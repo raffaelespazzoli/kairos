@@ -1,0 +1,27 @@
+# Member permissions — base role
+p, member, teams, read
+p, member, applications, read
+p, member, applications, onboard
+p, member, environments, read
+p, member, builds, read
+p, member, builds, trigger
+p, member, releases, read
+p, member, releases, create
+p, member, deployments, read
+p, member, deployments, deploy
+p, member, health, read
+p, member, dora, read
+p, member, dashboard, read
+
+# Lead additional permissions
+p, lead, deployments, deploy-prod
+
+# Admin additional permissions
+p, admin, clusters, read
+p, admin, clusters, create
+p, admin, clusters, update
+p, admin, clusters, delete
+
+# Role inheritance
+g, lead, member
+g, admin, lead

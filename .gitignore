@@ -1,0 +1,16 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+*.code-workspace
+
+# Cursor
+.cursor/
+
+# Node
+node_modules/
+
+# Logs
+*.log

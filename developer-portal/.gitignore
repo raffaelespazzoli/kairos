@@ -1,0 +1,38 @@
+# Java / Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
+.vscode/
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node / Frontend
+src/main/webui/node_modules/
+src/main/webui/dist/
+src/main/webui/.eslintcache
+*.tsbuildinfo
+
+# Quarkus
+.quarkus/
+.quinoa/
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.*
+!.env.example

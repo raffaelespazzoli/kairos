@@ -1,0 +1,104 @@
+# generated: 2026-04-03
+# last_updated: 2026-04-04T17:42:00
+# project: bmad
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: {project-root}/_bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-04-03
+last_updated: 2026-04-04T18:15:00
+project: bmad
+project_key: NOKEY
+tracking_system: file-system
+story_location: "{project-root}/_bmad-output/implementation-artifacts"
+
+development_status:
+  # Epic 1: Foundation, Authentication & Platform Setup
+  epic-1: done
+  1-1-project-scaffolding-monorepo-setup: done
+  1-2-oidc-authentication-team-recognition: done
+  1-3-casbin-rbac-authorization-layer: done
+  1-4-portal-page-shell-navigation: done
+  1-5-api-foundation-error-handling: done
+  1-6-vault-credential-provider: done
+  1-7-admin-cluster-registration: done
+  epic-1-retrospective: optional
+
+  # Epic 2: Application Onboarding & Environment Chain
+  epic-2: backlog
+  2-1-application-environment-data-model: backlog
+  2-2-git-provider-abstraction: backlog
+  2-3-application-registration-contract-validation: backlog
+  2-4-onboarding-plan-manifest-generation: backlog
+  2-5-onboarding-pr-creation-completion: backlog
+  2-6-application-list-team-navigation: backlog
+  2-7-argocd-adapter-environment-status: backlog
+  2-8-environment-chain-visualization: backlog
+  epic-2-retrospective: optional
+
+  # Epic 3: Developer Tooling & Deep Links
+  epic-3: backlog
+  3-1-deep-link-service-shared-component: backlog
+  3-2-devspaces-launch-vault-secret-navigation: backlog
+  3-3-deep-links-on-environment-chain: backlog
+  epic-3-retrospective: optional
+
+  # Epic 4: CI Pipeline, Build & Release Management
+  epic-4: backlog
+  4-1-tekton-adapter-pipeline-triggering: backlog
+  4-2-build-monitoring-log-retrieval: backlog
+  4-3-builds-page-build-table: backlog
+  4-4-release-creation-from-successful-builds: backlog
+  4-5-releases-page-release-list: backlog
+  epic-4-retrospective: optional
+
+  # Epic 5: Deployment & Environment Promotion
+  epic-5: backlog
+  5-1-deploy-release-to-environment: backlog
+  5-2-deployment-status-history: backlog
+  5-3-environment-chain-deploy-promote-actions: backlog
+  5-4-promotion-confirmation-production-gating: backlog
+  epic-5-retrospective: optional
+
+  # Epic 6: Observability & Health Monitoring
+  epic-6: backlog
+  6-1-prometheus-adapter-health-signals: backlog
+  6-2-application-health-page: backlog
+  6-3-dora-metrics-retrieval-display: backlog
+  epic-6-retrospective: optional
+
+  # Epic 7: Team Portfolio Dashboard
+  epic-7: backlog
+  7-1-team-dashboard-backend-aggregation: backlog
+  7-2-team-dashboard-page-application-health-grid: backlog
+  7-3-activity-feed-aggregated-dora-trends: backlog
+  epic-7-retrospective: optional

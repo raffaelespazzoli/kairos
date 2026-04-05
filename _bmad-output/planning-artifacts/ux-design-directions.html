@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Internal Developer Portal — Design Directions</title>
+<style>
+  :root {
+    --pf-blue: #0066CC;
+    --pf-blue-light: #E7F1FA;
+    --pf-green: #3E8635;
+    --pf-green-light: #E9F5E8;
+    --pf-red: #C9190B;
+    --pf-red-light: #FAEAE8;
+    --pf-gold: #F0AB00;
+    --pf-gold-light: #FDF7E7;
+    --pf-grey-100: #F0F0F0;
+    --pf-grey-200: #D2D2D2;
+    --pf-grey-400: #6A6E73;
+    --pf-grey-600: #3C3F42;
+    --pf-grey-900: #151515;
+    --pf-white: #FFFFFF;
+    --pf-bg: #F0F0F0;
+    --pf-card-bg: #FFFFFF;
+    --pf-border: #D2D2D2;
+    --pf-font-heading: 'Red Hat Display', 'Segoe UI', Arial, sans-serif;
+    --pf-font-body: 'Red Hat Text', 'Segoe UI', Arial, sans-serif;
+    --pf-font-mono: 'Red Hat Mono', 'Consolas', monospace;
+    --accent: #0066CC;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--pf-font-body);
+    color: var(--pf-grey-900);
+    background: var(--pf-grey-900);
+    line-height: 1.5;
+    font-size: 14px;
+  }
+
+  /* === SHOWCASE NAVIGATION === */
+  .showcase-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: var(--pf-grey-900);
+    border-bottom: 2px solid var(--pf-blue);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .showcase-nav h1 {
+    font-family: var(--pf-font-heading);
+    color: var(--pf-white);
+    font-size: 16px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .showcase-nav .divider {
+    width: 1px;
+    height: 24px;
+    background: var(--pf-grey-400);
+  }
+
+  .nav-btn {
+    padding: 6px 14px;
+    border: 1px solid var(--pf-grey-400);
+    background: transparent;
+    color: var(--pf-grey-200);
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: var(--pf-font-body);
+    font-size: 13px;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .nav-btn:hover { border-color: var(--pf-blue); color: var(--pf-white); }
+  .nav-btn.active { background: var(--pf-blue); border-color: var(--pf-blue); color: var(--pf-white); }
+
+  /* === MOCKUP SECTIONS === */
+  .mockup-section {
+    display: none;
+    padding-top: 72px;
+    min-height: 100vh;
+  }
+
+  .mockup-section.active { display: block; }
+
+  .section-header {
+    background: var(--pf-grey-900);
+    padding: 24px 32px;
+    border-bottom: 1px solid var(--pf-grey-600);
+  }
+
+  .section-header h2 {
+    font-family: var(--pf-font-heading);
+    color: var(--pf-white);
+    font-size: 20px;
+    margin-bottom: 4px;
+  }
+
+  .section-header p {
+    color: var(--pf-grey-400);
+    font-size: 13px;
+  }
+
+  /* === COMMON MOCKUP ELEMENTS === */
+  .mock-page {
+    display: flex;
+    min-height: calc(100vh - 170px);
+    background: var(--pf-bg);
+  }
+
+  .mock-sidebar {
+    width: 256px;
+    background: var(--pf-grey-900);
+    color: var(--pf-grey-200);
+    flex-shrink: 0;
+    border-right: 1px solid var(--pf-grey-600);
+  }
+
+  .mock-sidebar-narrow {
+    width: 64px;
+  }
+
+  .mock-masthead {
+    height: 48px;
+    background: var(--pf-grey-900);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--pf-grey-600);
+    color: var(--pf-white);
+    font-family: var(--pf-font-heading);
+    font-size: 14px;
+    font-weight: 700;
+    gap: 12px;
+  }
+
+  .mock-masthead .logo {
+    width: 28px;
+    height: 28px;
+    background: var(--pf-blue);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: white;
+  }
+
+  .mock-masthead .user {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--pf-grey-200);
+  }
+
+  .mock-masthead .avatar {
+    width: 28px;
+    height: 28px;
+    background: var(--pf-grey-400);
+    border-radius: 50%;
+  }
+
+  .sidebar-section {
+    padding: 12px;
+  }
+
+  .sidebar-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--pf-grey-400);
+    padding: 8px 12px 4px;
+    font-weight: 700;
+  }
+
+  .sidebar-item {
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.1s;
+  }
+
+  .sidebar-item:hover { background: rgba(255,255,255,0.08); }
+  .sidebar-item.active { background: rgba(0,102,204,0.2); color: var(--pf-white); }
+
+  .sidebar-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .mock-content {
+    flex: 1;
+    overflow: auto;
+  }
+
+  .mock-breadcrumb {
+    padding: 12px 24px;
+    font-size: 13px;
+    color: var(--pf-grey-400);
+    background: var(--pf-white);
+    border-bottom: 1px solid var(--pf-border);
+  }
+
+  .mock-breadcrumb a {
+    color: var(--pf-blue);
+    text-decoration: none;
+  }
+
+  .mock-tabs {
+    display: flex;
+    gap: 0;
+    background: var(--pf-white);
+    border-bottom: 1px solid var(--pf-border);
+    padding: 0 24px;
+  }
+
+  .mock-tab {
+    padding: 10px 16px;
+    font-size: 13px;
+    color: var(--pf-grey-600);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.1s;
+  }
+
+  .mock-tab:hover { color: var(--pf-grey-900); }
+  .mock-tab.active { color: var(--pf-blue); border-bottom-color: var(--pf-blue); font-weight: 600; }
+
+  .mock-body { padding: 24px; }
+
+  /* === STATUS BADGES === */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .badge-success { background: var(--pf-green-light); color: var(--pf-green); }
+  .badge-danger { background: var(--pf-red-light); color: var(--pf-red); }
+  .badge-warning { background: var(--pf-gold-light); color: #795600; }
+  .badge-info { background: var(--pf-blue-light); color: var(--pf-blue); }
+  .badge-neutral { background: var(--pf-grey-100); color: var(--pf-grey-400); }
+
+  .badge-icon { font-size: 10px; }
+
+  /* === CARDS === */
+  .card {
+    background: var(--pf-card-bg);
+    border: 1px solid var(--pf-border);
+    border-radius: 4px;
+  }
+
+  .card-header {
+    padding: 16px;
+    border-bottom: 1px solid var(--pf-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-title {
+    font-family: var(--pf-font-heading);
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .card-body { padding: 16px; }
+
+  /* === BUTTONS === */
+  .btn {
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: var(--pf-font-body);
+    cursor: pointer;
+    border: 1px solid transparent;
+    font-weight: 600;
+    transition: all 0.1s;
+  }
+
+  .btn-primary { background: var(--pf-blue); color: white; border-color: var(--pf-blue); }
+  .btn-primary:hover { background: #004080; }
+  .btn-secondary { background: transparent; color: var(--pf-blue); border-color: var(--pf-blue); }
+  .btn-link { background: none; border: none; color: var(--pf-blue); padding: 6px 8px; }
+
+  /* === TABLES === */
+  .table-compact { width: 100%; border-collapse: collapse; }
+  .table-compact th {
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--pf-grey-400);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    border-bottom: 2px solid var(--pf-border);
+    background: var(--pf-grey-100);
+  }
+  .table-compact td {
+    padding: 8px 12px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--pf-grey-100);
+    vertical-align: middle;
+  }
+
+  .mono { font-family: var(--pf-font-mono); font-size: 12px; color: var(--pf-grey-600); }
+
+  /* === ENVIRONMENT CHAIN === */
+  .env-chain {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    overflow-x: auto;
+    padding: 16px 0;
+  }
+
+  .env-stage {
+    flex: 1;
+    min-width: 180px;
+    position: relative;
+  }
+
+  .env-stage-card {
+    border: 1px solid var(--pf-border);
+    border-radius: 6px;
+    background: var(--pf-white);
+    padding: 16px;
+    text-align: center;
+    transition: box-shadow 0.15s;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .env-stage-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .env-stage-card.healthy { border-top: 3px solid var(--pf-green); }
+  .env-stage-card.unhealthy { border-top: 3px solid var(--pf-red); }
+  .env-stage-card.deploying { border-top: 3px solid var(--pf-gold); }
+  .env-stage-card.empty { border-top: 3px solid var(--pf-grey-200); }
+
+  .env-name {
+    font-family: var(--pf-font-heading);
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .env-version {
+    font-family: var(--pf-font-mono);
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+
+  .env-meta {
+    font-size: 11px;
+    color: var(--pf-grey-400);
+    margin-top: 8px;
+  }
+
+  .env-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    flex-shrink: 0;
+    color: var(--pf-grey-200);
+    font-size: 20px;
+  }
+
+  .env-promote-btn {
+    margin-top: 10px;
+    padding: 4px 10px;
+    font-size: 12px;
+    background: var(--pf-blue);
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: var(--pf-font-body);
+  }
+
+  /* === DIRECTION-SPECIFIC STYLES === */
+
+  /* Direction B: Pipeline-style chain */
+  .env-chain-pipeline {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 24px 0;
+    position: relative;
+  }
+
+  .env-chain-pipeline::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 40px;
+    right: 40px;
+    height: 3px;
+    background: var(--pf-grey-200);
+    transform: translateY(-50%);
+    z-index: 0;
+  }
+
+  .pipeline-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    position: relative;
+    z-index: 1;
+  }
+
+  .pipeline-circle {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 18px;
+    color: white;
+    margin-bottom: 10px;
+    border: 3px solid white;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  }
+
+  .pipeline-circle.healthy { background: var(--pf-green); }
+  .pipeline-circle.unhealthy { background: var(--pf-red); }
+  .pipeline-circle.deploying { background: var(--pf-gold); }
+  .pipeline-circle.empty { background: var(--pf-grey-200); }
+
+  .pipeline-label {
+    font-family: var(--pf-font-heading);
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .pipeline-version {
+    font-family: var(--pf-font-mono);
+    font-size: 12px;
+    color: var(--pf-grey-600);
+  }
+
+  .pipeline-meta {
+    font-size: 11px;
+    color: var(--pf-grey-400);
+    margin-top: 2px;
+  }
+
+  /* Direction C: Table-based */
+  .env-table-row {
+    display: grid;
+    grid-template-columns: 100px 1fr 120px 120px 100px 100px;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--pf-grey-100);
+    font-size: 13px;
+  }
+
+  .env-table-row:hover { background: var(--pf-grey-100); }
+
+  .env-table-header {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--pf-grey-400);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    background: var(--pf-grey-100);
+    border-bottom: 2px solid var(--pf-border);
+  }
+
+  /* Direction D: Split view */
+  .split-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+
+  /* Direction E: Dashboard cards */
+  .dash-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .dash-stat-card {
+    background: var(--pf-white);
+    border: 1px solid var(--pf-border);
+    border-radius: 4px;
+    padding: 16px;
+    text-align: center;
+  }
+
+  .dash-stat-value {
+    font-family: var(--pf-font-heading);
+    font-size: 28px;
+    font-weight: 700;
+  }
+
+  .dash-stat-label {
+    font-size: 12px;
+    color: var(--pf-grey-400);
+    margin-top: 4px;
+  }
+
+  /* Direction F: Compact list */
+  .compact-app-row {
+    display: grid;
+    grid-template-columns: 200px repeat(4, 1fr) 100px;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--pf-grey-100);
+    font-size: 13px;
+  }
+
+  .compact-app-row:hover { background: rgba(0,102,204,0.03); }
+
+  .compact-header {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--pf-grey-400);
+    text-transform: uppercase;
+    background: var(--pf-grey-100);
+    border-bottom: 2px solid var(--pf-border);
+  }
+
+  .env-mini-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+  }
+
+  .env-mini-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .dot-green { background: var(--pf-green); }
+  .dot-red { background: var(--pf-red); }
+  .dot-yellow { background: var(--pf-gold); }
+  .dot-grey { background: var(--pf-grey-200); }
+
+  /* === SPARKLINE (faked with CSS) === */
+  .sparkline {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 24px;
+  }
+
+  .spark-bar {
+    width: 4px;
+    background: var(--pf-blue);
+    border-radius: 1px;
+    opacity: 0.6;
+  }
+
+  /* === ACTIVITY FEED === */
+  .activity-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--pf-grey-100);
+    font-size: 13px;
+  }
+
+  .activity-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+    color: white;
+  }
+
+  .activity-time {
+    font-size: 11px;
+    color: var(--pf-grey-400);
+    margin-top: 2px;
+  }
+
+  /* Wizard styles */
+  .wizard-steps {
+    display: flex;
+    gap: 0;
+    margin-bottom: 24px;
+    background: var(--pf-white);
+    border: 1px solid var(--pf-border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .wizard-step {
+    flex: 1;
+    padding: 12px 16px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-right: 1px solid var(--pf-border);
+    color: var(--pf-grey-400);
+  }
+
+  .wizard-step:last-child { border-right: none; }
+
+  .wizard-step.done { color: var(--pf-green); }
+  .wizard-step.current { color: var(--pf-blue); background: var(--pf-blue-light); font-weight: 600; }
+
+  .wizard-num {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    border: 2px solid currentColor;
+    flex-shrink: 0;
+  }
+
+  .wizard-step.done .wizard-num { background: var(--pf-green); color: white; border-color: var(--pf-green); }
+  .wizard-step.current .wizard-num { background: var(--pf-blue); color: white; border-color: var(--pf-blue); }
+
+  /* Provisioning list */
+  .provision-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--pf-grey-100);
+    font-size: 13px;
+  }
+
+  .provision-icon {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .check { color: var(--pf-green); }
+</style>
+</head>
+<body>
+
+<!-- SHOWCASE NAVIGATION -->
+<nav class="showcase-nav">
+  <h1>IDP — Design Directions</h1>
+  <div class="divider"></div>
+  <button class="nav-btn active" onclick="showSection('dir-a')">A: Card Chain</button>
+  <button class="nav-btn" onclick="showSection('dir-b')">B: Pipeline Flow</button>
+  <button class="nav-btn" onclick="showSection('dir-c')">C: Table Dense</button>
+  <button class="nav-btn" onclick="showSection('dir-d')">D: Split View</button>
+  <button class="nav-btn" onclick="showSection('dir-e')">E: Team Dashboard</button>
+  <button class="nav-btn" onclick="showSection('dir-f')">F: Portfolio List</button>
+  <button class="nav-btn" onclick="showSection('dir-g')">G: Onboarding Wizard</button>
+  <button class="nav-btn" onclick="showSection('dir-h')">H: Build & Release</button>
+</nav>
+
+<!-- ============================================================ -->
+<!-- DIRECTION A: Card-based Environment Chain -->
+<!-- ============================================================ -->
+<section id="dir-a" class="mockup-section active">
+  <div class="section-header">
+    <h2>Direction A: Card-based Environment Chain</h2>
+    <p>Environment stages as individual cards with status, version, and inline actions. The primary application home view.</p>
+  </div>
+  <div class="mock-page">
+    <div class="mock-sidebar">
+      <div class="mock-masthead">
+        <div class="logo">P</div>
+        Dev Portal
+      </div>
+      <div class="sidebar-label">Team</div>
+      <div class="sidebar-item active">
+        <div class="sidebar-dot" style="background:var(--pf-blue)"></div>
+        Payments
+      </div>
+      <div class="sidebar-item">
+        <div class="sidebar-dot" style="background:var(--pf-grey-400)"></div>
+        Orders
+      </div>
+      <div class="sidebar-label">Applications</div>
+      <div class="sidebar-item active">
+        <div class="sidebar-dot dot-green"></div>
+        payment-service
+      </div>
+      <div class="sidebar-item">
+        <div class="sidebar-dot dot-green"></div>
+        payment-gateway
+      </div>
+      <div class="sidebar-item">
+        <div class="sidebar-dot dot-red"></div>
+        payment-notifier
+      </div>
+      <div style="padding: 16px 12px; margin-top: 8px;">
+        <button class="btn btn-secondary" style="width:100%; font-size:12px;">+ Onboard Application</button>
+      </div>
+    </div>
+    <div class="mock-content">
+      <div class="mock-breadcrumb">
+        <a href="#">Payments</a> / <a href="#">payment-service</a> / Overview
+      </div>
+      <div class="mock-tabs">
+        <div class="mock-tab active">Overview</div>
+        <div class="mock-tab">Builds</div>
+        <div class="mock-tab">Releases</div>
+        <div class="mock-tab">Environments</div>
+        <div class="mock-tab">Health</div>
+        <div class="mock-tab">Settings</div>
+      </div>
+      <div class="mock-body">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 20px;">
+          <div>
+            <h2 style="font-family:var(--pf-font-heading); font-size:20px; font-weight:700;">payment-service</h2>
+            <span style="font-size:12px; color:var(--pf-grey-400);">Quarkus · 3 environments · Last build 12m ago</span>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-secondary">Trigger Build</button>
+            <button class="btn btn-link">Open in DevSpaces ↗</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:24px;">
+          <div class="card-header">
+            <span class="card-title">Environment Chain</span>
+            <span style="font-size:12px; color:var(--pf-grey-400);">Last refreshed: just now</span>
+          </div>
+          <div class="card-body">
+            <div class="env-chain">
+              <div class="env-stage">
+                <div class="env-stage-card healthy">
+                  <div class="env-name">Dev</div>
+                  <span class="badge badge-success"><span class="badge-icon">✓</span> Healthy</span>
+                  <div class="env-version">v1.4.2</div>
+                  <div class="env-meta">Deployed 2h ago by Marco</div>
+                  <button class="env-promote-btn">Promote to QA →</button>
+                </div>
+              </div>
+              <div class="env-arrow">→</div>
+              <div class="env-stage">
+                <div class="env-stage-card healthy">
+                  <div class="env-name">QA</div>
+                  <span class="badge badge-success"><span class="badge-icon">✓</span> Healthy</span>
+                  <div class="env-version">v1.4.1</div>
+                  <div class="env-meta">Deployed 1d ago by Marco</div>
+                  <button class="env-promote-btn">Promote to Staging →</button>
+                </div>
+              </div>
+              <div class="env-arrow">→</div>
+              <div class="env-stage">
+                <div class="env-stage-card deploying">
+                  <div class="env-name">Staging</div>
+                  <span class="badge badge-warning"><span class="badge-icon">⟳</span> Deploying</span>
+                  <div class="env-version">v1.4.0 → v1.4.1</div>
+                  <div class="env-meta">Started 3m ago</div>
+                </div>
+              </div>
+              <div class="env-arrow">→</div>
+              <div class="env-stage">
+                <div class="env-stage-card healthy">
+                  <div class="env-name">Prod</div>
+                  <span class="badge badge-success"><span class="badge-icon">✓</span> Healthy</span>
+                  <div class="env-version">v1.3.8</div>
+                  <div class="env-meta">Deployed 5d ago by Diana</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Recent Builds</span>
+              <button class="btn btn-link" style="font-size:12px;">View all →</button>
+            </div>
+            <div class="card-body" style="padding:0;">
+              <table class="table-compact">
+                <thead><tr><th>Build</th><th>Status</th><th>Duration</th><th>Time</th></tr></thead>
+                <tbody>
+                  <tr><td class="mono">#142</td><td><span class="badge badge-success">✓ Passed</span></td><td>3m 22s</td><td>12m ago</td></tr>
+                  <tr><td class="mono">#141</td><td><span class="badge badge-success">✓ Passed</span></td><td>3m 18s</td><td>2h ago</td></tr>
+                  <tr><td class="mono">#140</td><td><span class="badge badge-danger">✕ Failed</span></td><td>1m 45s</td><td>3h ago</td></tr>
+                  <tr><td class="mono">#139</td><td><span class="badge badge-success">✓ Passed</span></td><td>3m 30s</td><td>1d ago</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Recent Activity</span>
+            </div>
+            <div class="card-body">
+              <div class="activity-item">
+                <div class="activity-icon" style="background:var(--pf-green)">↑</div>
+                <div><strong>v1.4.1</strong> promoted to Staging<div class="activity-time">3 minutes ago · Marco</div></div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon" style="background:var(--pf-blue)">⚙</div>
+                <div>Build <span class="mono">#142</span> passed<div class="activity-time">12 minutes ago</div></div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon" style="background:var(--pf-red)">✕</div>
+                <div>Build <span class="mono">#140</span> failed — test timeout<div class="activity-time">3 hours ago</div></div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon" style="background:var(--pf-green)">↑</div>
+                <div><strong>v1.4.1</strong> deployed to QA<div class="activity-time">1 day ago · Marco</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- DIRECTION B: Pipeline Flow Environment Chain -->
+<!-- ============================================================ -->
+<section id="dir-b" class="mockup-section">
+  <div class="section-header">
+    <h2>Direction B: Pipeline-style Environment Flow</h2>
+    <p>GitLab CI-inspired horizontal pipeline visualization with circular status nodes connected by a flow line.</p>
+  </div>
+  <div class="mock-page">
+    <div class="mock-sidebar">
+      <div class="mock-masthead">
+        <div class="logo">P</div>
+        Dev Portal
+      </div>
+      <div class="sidebar-label">Team</div>
+      <div class="sidebar-item active">
+        <div class="sidebar-dot" style="background:var(--pf-blue)"></div>
+        Payments
+      </div>
+      <div class="sidebar-label">Applications</div>
+      <div class="sidebar-item active">
+        <div class="sidebar-dot dot-green"></div>
+        payment-service
+      </div>
+      <div class="sidebar-item">
+        <div class="sidebar-dot dot-green"></div>
+        payment-gateway
+      </div>
+    </div>
+    <div class="mock-content">
+      <div class="mock-breadcrumb">
+        <a href="#">Payments</a> / <a href="#">payment-service</a> / Overview
+      </div>
+      <div class="mock-tabs">
+        <div class="mock-tab active">Overview</div>
+        <div class="mock-tab">Builds</div>
+        <div class="mock-tab">Releases</div>
+        <div class="mock-tab">Environments</div>
+        <div class="mock-tab">Health</div>
+      </div>
+      <div class="mock-body">
+        <div style="margin-bottom: 20px;">
+          <h2 style="font-family:var(--pf-font-heading); font-size:20px; font-weight:700;">payment-service</h2>
+          <span style="font-size:12px; color:var(--pf-grey-400);">Quarkus · Last build 12m ago</span>
+        </div>
+
+        <div class="card" style="margin-bottom:24px;">
+          <div class="card-header">
+            <span class="card-title">Environment Chain</span>
+          </div>
+          <div class="card-body">
+            <div class="env-chain-pipeline">
+              <div class="pipeline-node">
+                <div class="pipeline-circle healthy">✓</div>
+                <div class="pipeline-label">Dev</div>
+                <div class="pipeline-version">v1.4.2</div>
+                <div class="pipeline-meta">2h ago</div>
+              </div>
+              <div class="pipeline-node">
+                <div class="pipeline-circle healthy">✓</div>
+                <div class="pipeline-label">QA</div>
+                <div class="pipeline-version">v1.4.1</div>
+                <div class="pipeline-meta">1d ago</div>
+              </div>
+              <div class="pipeline-node">
+                <div class="pipeline-circle deploying">⟳</div>
+                <div class="pipeline-label">Staging</div>
+                <div class="pipeline-version">v1.4.1</div>
+                <div class="pipeline-meta">deploying...</div>
+              </div>
+              <div class="pipeline-node">
+                <div class="pipeline-circle healthy">✓</div>
+                <div class="pipeline-label">Prod</div>
+                <div class="pipeline-version">v1.3.8</div>
+                <div class="pipeline-meta">5d ago</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Latest Release</span>
+            <span class="badge badge-info">v1.4.2</span>
+          </div>
+          <div class="card-body">
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; font-size:13px;">
+              <div><strong>Commit</strong><br><span class="mono">a3f7b2c</span></div>
+              <div><strong>Image</strong><br><span class="mono">registry/payments/svc:1.4.2</span></div>
+              <div><strong>Build</strong><br><span class="mono">#142</span> <span class="badge badge-success" style="font-size:11px;">✓</span></div>
+              <div><strong>Created</strong><br>12 minutes ago by Marco</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- DIRECTION C: Table-Dense Environment View -->
+<!-- ============================================================ -->
+<section id="dir-c" class="mockup-section">
+  <div class="section-header">
+    <h2>Direction C: Table-Dense Environment View</h2>
+    <p>Maximum information density — all environments as rows in a compact table. Optimized for teams with many environments.</p>
+  </div>
+  <div class="mock-page">
+    <div class="mock-sidebar">
+      <div class="mock-masthead">
+        <div class="logo">P</div>
+        Dev Portal
+      </div>
+      <div class="sidebar-label">Team</div>
+      <div class="sidebar-item active">
+        <div class="sidebar-dot" style="background:var(--pf-blue)"></div>
+        Payments
+      </div>
+      <div class="sidebar-label">Applications</div>
+      <div class="sidebar-item active">
+        <div class="sidebar-dot dot-green"></div>
+        payment-service
+      </div>
+    </div>
+    <div class="mock-content">
+      <div class="mock-breadcrumb">
+        <a href="#">Payments</a> / <a href="#">payment-service</a> / Environments
+      </div>
+      <div class="mock-tabs">
+        <div class="mock-tab">Overview</div>
+        <div class="mock-tab">Builds</div>
+        <div class="mock-tab">Releases</div>
+        <div class="mock-tab active">Environments</div>
+        <div class="mock-tab">Health</div>
+      </div>
+      <div class="mock-body">
+        <h2 style="font-family:var(--pf-font-heading); font-size:20px; font-weight:700; margin-bottom:16px;">payment-service — Environments</h2>
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <div class="env-table-row env-table-header">
+              <div>Environment</div>
+              <div>Version</div>
+              <div>Health</div>
+              <div>Deployed</div>
+              <div>By</div>
+              <div>Action</div>
+            </div>
+            <div class="env-table-row">
+              <div style="font-weight:600;">Dev</div>
+              <div class="mono">v1.4.2</div>
+              <div><span class="badge badge-success">✓ Healthy</span></div>
+              <div>2h ago</div>
+              <div>Marco</div>
+              <div><button class="btn btn-primary" style="padding:3px 10px; font-size:12px;">Promote →</button></div>
+            </div>
+            <div class="env-table-row">
+              <div style="font-weight:600;">QA</div>
+              <div class="mono">v1.4.1</div>
+              <div><span class="badge badge-success">✓ Healthy</span></div>
+              <div>1d ago</div>
+              <div>Marco</div>
+              <div><button class="btn btn-primary" style="padding:3px 10px; font-size:12px;">Promote →</button></div>
+            </div>
+            <div class="env-table-row">
+              <div style="font-weight:600;">Staging</div>
+              <div class="mono">v1.4.0 → v1.4.1</div>
+              <div><span class="badge badge-warning">⟳ Deploying</span></div>
+              <div>3m ago</div>
+              <div>Marco</div>
+              <div><span style="color:var(--pf-grey-400); font-size:12px;">In progress</span></div>
+            </div>
+            <div class="env-table-row">
+              <div style="font-weight:600;">Prod</div>
+              <div class="mono">v1.3.8</div>
+              <div><span class="badge badge-success">✓ Healthy</span></div>
+              <div>5d ago</div>
+              <div>Diana</div>
+              <div><button class="btn btn-primary" style="padding:3px 10px; font-size:12px;">Deploy ↑</button></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:24px;">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Deployment History</span>
+            </div>
+            <div class="card-body" style="padding:0;">
+              <table class="table-compact">
+                <thead><tr><th>Environment</th><th>Version</th><th>Status</th><th>Deployed</th><th>By</th><th></th></tr></thead>
+                <tbody>
+                  <tr><td>Staging</td><td class="mono">v1.4.1</td><td><span class="badge badge-warning">⟳ In Progress</span></td><td>3m ago</td><td>Marco</td><td><button class="btn btn-link" style="font-size:12px;">View in ArgoCD ↗</button></td></tr>
+                  <tr><td>Dev</td><td class="mono">v1.4.2</td><td><span class="badge badge-success">✓ Synced</span></td><td>2h ago</td><td>Marco</td><td><button class="btn btn-link" style="font-size:12px;">View in ArgoCD ↗</button></td></tr>
+                  <tr><td>QA</td><td class="mono">v1.4.1</td><td><span class="badge badge-success">✓ Synced</span></td><td>1d ago</td><td>Marco</td><td><button class="btn btn-link" style="font-size:12px;">View in ArgoCD ↗</button></td></tr>
+                  <tr><td>Prod</td><td class="mono">v1.3.8</td><td><span class="badge badge-success">✓ Synced</span></td><td>5d ago</td><td>Diana</td><td><button class="btn btn-link" style="font-size:12px;">View in ArgoCD ↗</button></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- DIRECTION D: Split View (Chain + Detail) -->
+<!-- ============================================================ -->
+<section id="dir-d" class="mockup-section">
+  <div class="section-header">
+    <h2>Direction D: Split View — Chain + Detail Panel</h2>
+    <p>Environment chain on the left, detail panel on the right. Clicking a stage reveals its details without navigation.</p>
+  </div>
+  <div class="mock-page">
+    <div class="mock-sidebar">
+      <div class="mock-masthead">
+        <div class="logo">P</div>
+        Dev Portal
+      </div>
+      <div class="sidebar-label">Team</div>
+      <div class="sidebar-item active">
+        <div class="sidebar-dot" style="background:var(--pf-blue)"></div>
+        Payments
+      </div>
+      <div class="sidebar-label">Applications</div>
+      <div class="sidebar-item active">
+        <div class="sidebar-dot dot-green"></div>
+        payment-service
+      </div>
+    </div>
+    <div class="mock-content">
+      <div class="mock-breadcrumb">
+        <a href="#">Payments</a> / <a href="#">payment-service</a> / Overview
+      </div>
+      <div class="mock-tabs">
+        <div class="mock-tab active">Overview</div>
+        <div class="mock-tab">Builds</div>
+        <div class="mock-tab">Releases</div>
+        <div class="mock-tab">Health</div>
+      </div>
+      <div class="mock-body">
+        <div class="split-layout">
+          <!-- Left: Vertical chain -->
+          <div>
+            <h3 style="font-family:var(--pf-font-heading); font-size:16px; margin-bottom:12px;">Environment Chain</h3>
+            <div class="env-stage-card healthy" style="margin-bottom:8px; text-align:left; padding:12px 16px; display:flex; align-items:center; justify-content:space-between;">
+              <div>
+                <div style="font-weight:700; font-size:14px;">Dev</div>
+                <span class="mono" style="font-size:12px;">v1.4.2</span>
+              </div>
+              <span class="badge badge-success">✓ Healthy</span>
+            </div>
+            <div style="text-align:center; color:var(--pf-grey-200); font-size:16px; padding:4px 0;">↓</div>
+            <div class="env-stage-card healthy" style="margin-bottom:8px; text-align:left; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; border:2px solid var(--pf-blue);">
+              <div>
+                <div style="font-weight:700; font-size:14px;">QA <span style="font-size:11px; color:var(--pf-blue); font-weight:400;">← selected</span></div>
+                <span class="mono" style="font-size:12px;">v1.4.1</span>
+              </div>
+              <span class="badge badge-success">✓ Healthy</span>
+            </div>
+            <div style="text-align:center; color:var(--pf-grey-200); font-size:16px; padding:4px 0;">↓</div>
+            <div class="env-stage-card deploying" style="margin-bottom:8px; text-align:left; padding:12px 16px; display:flex; align-items:center; justify-content:space-between;">
+              <div>
+                <div style="font-weight:700; font-size:14px;">Staging</div>
+                <span class="mono" style="font-size:12px;">v1.4.0 → v1.4.1</span>
+              </div>
+              <span class="badge badge-warning">⟳ Deploying</span>
+            </div>
+            <div style="text-align:center; color:var(--pf-grey-200); font-size:16px; padding:4px 0;">↓</div>
+            <div class="env-stage-card healthy" style="text-align:left; padding:12px 16px; display:flex; align-items:center; justify-content:space-between;">
+              <div>
+                <div style="font-weight:700; font-size:14px;">Prod</div>
+                <span class="mono" style="font-size:12px;">v1.3.8</span>
+              </div>
+              <span class="badge badge-success">✓ Healthy</span>
+            </div>
+          </div>
+
+          <!-- Right: Detail panel for selected env -->
+          <div>
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">QA — Detail</span>
+                <div style="display:flex; gap:8px;">
+                  <button class="btn btn-primary" style="font-size:12px;">Promote to Staging →</button>
+                  <button class="btn btn-link" style="font-size:12px;">ArgoCD ↗</button>
+                  <button class="btn btn-link" style="font-size:12px;">Grafana ↗</button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; font-size:13px;">
+                  <div><strong>Deployed Version</strong><br><span class="mono">v1.4.1</span></div>
+                  <div><strong>Health</strong><br><span class="badge badge-success">✓ Healthy</span></div>
+                  <div><strong>Cluster</strong><br>ocp-cluster-02</div>
+                  <div><strong>Namespace</strong><br><span class="mono">payments-qa</span></div>
+                  <div><strong>Deployed By</strong><br>Marco</div>
+                  <div><strong>Deployed At</strong><br>2026-03-31 14:22 UTC</div>
+                </div>
+                <h4 style="font-size:14px; font-weight:600; margin:16px 0 8px;">Deployment History</h4>
+                <table class="table-compact">
+                  <thead><tr><th>Version</th><th>Status</th><th>Time</th><th>By</th></tr></thead>
+                  <tbody>
+                    <tr><td class="mono">v1.4.1</td><td><span class="badge badge-success">✓</span></td><td>1d ago</td><td>Marco</td></tr>
+                    <tr><td class="mono">v1.4.0</td><td><span class="badge badge-success">✓</span></td><td>3d ago</td><td>Marco</td></tr>
+                    <tr><td class="mono">v1.3.8</td><td><span class="badge badge-success">✓</span></td><td>1w ago</td><td>Diana</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- DIRECTION E: Team Dashboard -->
+<!-- ============================================================ -->
+<section id="dir-e" class="mockup-section">
+  <div class="section-header">
+    <h2>Direction E: Team Dashboard — Portfolio View</h2>
+    <p>Diana's view — team-level overview with all applications, cross-environment health, DORA trends, and activity feed.</p>
+  </div>
+  <div class="mock-page">
+    <div class="mock-sidebar">
+      <div class="mock-masthead">
+        <div class="logo">P</div>
+        Dev Portal
+      </div>
+      <div class="sidebar-label">Team</div>
+      <div class="sidebar-item active">
+        <div class="sidebar-dot" style="background:var(--pf-blue)"></div>
+        Checkout
+      </div>
+      <div class="sidebar-item">
+        <div class="sidebar-dot" style="background:var(--pf-grey-400)"></div>
+        Payments
+      </div>
+    </div>
+    <div class="mock-content">
+      <div class="mock-breadcrumb">
+        <a href="#">Checkout</a> / Team Dashboard
+      </div>
+      <div class="mock-body">
+        <h2 style="font-family:var(--pf-font-heading); font-size:20px; font-weight:700; margin-bottom:20px;">Checkout — Team Dashboard</h2>
+
+        <!-- Stats row -->
+        <div class="dash-grid">
+          <div class="dash-stat-card">
+            <div class="dash-stat-value" style="color:var(--pf-green);">3</div>
+            <div class="dash-stat-label">Applications</div>
+          </div>
+          <div class="dash-stat-card">
+            <div class="dash-stat-value">12</div>
+            <div class="dash-stat-label">Deployments (30d)</div>
+          </div>
+          <div class="dash-stat-card">
+            <div class="dash-stat-value" style="color:var(--pf-green);">4.2/wk</div>
+            <div class="dash-stat-label">Deploy Frequency</div>
+          </div>
+          <div class="dash-stat-card">
+            <div class="dash-stat-value">2.1h</div>
+            <div class="dash-stat-label">Lead Time (avg)</div>
+          </div>
+        </div>
+
+        <!-- Applications with inline environment health -->
+        <div class="card" style="margin-bottom:24px;">
+          <div class="card-header">
+            <span class="card-title">Applications</span>
+          </div>
+          <div class="card-body" style="padding:0;">
+            <div class="compact-app-row compact-header">
+              <div>Application</div>
+              <div>Dev</div>
+              <div>QA</div>
+              <div>Staging</div>
+              <div>Prod</div>
+              <div>Activity</div>
+            </div>
+            <div class="compact-app-row">
+              <div style="font-weight:600;">checkout-api</div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-green"></span> v2.1.0</span></div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-green"></span> v2.1.0</span></div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-green"></span> v2.0.9</span></div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-green"></span> v2.0.9</span></div>
+              <div>
+                <div class="sparkline">
+                  <div class="spark-bar" style="height:8px"></div><div class="spark-bar" style="height:12px"></div><div class="spark-bar" style="height:6px"></div><div class="spark-bar" style="height:18px"></div><div class="spark-bar" style="height:14px"></div><div class="spark-bar" style="height:20px"></div><div class="spark-bar" style="height:16px"></div>
+                </div>
+              </div>
+            </div>
+            <div class="compact-app-row">
+              <div style="font-weight:600;">checkout-ui</div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-green"></span> v3.5.1</span></div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-green"></span> v3.5.0</span></div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-yellow"></span> deploying</span></div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-green"></span> v3.4.8</span></div>
+              <div>
+                <div class="sparkline">
+                  <div class="spark-bar" style="height:12px"></div><div class="spark-bar" style="height:16px"></div><div class="spark-bar" style="height:10px"></div><div class="spark-bar" style="height:22px"></div><div class="spark-bar" style="height:18px"></div><div class="spark-bar" style="height:14px"></div><div class="spark-bar" style="height:24px"></div>
+                </div>
+              </div>
+            </div>
+            <div class="compact-app-row">
+              <div style="font-weight:600;">checkout-worker</div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-green"></span> v1.8.3</span></div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-red"></span> v1.8.2</span></div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-green"></span> v1.8.1</span></div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-green"></span> v1.8.1</span></div>
+              <div>
+                <div class="sparkline">
+                  <div class="spark-bar" style="height:6px"></div><div class="spark-bar" style="height:8px"></div><div class="spark-bar" style="height:4px"></div><div class="spark-bar" style="height:10px"></div><div class="spark-bar" style="height:6px"></div><div class="spark-bar" style="height:8px"></div><div class="spark-bar" style="height:12px"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">DORA Trends (30 days)</span>
+            </div>
+            <div class="card-body">
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                <div style="text-align:center; padding:12px;">
+                  <div style="font-size:24px; font-weight:700; color:var(--pf-green);">↑ 4.2/wk</div>
+                  <div style="font-size:12px; color:var(--pf-grey-400);">Deployment Frequency</div>
+                  <div style="font-size:11px; color:var(--pf-green);">+18% from last month</div>
+                </div>
+                <div style="text-align:center; padding:12px;">
+                  <div style="font-size:24px; font-weight:700; color:var(--pf-green);">↓ 2.1h</div>
+                  <div style="font-size:12px; color:var(--pf-grey-400);">Lead Time for Changes</div>
+                  <div style="font-size:11px; color:var(--pf-green);">-22% from last month</div>
+                </div>
+                <div style="text-align:center; padding:12px;">
+                  <div style="font-size:24px; font-weight:700; color:var(--pf-green);">2.3%</div>
+                  <div style="font-size:12px; color:var(--pf-grey-400);">Change Failure Rate</div>
+                  <div style="font-size:11px; color:var(--pf-green);">-5% from last month</div>
+                </div>
+                <div style="text-align:center; padding:12px;">
+                  <div style="font-size:24px; font-weight:700;">45m</div>
+                  <div style="font-size:12px; color:var(--pf-grey-400);">Mean Time to Recovery</div>
+                  <div style="font-size:11px; color:var(--pf-grey-400);">No change</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Recent Activity</span>
+            </div>
+            <div class="card-body">
+              <div class="activity-item">
+                <div class="activity-icon" style="background:var(--pf-gold)">↑</div>
+                <div><strong>checkout-ui</strong> v3.5.0 promoting to Staging<div class="activity-time">5 minutes ago · Alex</div></div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon" style="background:var(--pf-red)">!</div>
+                <div><strong>checkout-worker</strong> unhealthy in QA<div class="activity-time">1 hour ago · health check failed</div></div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon" style="background:var(--pf-green)">✓</div>
+                <div><strong>checkout-api</strong> v2.1.0 deployed to QA<div class="activity-time">3 hours ago · Diana</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- DIRECTION F: Portfolio Compact List -->
+<!-- ============================================================ -->
+<section id="dir-f" class="mockup-section">
+  <div class="section-header">
+    <h2>Direction F: Compact Portfolio List</h2>
+    <p>All applications in a single compact table with environment health dots — maximum scanability for large teams.</p>
+  </div>
+  <div class="mock-page">
+    <div class="mock-sidebar mock-sidebar-narrow" style="display:flex; flex-direction:column; align-items:center; padding-top:56px; gap:16px;">
+      <div style="width:36px; height:36px; background:var(--pf-blue); border-radius:6px; display:flex; align-items:center; justify-content:center; color:white; font-weight:700; font-size:14px;">P</div>
+      <div style="width:36px; height:36px; background:rgba(0,102,204,0.2); border-radius:6px; display:flex; align-items:center; justify-content:center; color:var(--pf-blue); font-size:16px; cursor:pointer;" title="Payments">Pa</div>
+      <div style="width:36px; height:36px; border-radius:6px; display:flex; align-items:center; justify-content:center; color:var(--pf-grey-400); font-size:16px; cursor:pointer;" title="Orders">Or</div>
+      <div style="width:36px; height:36px; border-radius:6px; display:flex; align-items:center; justify-content:center; color:var(--pf-grey-400); font-size:16px; cursor:pointer;" title="Checkout">Ch</div>
+    </div>
+    <div class="mock-content">
+      <div class="mock-masthead" style="justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span>Payments Team</span>
+          <span style="font-size:12px; font-weight:400; color:var(--pf-grey-400);">5 applications</span>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button class="btn btn-secondary" style="font-size:12px;">+ Onboard App</button>
+          <div class="avatar" style="width:28px; height:28px; background:var(--pf-grey-400); border-radius:50%;"></div>
+        </div>
+      </div>
+      <div class="mock-body">
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <div class="compact-app-row compact-header">
+              <div>Application</div>
+              <div>Dev</div>
+              <div>QA</div>
+              <div>Staging</div>
+              <div>Prod</div>
+              <div>Last Build</div>
+            </div>
+            <div class="compact-app-row">
+              <div><strong>payment-service</strong><br><span style="font-size:11px; color:var(--pf-grey-400);">Quarkus</span></div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-green"></span> v1.4.2</span></div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-green"></span> v1.4.1</span></div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-yellow"></span> deploying</span></div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-green"></span> v1.3.8</span></div>
+              <div><span class="badge badge-success" style="font-size:11px;">✓ #142</span> 12m</div>
+            </div>
+            <div class="compact-app-row">
+              <div><strong>payment-gateway</strong><br><span style="font-size:11px; color:var(--pf-grey-400);">Node.js</span></div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-green"></span> v2.8.0</span></div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-green"></span> v2.8.0</span></div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-green"></span> v2.7.9</span></div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-green"></span> v2.7.9</span></div>
+              <div><span class="badge badge-success" style="font-size:11px;">✓ #89</span> 2h</div>
+            </div>
+            <div class="compact-app-row">
+              <div><strong>payment-notifier</strong><br><span style="font-size:11px; color:var(--pf-grey-400);">Quarkus</span></div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-green"></span> v1.2.1</span></div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-red"></span> v1.2.0</span></div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-green"></span> v1.1.8</span></div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-green"></span> v1.1.8</span></div>
+              <div><span class="badge badge-danger" style="font-size:11px;">✕ #34</span> 45m</div>
+            </div>
+            <div class="compact-app-row">
+              <div><strong>payment-reconciler</strong><br><span style="font-size:11px; color:var(--pf-grey-400);">.NET</span></div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-green"></span> v3.0.2</span></div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-green"></span> v3.0.2</span></div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-green"></span> v3.0.2</span></div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-green"></span> v3.0.2</span></div>
+              <div><span class="badge badge-success" style="font-size:11px;">✓ #201</span> 1d</div>
+            </div>
+            <div class="compact-app-row">
+              <div><strong>payment-audit</strong><br><span style="font-size:11px; color:var(--pf-grey-400);">Quarkus</span></div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-green"></span> v1.0.5</span></div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-green"></span> v1.0.5</span></div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-grey"></span> —</span></div>
+              <div><span class="env-mini-badge"><span class="env-mini-dot dot-grey"></span> —</span></div>
+              <div><span class="badge badge-success" style="font-size:11px;">✓ #12</span> 3d</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- DIRECTION G: Onboarding Wizard -->
+<!-- ============================================================ -->
+<section id="dir-g" class="mockup-section">
+  <div class="section-header">
+    <h2>Direction G: Application Onboarding Wizard</h2>
+    <p>The trust-building moment — guided onboarding flow with contract validation, provisioning preview, and execution progress.</p>
+  </div>
+  <div class="mock-page">
+    <div class="mock-sidebar">
+      <div class="mock-masthead">
+        <div class="logo">P</div>
+        Dev Portal
+      </div>
+      <div class="sidebar-label">Team</div>
+      <div class="sidebar-item active">
+        <div class="sidebar-dot" style="background:var(--pf-blue)"></div>
+        Payments
+      </div>
+    </div>
+    <div class="mock-content">
+      <div class="mock-breadcrumb">
+        <a href="#">Payments</a> / Onboard Application
+      </div>
+      <div class="mock-body">
+        <h2 style="font-family:var(--pf-font-heading); font-size:20px; font-weight:700; margin-bottom:20px;">Onboard Application</h2>
+
+        <div class="wizard-steps">
+          <div class="wizard-step done"><div class="wizard-num">✓</div> Repository</div>
+          <div class="wizard-step done"><div class="wizard-num">✓</div> Validate</div>
+          <div class="wizard-step current"><div class="wizard-num">3</div> Review Plan</div>
+          <div class="wizard-step"><div class="wizard-num">4</div> Provision</div>
+          <div class="wizard-step"><div class="wizard-num">5</div> Complete</div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Application Details</span>
+              <span class="badge badge-success">✓ Contract Valid</span>
+            </div>
+            <div class="card-body" style="font-size:13px;">
+              <div style="display:grid; grid-template-columns:auto 1fr; gap:8px 16px;">
+                <strong>Repository</strong><div class="mono">git.internal/payments/payment-service</div>
+                <strong>Runtime</strong><div>Quarkus (detected)</div>
+                <strong>Team</strong><div>Payments</div>
+                <strong>Contract</strong><div><span class="check">✓</span> Dockerfile · <span class="check">✓</span> CI config · <span class="check">✓</span> Chart</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Provisioning Plan</span>
+            </div>
+            <div class="card-body" style="padding:0;">
+              <div class="provision-item">
+                <div class="provision-icon" style="background:var(--pf-blue)"></div>
+                <div><strong>4 namespaces</strong> — payments-dev, payments-qa, payments-staging, payments-prod</div>
+              </div>
+              <div class="provision-item">
+                <div class="provision-icon" style="background:var(--pf-blue)"></div>
+                <div><strong>1 Tekton pipeline</strong> — CI build + test + image push</div>
+              </div>
+              <div class="provision-item">
+                <div class="provision-icon" style="background:var(--pf-blue)"></div>
+                <div><strong>4 ArgoCD applications</strong> — one per environment</div>
+              </div>
+              <div class="provision-item">
+                <div class="provision-icon" style="background:var(--pf-blue)"></div>
+                <div><strong>4 Vault secret stores</strong> — one per namespace</div>
+              </div>
+              <div class="provision-item">
+                <div class="provision-icon" style="background:var(--pf-blue)"></div>
+                <div><strong>Environment chain</strong> — dev → qa → staging → prod</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:24px; display:flex; justify-content:space-between; align-items:center;">
+          <button class="btn btn-secondary">← Back to Validation</button>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span style="font-size:12px; color:var(--pf-grey-400);">This will create resources across 2 clusters</span>
+            <button class="btn btn-primary" style="font-size:14px; padding:8px 24px;">Confirm & Provision →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- DIRECTION H: Build & Release View -->
+<!-- ============================================================ -->
+<section id="dir-h" class="mockup-section">
+  <div class="section-header">
+    <h2>Direction H: Build & Release Management</h2>
+    <p>CI pipeline monitoring and release creation — the daily developer workflow for building and shipping code.</p>
+  </div>
+  <div class="mock-page">
+    <div class="mock-sidebar">
+      <div class="mock-masthead">
+        <div class="logo">P</div>
+        Dev Portal
+      </div>
+      <div class="sidebar-label">Team</div>
+      <div class="sidebar-item active">
+        <div class="sidebar-dot" style="background:var(--pf-blue)"></div>
+        Payments
+      </div>
+      <div class="sidebar-label">Applications</div>
+      <div class="sidebar-item active">
+        <div class="sidebar-dot dot-green"></div>
+        payment-service
+      </div>
+    </div>
+    <div class="mock-content">
+      <div class="mock-breadcrumb">
+        <a href="#">Payments</a> / <a href="#">payment-service</a> / Builds
+      </div>
+      <div class="mock-tabs">
+        <div class="mock-tab">Overview</div>
+        <div class="mock-tab active">Builds</div>
+        <div class="mock-tab">Releases</div>
+        <div class="mock-tab">Environments</div>
+        <div class="mock-tab">Health</div>
+      </div>
+      <div class="mock-body">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+          <h2 style="font-family:var(--pf-font-heading); font-size:20px; font-weight:700;">Builds</h2>
+          <button class="btn btn-primary">Trigger Build</button>
+        </div>
+
+        <div class="card" style="margin-bottom:24px;">
+          <div class="card-body" style="padding:0;">
+            <table class="table-compact">
+              <thead>
+                <tr>
+                  <th>Build</th>
+                  <th>Status</th>
+                  <th>Commit</th>
+                  <th>Message</th>
+                  <th>Image</th>
+                  <th>Duration</th>
+                  <th>Time</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="mono" style="font-weight:600;">#142</td>
+                  <td><span class="badge badge-success">✓ Passed</span></td>
+                  <td class="mono">a3f7b2c</td>
+                  <td>fix: handle null payment ref</td>
+                  <td class="mono" style="font-size:11px;">registry/payments/svc:1.4.2</td>
+                  <td>3m 22s</td>
+                  <td>12m ago</td>
+                  <td><button class="btn btn-primary" style="padding:3px 10px; font-size:12px;">Create Release</button></td>
+                </tr>
+                <tr>
+                  <td class="mono" style="font-weight:600;">#141</td>
+                  <td><span class="badge badge-success">✓ Passed</span></td>
+                  <td class="mono">b8e2c41</td>
+                  <td>feat: add retry logic for timeouts</td>
+                  <td class="mono" style="font-size:11px;">registry/payments/svc:1.4.1</td>
+                  <td>3m 18s</td>
+                  <td>2h ago</td>
+                  <td><span class="badge badge-info" style="font-size:11px;">Released v1.4.1</span></td>
+                </tr>
+                <tr style="background: var(--pf-red-light);">
+                  <td class="mono" style="font-weight:600;">#140</td>
+                  <td><span class="badge badge-danger">✕ Failed</span></td>
+                  <td class="mono">c5d9a12</td>
+                  <td>feat: new validation rules</td>
+                  <td style="color:var(--pf-grey-400);">—</td>
+                  <td>1m 45s</td>
+                  <td>3h ago</td>
+                  <td><button class="btn btn-link" style="font-size:12px;">View Logs ↗</button></td>
+                </tr>
+                <tr>
+                  <td class="mono" style="font-weight:600;">#139</td>
+                  <td><span class="badge badge-success">✓ Passed</span></td>
+                  <td class="mono">d1f3e78</td>
+                  <td>refactor: extract payment processor</td>
+                  <td class="mono" style="font-size:11px;">registry/payments/svc:1.4.0</td>
+                  <td>3m 30s</td>
+                  <td>1d ago</td>
+                  <td><span class="badge badge-info" style="font-size:11px;">Released v1.4.0</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <h3 style="font-family:var(--pf-font-heading); font-size:16px; font-weight:700; margin-bottom:12px;">Build #140 — Failed</h3>
+        <div class="card">
+          <div class="card-header" style="background:var(--pf-red-light);">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="badge badge-danger">✕ Failed</span>
+              <span style="font-size:13px;">Stage: Unit Tests · Step: mvn test</span>
+            </div>
+            <button class="btn btn-link" style="font-size:12px;">Open in Tekton ↗</button>
+          </div>
+          <div class="card-body" style="background:var(--pf-grey-900); color:var(--pf-grey-200); font-family:var(--pf-font-mono); font-size:12px; line-height:1.8; max-height:200px; overflow-y:auto;">
+            <div>[INFO] Running com.payments.ValidationTest</div>
+            <div>[INFO] Tests run: 12, Failures: 0, Errors: 0</div>
+            <div>[INFO] Running com.payments.ProcessorTest</div>
+            <div style="color:var(--pf-red);">[ERROR] Tests run: 8, Failures: 1, Errors: 0</div>
+            <div style="color:var(--pf-red);">[ERROR] ProcessorTest.testNullRefHandling:42 Expected: not null</div>
+            <div style="color:var(--pf-red);">[ERROR]   but: was null</div>
+            <div>[INFO] BUILD FAILURE</div>
+            <div>[INFO] Total time: 1:45 min</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+function showSection(id) {
+  document.querySelectorAll('.mockup-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+  window.scrollTo(0, 0);
+}
+</script>
+</body>
+</html>
