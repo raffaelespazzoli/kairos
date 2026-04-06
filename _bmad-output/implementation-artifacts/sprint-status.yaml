@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-03
-last_updated: 2026-04-06T12:00:00
+last_updated: 2026-04-06T17:45:00
 project: bmad
 project_key: NOKEY
 tracking_system: file-system
@@ -51,7 +51,7 @@ development_status:
   1-5-api-foundation-error-handling: done
   1-6-vault-credential-provider: done
   1-7-admin-cluster-registration: done
-  epic-1-retrospective: optional
+  epic-1-retrospective: done
 
   # Epic 2: Application Onboarding & Environment Chain
   epic-2: done
