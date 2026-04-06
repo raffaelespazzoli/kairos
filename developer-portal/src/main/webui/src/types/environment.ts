@@ -15,6 +15,7 @@ export interface EnvironmentChainEntry {
   lastDeployedAt: string | null;
   argocdDeepLink: string | null;
   vaultDeepLink: string | null;
+  grafanaDeepLink: string | null;
 }
 
 export interface EnvironmentChainResponse {

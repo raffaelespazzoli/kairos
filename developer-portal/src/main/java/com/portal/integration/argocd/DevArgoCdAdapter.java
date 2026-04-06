@@ -36,7 +36,8 @@ public class DevArgoCdAdapter implements ArgoCdAdapter {
                     return new EnvironmentStatusDto(
                             env.name, status, version, deployedAt,
                             appName + "-run-" + env.name.toLowerCase(),
-                            "https://dev-argocd/applications/" + appName + "-run-" + env.name.toLowerCase());
+                            "https://dev-argocd/applications/" + appName + "-run-" + env.name.toLowerCase(),
+                            null);
                 })
                 .toList();
     }

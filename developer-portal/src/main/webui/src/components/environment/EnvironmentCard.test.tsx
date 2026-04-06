@@ -15,6 +15,7 @@ function makeEntry(overrides: Partial<EnvironmentChainEntry> = {}): EnvironmentC
     lastDeployedAt: new Date(Date.now() - 7200000).toISOString(),
     argocdDeepLink: 'https://argocd/applications/payments-run-dev',
     vaultDeepLink: 'https://vault.example.com/ui/vault/secrets/applications/team/team-payments-dev/static-secrets',
+    grafanaDeepLink: null,
     ...overrides,
   };
 }
@@ -124,6 +125,48 @@ describe('EnvironmentCard', () => {
     expect(screen.getByText(/Cluster: ocp-dev-01/)).toBeInTheDocument();
     expect(screen.getByText(/Open in ArgoCD ↗/)).toBeInTheDocument();
     expect(screen.getByText(/View in Grafana ↗/)).toBeInTheDocument();
+  });
+
+  it('shows aria-label on expanded ArgoCD deep link', async () => {
+    const user = userEvent.setup();
+    render(<EnvironmentCard entry={makeEntry()} nextEnvName="staging" />);
+
+    await user.click(screen.getByText('dev'));
+
+    expect(
+      screen.getByRole('link', { name: 'Open dev in ArgoCD' }),
+    ).toBeInTheDocument();
+  });
+
+  it('shows aria-label on UNHEALTHY card footer deep link', () => {
+    render(
+      <EnvironmentCard
+        entry={makeEntry({ status: 'UNHEALTHY', deployedVersion: 'v1.3.0' })}
+      />,
+    );
+
+    expect(
+      screen.getByRole('link', { name: 'Open dev in ArgoCD' }),
+    ).toBeInTheDocument();
+  });
+
+  it('deep link buttons are reachable via Tab in expanded card', async () => {
+    const user = userEvent.setup();
+    render(<EnvironmentCard entry={makeEntry()} nextEnvName="staging" />);
+
+    await user.click(screen.getByText('dev'));
+
+    screen.getByLabelText(/dev environment/).focus();
+
+    const deepLink = screen.getByRole('link', { name: 'Open dev in ArgoCD' });
+    let reached = false;
+    for (let i = 0; i < 10 && !reached; i++) {
+      await user.tab();
+      if (document.activeElement === deepLink) {
+        reached = true;
+      }
+    }
+    expect(reached).toBe(true);
   });
 
   it('has correct aria-label', () => {

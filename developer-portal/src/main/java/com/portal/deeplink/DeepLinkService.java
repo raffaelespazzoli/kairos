@@ -17,7 +17,11 @@ public class DeepLinkService {
     DeepLinkConfig config;
 
     public Optional<String> generateArgoCdLink(String argocdAppName) {
-        return Optional.of(stripTrailingSlash(config.argocdUrl()) + "/applications/" + argocdAppName);
+        String url = config.argocdUrl();
+        if (url == null || url.isBlank()) {
+            return Optional.empty();
+        }
+        return Optional.of(stripTrailingSlash(url) + "/applications/" + argocdAppName);
     }
 
     public Optional<String> generateTektonLink(String pipelineRunId) {

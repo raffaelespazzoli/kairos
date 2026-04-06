@@ -5,3 +5,7 @@
 ## Deferred from: code review of 3-2-devspaces-launch-vault-secret-navigation (2026-04-06)
 
 - ~~`OnboardingCompletionPanel.tsx` still navigates `View {application}` to `/teams/${teamId}/applications/${applicationId}`, but the router only defines application pages under `/teams/:teamId/apps/:appId`~~ — **resolved** during 3.2 review: changed to `/apps/`.
+
+## ~~Deferred from: code review of 3-3-deep-links-on-environment-chain (2026-04-06)~~ — RESOLVED
+
+- ~~`DeepLinkService.generateArgoCdLink()` always returns a URL from a required `portal.argocd.url` value, while `application.properties` gives that property a localhost default.~~ **Fixed:** added blank/null guard to `generateArgoCdLink`; now returns `Optional.empty()` when the URL is empty. Note: the `application.properties` default (`http://localhost:8080`) still provides a value when `ARGOCD_URL` is unset, which is correct for dev mode. In production, operators must set `ARGOCD_URL` to a real URL or leave it blank to suppress links.

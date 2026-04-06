@@ -123,15 +123,15 @@ class EnvironmentServiceTest {
                         new EnvironmentStatusDto("dev", PortalEnvironmentStatus.HEALTHY,
                                 "v1.4.2", Instant.now().minusSeconds(3600),
                                 "env-svc-payments-run-dev",
-                                "https://argocd/applications/env-svc-payments-run-dev"),
+                                "https://argocd/applications/env-svc-payments-run-dev", null),
                         new EnvironmentStatusDto("staging", PortalEnvironmentStatus.DEPLOYING,
                                 "v1.4.2", null,
                                 "env-svc-payments-run-staging",
-                                "https://argocd/applications/env-svc-payments-run-staging"),
+                                "https://argocd/applications/env-svc-payments-run-staging", null),
                         new EnvironmentStatusDto("prod", PortalEnvironmentStatus.NOT_DEPLOYED,
                                 null, null,
                                 "env-svc-payments-run-prod",
-                                "https://argocd/applications/env-svc-payments-run-prod")
+                                "https://argocd/applications/env-svc-payments-run-prod", null)
                 ));
 
         EnvironmentChainResponse response = environmentService.getEnvironmentChain(team.id, app.id);
@@ -149,12 +149,14 @@ class EnvironmentServiceTest {
         assertNotNull(dev.lastDeployedAt());
         assertNotNull(dev.vaultDeepLink());
         assertTrue(dev.vaultDeepLink().contains("/applications/env-svc-team/env-svc-team-env-svc-payments-dev/static-secrets"));
+        assertNull(dev.grafanaDeepLink());
 
         EnvironmentChainEntryDto staging = response.environments().get(1);
         assertEquals("staging", staging.environmentName());
         assertEquals("DEPLOYING", staging.status());
         assertNotNull(staging.vaultDeepLink());
         assertTrue(staging.vaultDeepLink().contains("/env-svc-team-env-svc-payments-staging/"));
+        assertNull(staging.grafanaDeepLink());
 
         EnvironmentChainEntryDto prod = response.environments().get(2);
         assertEquals("prod", prod.environmentName());
@@ -162,6 +164,7 @@ class EnvironmentServiceTest {
         assertNull(prod.deployedVersion());
         assertNotNull(prod.vaultDeepLink());
         assertTrue(prod.vaultDeepLink().contains("/env-svc-team-env-svc-payments-prod/"));
+        assertNull(prod.grafanaDeepLink());
     }
 
     @Test

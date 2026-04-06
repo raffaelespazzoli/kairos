@@ -12,5 +12,6 @@ public record EnvironmentStatusDto(
     String deployedVersion,
     Instant lastDeployedAt,
     String argocdAppName,
-    String argocdDeepLink
+    String argocdDeepLink,
+    String grafanaDeepLink
 ) {}

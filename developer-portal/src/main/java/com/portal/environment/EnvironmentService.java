@@ -51,7 +51,8 @@ public class EnvironmentService {
                     .map(s -> new EnvironmentStatusDto(
                             s.environmentName(), s.status(), s.deployedVersion(),
                             s.lastDeployedAt(), s.argocdAppName(),
-                            deepLinkService.generateArgoCdLink(s.argocdAppName()).orElse(null)))
+                            deepLinkService.generateArgoCdLink(s.argocdAppName()).orElse(null),
+                            s.grafanaDeepLink()))
                     .toList();
         } catch (PortalIntegrationException e) {
             argocdError = e.getMessage();

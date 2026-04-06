@@ -25,7 +25,8 @@ class EnvironmentStatusDtoTest {
                 "v1.2.3",
                 deployedAt,
                 "my-app-run-dev",
-                "https://argocd.example.com/applications/my-app-run-dev");
+                "https://argocd.example.com/applications/my-app-run-dev",
+                null);
 
         String json = objectMapper.writeValueAsString(dto);
         JsonNode node = objectMapper.readTree(json);
@@ -40,13 +41,15 @@ class EnvironmentStatusDtoTest {
         assertEquals("my-app-run-dev", node.get("argocdAppName").asText());
         assertEquals("https://argocd.example.com/applications/my-app-run-dev",
                 node.get("argocdDeepLink").asText());
+        assertTrue(node.has("grafanaDeepLink"), "grafanaDeepLink field should be present");
+        assertTrue(node.get("grafanaDeepLink").isNull());
     }
 
     @Test
     void statusSerializesAsString() throws Exception {
         EnvironmentStatusDto dto = new EnvironmentStatusDto(
                 "qa", PortalEnvironmentStatus.DEPLOYING,
-                null, null, "app-run-qa", "https://argocd/applications/app-run-qa");
+                null, null, "app-run-qa", "https://argocd/applications/app-run-qa", null);
 
         String json = objectMapper.writeValueAsString(dto);
         JsonNode node = objectMapper.readTree(json);
@@ -59,20 +62,21 @@ class EnvironmentStatusDtoTest {
     void nullFieldsSerializeAsJsonNull() throws Exception {
         EnvironmentStatusDto dto = new EnvironmentStatusDto(
                 "prod", PortalEnvironmentStatus.NOT_DEPLOYED,
-                null, null, "app-run-prod", "https://argocd/applications/app-run-prod");
+                null, null, "app-run-prod", "https://argocd/applications/app-run-prod", null);
 
         String json = objectMapper.writeValueAsString(dto);
         JsonNode node = objectMapper.readTree(json);
 
         assertTrue(node.get("deployedVersion").isNull());
         assertTrue(node.get("lastDeployedAt").isNull());
+        assertTrue(node.get("grafanaDeepLink").isNull());
     }
 
     @Test
     void allStatusValuesSerializeCorrectly() throws Exception {
         for (PortalEnvironmentStatus status : PortalEnvironmentStatus.values()) {
             EnvironmentStatusDto dto = new EnvironmentStatusDto(
-                    "env", status, null, null, "app-run-env", "https://argocd/app");
+                    "env", status, null, null, "app-run-env", "https://argocd/app", null);
 
             String json = objectMapper.writeValueAsString(dto);
             JsonNode node = objectMapper.readTree(json);

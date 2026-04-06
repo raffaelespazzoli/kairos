@@ -77,12 +77,13 @@ public class ArgoCdRestAdapter implements ArgoCdAdapter {
                     syncStatus.deployedVersion().orElse(null),
                     syncStatus.operationFinishedAt().orElse(null),
                     argoAppName,
-                    deepLink);
+                    deepLink,
+                    null);
         } catch (WebApplicationException e) {
             if (e.getResponse().getStatus() == 404) {
                 return new EnvironmentStatusDto(
                         env.name, PortalEnvironmentStatus.NOT_DEPLOYED,
-                        null, null, argoAppName, deepLink);
+                        null, null, argoAppName, deepLink, null);
             }
             throw new PortalIntegrationException("argocd", "getEnvironmentStatus",
                     "Deployment status unavailable \u2014 ArgoCD returned an error",

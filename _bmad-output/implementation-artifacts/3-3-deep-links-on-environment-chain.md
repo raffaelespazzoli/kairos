@@ -1,6 +1,6 @@
 # Story 3.3: Deep Links on Environment Chain
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -22,29 +22,35 @@ So that I can investigate deployment details in ArgoCD when needed without searc
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Add `grafanaDeepLink` field to backend DTOs (AC: #3)
-  - [ ] 1.1 Add `grafanaDeepLink` parameter to `EnvironmentStatusDto` record
-  - [ ] 1.2 Add `grafanaDeepLink` parameter to `EnvironmentChainEntryDto` record
-  - [ ] 1.3 Update `EnvironmentMapper.merge()` to pass through `grafanaDeepLink`
-  - [ ] 1.4 Update `ArgoCdRestAdapter.getEnvironmentStatuses()` to pass `null` for `grafanaDeepLink` in the constructed `EnvironmentStatusDto`
-  - [ ] 1.5 Update `DevArgoCdAdapter` to pass `null` for `grafanaDeepLink`
-- [ ] Task 2: Add `aria-label` prop to `DeepLinkButton` (AC: #5)
-  - [ ] 2.1 Add optional `ariaLabel` prop to `DeepLinkButtonProps` interface
-  - [ ] 2.2 Render `aria-label` attribute on the PatternFly `Button` component when provided
-- [ ] Task 3: Update `EnvironmentCard.tsx` to pass aria-labels (AC: #5)
-  - [ ] 3.1 Pass `ariaLabel="Open {environmentName} in ArgoCD"` to `DeepLinkButton` in expanded detail area
-  - [ ] 3.2 Pass same `ariaLabel` to `DeepLinkButton` in UNHEALTHY card footer
-- [ ] Task 4: Add `grafanaDeepLink` to frontend types (AC: #3)
-  - [ ] 4.1 Add `grafanaDeepLink: string | null` to `EnvironmentChainEntry` interface in `types/environment.ts`
-- [ ] Task 5: Update backend tests (AC: #1, #3)
-  - [ ] 5.1 Update `EnvironmentStatusDtoTest` serialization to include `grafanaDeepLink`
-  - [ ] 5.2 Update `EnvironmentServiceTest` to verify `grafanaDeepLink` is null in merged entries
-  - [ ] 5.3 Update `EnvironmentResourceIT` to verify `grafanaDeepLink` field is present in JSON response
-  - [ ] 5.4 Update `ArgoCdRestAdapterTest` to pass `null` for new parameter
-- [ ] Task 6: Update frontend tests (AC: #2, #5)
-  - [ ] 6.1 Update `EnvironmentCard.test.tsx`: verify aria-label "Open dev in ArgoCD" on expanded deep link
-  - [ ] 6.2 Update `EnvironmentCard.test.tsx`: verify aria-label on UNHEALTHY card's footer deep link
-  - [ ] 6.3 Verify Tab key reaches deep link buttons within expanded card (existing keyboard test may cover this)
+- [x] Task 1: Add `grafanaDeepLink` field to backend DTOs (AC: #3)
+  - [x] 1.1 Add `grafanaDeepLink` parameter to `EnvironmentStatusDto` record
+  - [x] 1.2 Add `grafanaDeepLink` parameter to `EnvironmentChainEntryDto` record
+  - [x] 1.3 Update `EnvironmentMapper.merge()` to pass through `grafanaDeepLink`
+  - [x] 1.4 Update `ArgoCdRestAdapter.getEnvironmentStatuses()` to pass `null` for `grafanaDeepLink` in the constructed `EnvironmentStatusDto`
+  - [x] 1.5 Update `DevArgoCdAdapter` to pass `null` for `grafanaDeepLink`
+- [x] Task 2: Add `aria-label` prop to `DeepLinkButton` (AC: #5)
+  - [x] 2.1 Add optional `ariaLabel` prop to `DeepLinkButtonProps` interface
+  - [x] 2.2 Render `aria-label` attribute on the PatternFly `Button` component when provided
+- [x] Task 3: Update `EnvironmentCard.tsx` to pass aria-labels (AC: #5)
+  - [x] 3.1 Pass `ariaLabel="Open {environmentName} in ArgoCD"` to `DeepLinkButton` in expanded detail area
+  - [x] 3.2 Pass same `ariaLabel` to `DeepLinkButton` in UNHEALTHY card footer
+- [x] Task 4: Add `grafanaDeepLink` to frontend types (AC: #3)
+  - [x] 4.1 Add `grafanaDeepLink: string | null` to `EnvironmentChainEntry` interface in `types/environment.ts`
+- [x] Task 5: Update backend tests (AC: #1, #3)
+  - [x] 5.1 Update `EnvironmentStatusDtoTest` serialization to include `grafanaDeepLink`
+  - [x] 5.2 Update `EnvironmentServiceTest` to verify `grafanaDeepLink` is null in merged entries
+  - [x] 5.3 Update `EnvironmentResourceIT` to verify `grafanaDeepLink` field is present in JSON response
+  - [x] 5.4 Update `ArgoCdRestAdapterTest` to verify `grafanaDeepLink` is null in constructed DTOs
+- [x] Task 6: Update frontend tests (AC: #2, #5)
+  - [x] 6.1 Update `EnvironmentCard.test.tsx`: verify aria-label "Open dev in ArgoCD" on expanded deep link
+  - [x] 6.2 Update `EnvironmentCard.test.tsx`: verify aria-label on UNHEALTHY card's footer deep link
+  - [x] 6.3 Verify Tab key reaches deep link buttons within expanded card
+
+### Review Findings
+
+- [x] [Review][Patch] Preserve `grafanaDeepLink` when remapping environment statuses [`developer-portal/src/main/java/com/portal/environment/EnvironmentService.java:50`] — fixed: pass through `s.grafanaDeepLink()` instead of `null`
+- [x] [Review][Patch] Replace the fake Tab test with real keyboard navigation in `EnvironmentCard.test.tsx` [`developer-portal/src/main/webui/src/components/environment/EnvironmentCard.test.tsx:153`] — fixed: `user.tab()` loop from card to deep link
+- [x] [Review][Fix] ArgoCD deep links are not truly optional when the URL is unconfigured [`developer-portal/src/main/java/com/portal/deeplink/DeepLinkService.java:19`] — fixed: added blank/null guard; returns `Optional.empty()` when `portal.argocd.url` is empty
 
 ## Dev Notes
 
@@ -175,8 +181,49 @@ Story 3.1 (Deep Link Service & Shared Component) is also in backlog. That story 
 
 ### Agent Model Used
 
+claude-4.6-opus-high-thinking
+
 ### Debug Log References
+
+- Full backend test suite (unit + integration) passes with `./mvnw verify -Dquarkus.quinoa.enabled=false`
+- Frontend tests pass for all modified files (48/48)
+- Pre-existing frontend test failures in AppBreadcrumb, Sidebar, AppShell, App routing, Accessibility tests are unrelated (17 failures existed before this story)
 
 ### Completion Notes List
 
+- Added `grafanaDeepLink` (String, null for now) to `EnvironmentStatusDto` and `EnvironmentChainEntryDto` Java records, preparing the DTO layer for Epic 6 Grafana integration
+- `EnvironmentMapper.merge()` passes through `grafanaDeepLink` from status DTOs to chain entry DTOs
+- All adapter construction sites (`ArgoCdRestAdapter`, `DevArgoCdAdapter`, `EnvironmentService`) updated to pass `null` for `grafanaDeepLink`
+- Added `ariaLabel` optional prop to `DeepLinkButton` component, rendered as `aria-label` on the PF6 `Button`
+- `EnvironmentCard` now passes `ariaLabel="Open {envName} in ArgoCD"` to both the expanded detail and UNHEALTHY footer `DeepLinkButton` instances
+- Added `grafanaDeepLink: string | null` to frontend `EnvironmentChainEntry` interface
+- Backend tests updated: `EnvironmentStatusDtoTest` verifies `grafanaDeepLink` field is present and null in JSON; `EnvironmentServiceTest` verifies null in merged entries; `EnvironmentResourceIT` verifies field in REST response; `ArgoCdRestAdapterTest` verifies null on constructed DTOs
+- Frontend tests added: aria-label verification on expanded deep link, UNHEALTHY footer deep link, and Tab key reachability
+- Also updated `EnvironmentChain.test.tsx`, `ApplicationOverviewPage.test.tsx`, `ApplicationSettingsPage.test.tsx` to include `grafanaDeepLink: null` in test data (constructor breakage from type addition)
+
 ### File List
+
+- developer-portal/src/main/java/com/portal/environment/EnvironmentStatusDto.java (modified)
+- developer-portal/src/main/java/com/portal/environment/EnvironmentChainEntryDto.java (modified)
+- developer-portal/src/main/java/com/portal/environment/EnvironmentMapper.java (modified)
+- developer-portal/src/main/java/com/portal/environment/EnvironmentService.java (modified)
+- developer-portal/src/main/java/com/portal/integration/argocd/ArgoCdRestAdapter.java (modified)
+- developer-portal/src/main/java/com/portal/integration/argocd/DevArgoCdAdapter.java (modified)
+- developer-portal/src/main/webui/src/components/shared/DeepLinkButton.tsx (modified)
+- developer-portal/src/main/webui/src/components/environment/EnvironmentCard.tsx (modified)
+- developer-portal/src/main/webui/src/types/environment.ts (modified)
+- developer-portal/src/test/java/com/portal/environment/EnvironmentStatusDtoTest.java (modified)
+- developer-portal/src/test/java/com/portal/environment/EnvironmentServiceTest.java (modified)
+- developer-portal/src/test/java/com/portal/environment/EnvironmentResourceIT.java (modified)
+- developer-portal/src/test/java/com/portal/integration/argocd/ArgoCdRestAdapterTest.java (modified)
+- developer-portal/src/main/webui/src/components/environment/EnvironmentCard.test.tsx (modified)
+- developer-portal/src/main/webui/src/components/environment/EnvironmentChain.test.tsx (modified)
+- developer-portal/src/main/webui/src/routes/ApplicationOverviewPage.test.tsx (modified)
+- developer-portal/src/main/webui/src/routes/ApplicationSettingsPage.test.tsx (modified)
+- developer-portal/src/main/java/com/portal/deeplink/DeepLinkService.java (modified)
+- developer-portal/src/test/java/com/portal/deeplink/DeepLinkServiceTest.java (modified)
+
+### Change Log
+
+- 2026-04-06: Story 3.3 implemented — added grafanaDeepLink field to backend DTOs and frontend types (null placeholder for Epic 6); added aria-label accessibility to ArgoCD deep link buttons on environment cards; all backend and frontend tests updated and passing
+- 2026-04-06: Review findings fixed — preserved grafanaDeepLink pass-through in EnvironmentService; replaced fake Tab test with real user.tab() keyboard navigation; added blank/null guard to DeepLinkService.generateArgoCdLink so it returns Optional.empty() when unconfigured

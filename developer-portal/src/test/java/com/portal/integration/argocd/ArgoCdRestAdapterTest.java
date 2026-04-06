@@ -65,6 +65,7 @@ class ArgoCdRestAdapterTest {
         assertNotNull(dto.lastDeployedAt());
         assertEquals("my-app-run-dev", dto.argocdAppName());
         assertEquals("https://argocd.example.com/applications/my-app-run-dev", dto.argocdDeepLink());
+        assertNull(dto.grafanaDeepLink());
     }
 
     @Test
@@ -149,6 +150,7 @@ class ArgoCdRestAdapterTest {
         assertEquals(PortalEnvironmentStatus.NOT_DEPLOYED, dto.status());
         assertNull(dto.deployedVersion());
         assertNull(dto.lastDeployedAt());
+        assertNull(dto.grafanaDeepLink());
     }
 
     @Test

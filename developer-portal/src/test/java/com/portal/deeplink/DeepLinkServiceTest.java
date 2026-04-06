@@ -66,6 +66,38 @@ class DeepLinkServiceTest {
     }
 
     @Test
+    void generateArgoCdLinkReturnsEmptyWhenUrlIsBlank() {
+        DeepLinkConfig emptyConfig = new DeepLinkConfig();
+        emptyConfig.argocdUrl = "";
+        emptyConfig.tektonDashboardUrl = Optional.empty();
+        emptyConfig.grafanaUrl = Optional.empty();
+        emptyConfig.grafanaDashboardId = Optional.empty();
+        emptyConfig.devspacesUrl = Optional.empty();
+        emptyConfig.vaultUrl = Optional.empty();
+
+        DeepLinkService svc = new DeepLinkService();
+        svc.config = emptyConfig;
+
+        assertTrue(svc.generateArgoCdLink("my-app").isEmpty());
+    }
+
+    @Test
+    void generateArgoCdLinkReturnsEmptyWhenUrlIsNull() {
+        DeepLinkConfig emptyConfig = new DeepLinkConfig();
+        emptyConfig.argocdUrl = null;
+        emptyConfig.tektonDashboardUrl = Optional.empty();
+        emptyConfig.grafanaUrl = Optional.empty();
+        emptyConfig.grafanaDashboardId = Optional.empty();
+        emptyConfig.devspacesUrl = Optional.empty();
+        emptyConfig.vaultUrl = Optional.empty();
+
+        DeepLinkService svc = new DeepLinkService();
+        svc.config = emptyConfig;
+
+        assertTrue(svc.generateArgoCdLink("my-app").isEmpty());
+    }
+
+    @Test
     void generateDevSpacesLinkReturnsEmptyWhenNotConfigured() {
         DeepLinkConfig emptyConfig = new DeepLinkConfig();
         emptyConfig.argocdUrl = "https://argocd.example.com";

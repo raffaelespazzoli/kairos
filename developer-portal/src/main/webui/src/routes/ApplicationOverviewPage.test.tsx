@@ -41,6 +41,7 @@ const sampleEnvData: EnvironmentChainResponse = {
       lastDeployedAt: new Date(Date.now() - 7200000).toISOString(),
       argocdDeepLink: 'https://argocd/applications/payments-run-dev',
       vaultDeepLink: 'https://vault.example.com/ui/vault/secrets/applications/team/team-payments-dev/static-secrets',
+      grafanaDeepLink: null,
     },
     {
       environmentName: 'staging',
@@ -52,6 +53,7 @@ const sampleEnvData: EnvironmentChainResponse = {
       lastDeployedAt: null,
       argocdDeepLink: null,
       vaultDeepLink: 'https://vault.example.com/ui/vault/secrets/applications/team/team-payments-staging/static-secrets',
+      grafanaDeepLink: null,
     },
   ],
   argocdError: null,

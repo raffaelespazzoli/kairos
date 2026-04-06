@@ -114,15 +114,15 @@ class EnvironmentResourceIT {
                         new EnvironmentStatusDto("dev", PortalEnvironmentStatus.HEALTHY,
                                 "v1.4.2", Instant.now().minusSeconds(3600),
                                 "envres-payments-run-dev",
-                                "https://argocd/applications/envres-payments-run-dev"),
+                                "https://argocd/applications/envres-payments-run-dev", null),
                         new EnvironmentStatusDto("staging", PortalEnvironmentStatus.DEPLOYING,
                                 "v1.4.2", null,
                                 "envres-payments-run-staging",
-                                "https://argocd/applications/envres-payments-run-staging"),
+                                "https://argocd/applications/envres-payments-run-staging", null),
                         new EnvironmentStatusDto("prod", PortalEnvironmentStatus.NOT_DEPLOYED,
                                 null, null,
                                 "envres-payments-run-prod",
-                                "https://argocd/applications/envres-payments-run-prod")
+                                "https://argocd/applications/envres-payments-run-prod", null)
                 ));
 
         given()
@@ -140,14 +140,17 @@ class EnvironmentResourceIT {
                 .body("environments[0].namespace", equalTo("payments-dev"))
                 .body("environments[0].vaultDeepLink",
                         equalTo("https://vault.test.example.com/ui/vault/secrets/applications/envres-test-team/envres-test-team-envres-payments-dev/static-secrets"))
+                .body("environments[0].grafanaDeepLink", nullValue())
                 .body("environments[1].environmentName", equalTo("staging"))
                 .body("environments[1].status", equalTo("DEPLOYING"))
                 .body("environments[1].vaultDeepLink",
                         equalTo("https://vault.test.example.com/ui/vault/secrets/applications/envres-test-team/envres-test-team-envres-payments-staging/static-secrets"))
+                .body("environments[1].grafanaDeepLink", nullValue())
                 .body("environments[2].environmentName", equalTo("prod"))
                 .body("environments[2].status", equalTo("NOT_DEPLOYED"))
                 .body("environments[2].vaultDeepLink",
-                        equalTo("https://vault.test.example.com/ui/vault/secrets/applications/envres-test-team/envres-test-team-envres-payments-prod/static-secrets"));
+                        equalTo("https://vault.test.example.com/ui/vault/secrets/applications/envres-test-team/envres-test-team-envres-payments-prod/static-secrets"))
+                .body("environments[2].grafanaDeepLink", nullValue());
     }
 
     @Test

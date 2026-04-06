@@ -177,6 +177,7 @@ export const EnvironmentCard = forwardRef<HTMLDivElement, EnvironmentCardProps>(
                     <DeepLinkButton
                       href={entry.argocdDeepLink}
                       toolName="ArgoCD"
+                      ariaLabel={`Open ${entry.environmentName} in ArgoCD`}
                     />
                   </FlexItem>
                 )}
@@ -213,6 +214,7 @@ export const EnvironmentCard = forwardRef<HTMLDivElement, EnvironmentCardProps>(
                   <DeepLinkButton
                     href={entry.argocdDeepLink}
                     toolName="ArgoCD"
+                    ariaLabel={`Open ${entry.environmentName} in ArgoCD`}
                   />
                 )}
               </>
