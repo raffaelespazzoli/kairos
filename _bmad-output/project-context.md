@@ -93,8 +93,8 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - No cross-package entity imports — reference other domains by ID only; use a service to cross domain boundaries
 - REST resource → Service → Adapter call chain — resources never call adapters directly
 - Two-layer auth enforced via JAX-RS `ContainerRequestFilter` pipeline:
-  1. `PermissionFilter` — extracts role from configurable JWT claim → Casbin check → 403 if denied
-  2. `TeamContextFilter` — extracts team from configurable JWT claim → sets `TeamContext` CDI bean
+  1. `TeamContextFilter` (`@Priority(AUTHENTICATION + 10)`) — extracts team + role from configurable JWT claims → populates `TeamContext` CDI bean
+  2. `PermissionFilter` (`@Priority(AUTHORIZATION)`) — reads role from `TeamContext` → Casbin check → 403 if denied
 - `TeamContext` is a `@RequestScoped` CDI bean injected into every service — all data access and integration calls scoped by team
 - JWT claim names are configurable: `portal.oidc.role-claim` (default: `role`), `portal.oidc.team-claim` (default: `team`)
 - Casbin policy is a static file (`src/main/resources/casbin/model.conf` + `policy.csv`) — three roles with inheritance: `member` → `lead` → `admin`
