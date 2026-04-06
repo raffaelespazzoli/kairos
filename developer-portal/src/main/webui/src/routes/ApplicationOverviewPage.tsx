@@ -7,18 +7,34 @@ import {
   DescriptionListTerm,
   DescriptionListDescription,
   Button,
+  Grid,
+  GridItem,
+  Card,
+  CardBody,
+  CardTitle,
+  Flex,
+  FlexItem,
 } from '@patternfly/react-core';
 import { useParams } from 'react-router-dom';
 import { useApplications } from '../contexts/ApplicationsContext';
+import { useEnvironments } from '../hooks/useEnvironments';
+import { EnvironmentChain } from '../components/environment/EnvironmentChain';
 import { LoadingSpinner } from '../components/shared/LoadingSpinner';
 import { ErrorAlert } from '../components/shared/ErrorAlert';
+import { RefreshButton } from '../components/shared/RefreshButton';
 
 export function ApplicationOverviewPage() {
-  const { appId } = useParams();
-  const { applications, isLoading, error } = useApplications();
+  const { teamId, appId } = useParams();
+  const { applications, isLoading: appsLoading, error: appsError } = useApplications();
+  const {
+    data: envData,
+    error: envError,
+    isLoading: envLoading,
+    refresh,
+  } = useEnvironments(teamId, appId);
 
-  if (isLoading) return <LoadingSpinner systemName="Portal" />;
-  if (error) return <ErrorAlert error={error} />;
+  if (appsLoading) return <LoadingSpinner systemName="Portal" />;
+  if (appsError) return <ErrorAlert error={appsError} />;
 
   const app = applications.find((a) => String(a.id) === appId);
 
@@ -35,41 +51,84 @@ export function ApplicationOverviewPage() {
   }
 
   return (
-    <PageSection>
-      <Title headingLevel="h2">{app.name}</Title>
-      <DescriptionList isHorizontal>
-        <DescriptionListGroup>
-          <DescriptionListTerm>Runtime</DescriptionListTerm>
-          <DescriptionListDescription>{app.runtimeType}</DescriptionListDescription>
-        </DescriptionListGroup>
-        {app.onboardedAt && (
+    <>
+      <PageSection>
+        <Flex>
+          <FlexItem grow={{ default: 'grow' }}>
+            <Title headingLevel="h2">{app.name}</Title>
+          </FlexItem>
+          <FlexItem>
+            <RefreshButton onRefresh={refresh} isRefreshing={envLoading} />
+          </FlexItem>
+        </Flex>
+
+        <DescriptionList isHorizontal className="pf-v6-u-mt-md">
           <DescriptionListGroup>
-            <DescriptionListTerm>Onboarded</DescriptionListTerm>
-            <DescriptionListDescription>
-              {new Date(app.onboardedAt).toLocaleDateString()}
-            </DescriptionListDescription>
+            <DescriptionListTerm>Runtime</DescriptionListTerm>
+            <DescriptionListDescription>{app.runtimeType}</DescriptionListDescription>
           </DescriptionListGroup>
+          {app.onboardedAt && (
+            <DescriptionListGroup>
+              <DescriptionListTerm>Onboarded</DescriptionListTerm>
+              <DescriptionListDescription>
+                {new Date(app.onboardedAt).toLocaleDateString()}
+              </DescriptionListDescription>
+            </DescriptionListGroup>
+          )}
+          {app.onboardingPrUrl && (
+            <DescriptionListGroup>
+              <DescriptionListTerm>Onboarding PR</DescriptionListTerm>
+              <DescriptionListDescription>
+                <Button
+                  variant="link"
+                  component="a"
+                  href={app.onboardingPrUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  View onboarding PR
+                </Button>
+              </DescriptionListDescription>
+            </DescriptionListGroup>
+          )}
+        </DescriptionList>
+      </PageSection>
+
+      <PageSection>
+        {envLoading && <LoadingSpinner systemName="ArgoCD" />}
+        {envError && <ErrorAlert error={envError} />}
+        {envData && (
+          <EnvironmentChain
+            environments={envData.environments}
+            argocdError={envData.argocdError}
+          />
         )}
-        {app.onboardingPrUrl && (
-          <DescriptionListGroup>
-            <DescriptionListTerm>Onboarding PR</DescriptionListTerm>
-            <DescriptionListDescription>
-              <Button
-                variant="link"
-                component="a"
-                href={app.onboardingPrUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                View onboarding PR
-              </Button>
-            </DescriptionListDescription>
-          </DescriptionListGroup>
-        )}
-      </DescriptionList>
-      <Content component="p" className="pf-v6-u-mt-lg">
-        Environment chain visualization coming in Story 2.8.
-      </Content>
-    </PageSection>
+      </PageSection>
+
+      <PageSection>
+        <Grid hasGutter>
+          <GridItem span={6}>
+            <Card>
+              <CardTitle>Recent Builds</CardTitle>
+              <CardBody>
+                <Content component="p">
+                  Build history coming in Epic 4.
+                </Content>
+              </CardBody>
+            </Card>
+          </GridItem>
+          <GridItem span={6}>
+            <Card>
+              <CardTitle>Activity</CardTitle>
+              <CardBody>
+                <Content component="p">
+                  Activity feed coming in Epic 7.
+                </Content>
+              </CardBody>
+            </Card>
+          </GridItem>
+        </Grid>
+      </PageSection>
+    </>
   );
 }

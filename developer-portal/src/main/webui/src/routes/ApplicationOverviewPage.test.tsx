@@ -1,11 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { ApplicationOverviewPage } from './ApplicationOverviewPage';
 import { ApplicationLayout } from '../components/layout/ApplicationLayout';
 import { ApplicationsProvider } from '../contexts/ApplicationsContext';
 import type { ApplicationSummary } from '../types/application';
 import type { PortalError } from '../types/error';
+import type { EnvironmentChainResponse } from '../types/environment';
 
 const sampleApps: ApplicationSummary[] = [
   {
@@ -23,6 +24,43 @@ const sampleApps: ApplicationSummary[] = [
     onboardingPrUrl: '',
   },
 ];
+
+const sampleEnvData: EnvironmentChainResponse = {
+  environments: [
+    {
+      environmentName: 'dev',
+      clusterName: 'ocp-dev',
+      namespace: 'payments-dev',
+      promotionOrder: 0,
+      status: 'HEALTHY',
+      deployedVersion: 'v1.4.2',
+      lastDeployedAt: new Date(Date.now() - 7200000).toISOString(),
+      argocdDeepLink: 'https://argocd/applications/payments-run-dev',
+    },
+    {
+      environmentName: 'staging',
+      clusterName: 'ocp-staging',
+      namespace: 'payments-staging',
+      promotionOrder: 1,
+      status: 'NOT_DEPLOYED',
+      deployedVersion: null,
+      lastDeployedAt: null,
+      argocdDeepLink: null,
+    },
+  ],
+  argocdError: null,
+};
+
+let mockEnvResult = {
+  data: sampleEnvData as EnvironmentChainResponse | null,
+  error: null as PortalError | null,
+  isLoading: false,
+  refresh: vi.fn(),
+};
+
+vi.mock('../hooks/useEnvironments', () => ({
+  useEnvironments: () => mockEnvResult,
+}));
 
 function renderPage(
   route: string,
@@ -46,11 +84,13 @@ function renderPage(
 
 describe('ApplicationOverviewPage', () => {
   it('shows loading spinner while applications are loading', () => {
+    mockEnvResult = { data: null, error: null, isLoading: false, refresh: vi.fn() };
     renderPage('/teams/1/apps/42', [], true);
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
   });
 
-  it('shows error alert when fetch fails', () => {
+  it('shows error alert when applications fetch fails', () => {
+    mockEnvResult = { data: null, error: null, isLoading: false, refresh: vi.fn() };
     renderPage('/teams/1/apps/42', [], false, {
       error: 'unknown',
       message: 'Failed to load applications',
@@ -60,11 +100,13 @@ describe('ApplicationOverviewPage', () => {
   });
 
   it('shows error when application is not found', () => {
+    mockEnvResult = { data: null, error: null, isLoading: false, refresh: vi.fn() };
     renderPage('/teams/1/apps/9999');
     expect(screen.getByText('Application not found')).toBeInTheDocument();
   });
 
   it('renders application name as heading', () => {
+    mockEnvResult = { data: sampleEnvData, error: null, isLoading: false, refresh: vi.fn() };
     renderPage('/teams/1/apps/42');
     expect(
       screen.getByRole('heading', { name: 'payments-api' }),
@@ -72,17 +114,20 @@ describe('ApplicationOverviewPage', () => {
   });
 
   it('displays runtime type', () => {
+    mockEnvResult = { data: sampleEnvData, error: null, isLoading: false, refresh: vi.fn() };
     renderPage('/teams/1/apps/42');
     expect(screen.getByText('Runtime')).toBeInTheDocument();
     expect(screen.getByText('quarkus')).toBeInTheDocument();
   });
 
   it('displays onboarded date when present', () => {
+    mockEnvResult = { data: sampleEnvData, error: null, isLoading: false, refresh: vi.fn() };
     renderPage('/teams/1/apps/42');
     expect(screen.getByText('Onboarded')).toBeInTheDocument();
   });
 
   it('displays onboarding PR link when present', () => {
+    mockEnvResult = { data: sampleEnvData, error: null, isLoading: false, refresh: vi.fn() };
     renderPage('/teams/1/apps/42');
     const prLink = screen.getByText('View onboarding PR');
     expect(prLink.closest('a')).toHaveAttribute(
@@ -93,14 +138,54 @@ describe('ApplicationOverviewPage', () => {
   });
 
   it('hides onboarding PR section when URL is empty', () => {
+    mockEnvResult = { data: sampleEnvData, error: null, isLoading: false, refresh: vi.fn() };
     renderPage('/teams/1/apps/99');
     expect(screen.queryByText('View onboarding PR')).not.toBeInTheDocument();
   });
 
-  it('shows environment chain coming soon message', () => {
+  it('renders environment chain when data loads', () => {
+    mockEnvResult = { data: sampleEnvData, error: null, isLoading: false, refresh: vi.fn() };
     renderPage('/teams/1/apps/42');
+    expect(screen.getByText('dev')).toBeInTheDocument();
+    expect(screen.getByText('staging')).toBeInTheDocument();
     expect(
-      screen.getByText('Environment chain visualization coming in Story 2.8.'),
+      screen.getByRole('list', { name: /Environment promotion chain/i }),
     ).toBeInTheDocument();
+  });
+
+  it('shows environment loading spinner', () => {
+    mockEnvResult = { data: null, error: null, isLoading: true, refresh: vi.fn() };
+    renderPage('/teams/1/apps/42');
+    expect(screen.getAllByRole('progressbar').length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('shows error when environment fetch fails', () => {
+    mockEnvResult = {
+      data: null,
+      error: {
+        error: 'unknown',
+        message: 'Failed to load environments',
+        timestamp: '2026-04-06T00:00:00Z',
+      },
+      isLoading: false,
+      refresh: vi.fn(),
+    };
+    renderPage('/teams/1/apps/42');
+    expect(screen.getByText('Failed to load environments')).toBeInTheDocument();
+  });
+
+  it('renders placeholder cards for builds and activity', () => {
+    mockEnvResult = { data: sampleEnvData, error: null, isLoading: false, refresh: vi.fn() };
+    renderPage('/teams/1/apps/42');
+    expect(screen.getByText('Recent Builds')).toBeInTheDocument();
+    expect(screen.getByText('Activity')).toBeInTheDocument();
+    expect(screen.getByText('Build history coming in Epic 4.')).toBeInTheDocument();
+    expect(screen.getByText('Activity feed coming in Epic 7.')).toBeInTheDocument();
+  });
+
+  it('renders refresh button', () => {
+    mockEnvResult = { data: sampleEnvData, error: null, isLoading: false, refresh: vi.fn() };
+    renderPage('/teams/1/apps/42');
+    expect(screen.getByRole('button', { name: /Refresh/i })).toBeInTheDocument();
   });
 });

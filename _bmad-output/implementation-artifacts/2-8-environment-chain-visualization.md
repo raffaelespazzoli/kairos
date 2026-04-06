@@ -1,6 +1,6 @@
 # Story 2.8: Environment Chain Visualization
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -93,74 +93,79 @@ So that I can instantly understand where my application stands across all enviro
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create EnvironmentService backend (AC: #1)
-  - [ ] Create `EnvironmentService.java` in `com.portal.environment`, `@ApplicationScoped`
-  - [ ] Inject `ArgoCdAdapter` and `TeamContext`
-  - [ ] Implement `getEnvironmentChain(Long appId)`: load environments from DB, call ArgoCdAdapter, merge into `EnvironmentChainEntryDto` list
-  - [ ] Handle `PortalIntegrationException` from ArgoCD: catch and return partial data with error flag
+- [x] Task 1: Create EnvironmentService backend (AC: #1)
+  - [x] Create `EnvironmentService.java` in `com.portal.environment`, `@ApplicationScoped`
+  - [x] Inject `ArgoCdAdapter` and `TeamContext`
+  - [x] Implement `getEnvironmentChain(Long appId)`: load environments from DB, call ArgoCdAdapter, merge into `EnvironmentChainEntryDto` list
+  - [x] Handle `PortalIntegrationException` from ArgoCD: catch and return partial data with error flag
 
-- [ ] Task 2: Create EnvironmentChainEntryDto and response DTOs (AC: #1)
-  - [ ] Create `EnvironmentChainEntryDto.java` record in `com.portal.environment`
-  - [ ] Fields: environmentName, clusterName, namespace, promotionOrder, status, deployedVersion, lastDeployedAt, argocdDeepLink
-  - [ ] Create `EnvironmentChainResponse.java` record: list of entries + optional argocdError message
+- [x] Task 2: Create EnvironmentChainEntryDto and response DTOs (AC: #1)
+  - [x] Create `EnvironmentChainEntryDto.java` record in `com.portal.environment`
+  - [x] Fields: environmentName, clusterName, namespace, promotionOrder, status, deployedVersion, lastDeployedAt, argocdDeepLink
+  - [x] Create `EnvironmentChainResponse.java` record: list of entries + optional argocdError message
 
-- [ ] Task 3: Create EnvironmentResource REST endpoint (AC: #1)
-  - [ ] Create `EnvironmentResource.java` in `com.portal.environment`, `@Path("/api/v1/teams/{teamId}/applications/{appId}/environments")`
-  - [ ] `@GET` returns `EnvironmentChainResponse`
-  - [ ] Inject `EnvironmentService`
-  - [ ] Validate application belongs to team (return 404 if not)
+- [x] Task 3: Create EnvironmentResource REST endpoint (AC: #1)
+  - [x] Create `EnvironmentResource.java` in `com.portal.environment`, `@Path("/api/v1/teams/{teamId}/applications/{appId}/environments")`
+  - [x] `@GET` returns `EnvironmentChainResponse`
+  - [x] Inject `EnvironmentService`
+  - [x] Validate application belongs to team (return 404 if not)
 
-- [ ] Task 4: Create TypeScript types for environment data (AC: #1, #2)
-  - [ ] Create `src/main/webui/src/types/environment.ts`
-  - [ ] Define `EnvironmentChainEntry` and `EnvironmentChainResponse` interfaces
+- [x] Task 4: Create TypeScript types for environment data (AC: #1, #2)
+  - [x] Create `src/main/webui/src/types/environment.ts`
+  - [x] Define `EnvironmentChainEntry` and `EnvironmentChainResponse` interfaces
 
-- [ ] Task 5: Create environments API function (AC: #1)
-  - [ ] Create `src/main/webui/src/api/environments.ts`
-  - [ ] Implement `fetchEnvironmentChain(teamId, appId)` using `apiFetch`
+- [x] Task 5: Create environments API function (AC: #1)
+  - [x] Create `src/main/webui/src/api/environments.ts`
+  - [x] Implement `fetchEnvironmentChain(teamId, appId)` using `apiFetch`
 
-- [ ] Task 6: Create useEnvironments hook (AC: #1, #11)
-  - [ ] Create `src/main/webui/src/hooks/useEnvironments.ts`
-  - [ ] Use `useApiFetch` pattern returning `{ data, error, isLoading, refresh }`
+- [x] Task 6: Create useEnvironments hook (AC: #1, #11)
+  - [x] Create `src/main/webui/src/hooks/useEnvironments.ts`
+  - [x] Use `useApiFetch` pattern returning `{ data, error, isLoading, refresh }`
 
-- [ ] Task 7: Create EnvironmentCard component (AC: #3, #4, #5, #6, #8, #9)
-  - [ ] Create `src/main/webui/src/components/environment/EnvironmentCard.tsx`
-  - [ ] Compose PatternFly Card + Label with status-driven color and icon
-  - [ ] Implement expandable detail section with deep links
-  - [ ] Apply status-specific top border (3px colored)
-  - [ ] Implement hover elevation and pointer cursor
-  - [ ] Add aria-label with env name, version, status
+- [x] Task 7: Create EnvironmentCard component (AC: #3, #4, #5, #6, #8, #9)
+  - [x] Create `src/main/webui/src/components/environment/EnvironmentCard.tsx`
+  - [x] Compose PatternFly Card + Label with status-driven color and icon
+  - [x] Implement expandable detail section with deep links
+  - [x] Apply status-specific top border (3px colored)
+  - [x] Implement hover elevation and pointer cursor
+  - [x] Add aria-label with env name, version, status
 
-- [ ] Task 8: Create EnvironmentChain component (AC: #2, #9, #10)
-  - [ ] Create `src/main/webui/src/components/environment/EnvironmentChain.tsx`
-  - [ ] Render EnvironmentCards in a flexbox row with arrow connectors
-  - [ ] Implement `role="list"` / `role="listitem"` for accessibility
-  - [ ] Implement left/right arrow key navigation between cards
-  - [ ] Apply `overflow-x: auto` with min-width 180px per card
+- [x] Task 8: Create EnvironmentChain component (AC: #2, #9, #10)
+  - [x] Create `src/main/webui/src/components/environment/EnvironmentChain.tsx`
+  - [x] Render EnvironmentCards in a flexbox row with arrow connectors
+  - [x] Implement `role="list"` / `role="listitem"` for accessibility
+  - [x] Implement left/right arrow key navigation between cards
+  - [x] Apply `overflow-x: auto` with min-width 180px per card
 
-- [ ] Task 9: Update ApplicationOverviewPage (AC: #7, #11)
-  - [ ] Replace placeholder content with EnvironmentChain + RefreshButton + ErrorAlert
-  - [ ] Add two-column grid below chain with placeholder "Recent Builds" and "Activity" cards
-  - [ ] Show LoadingSpinner with systemName="ArgoCD" while loading
-  - [ ] Show inline warning Alert if ArgoCD error returned in response
+- [x] Task 9: Update ApplicationOverviewPage (AC: #7, #11)
+  - [x] Replace placeholder content with EnvironmentChain + RefreshButton + ErrorAlert
+  - [x] Add two-column grid below chain with placeholder "Recent Builds" and "Activity" cards
+  - [x] Show LoadingSpinner with systemName="ArgoCD" while loading
+  - [x] Show inline warning Alert if ArgoCD error returned in response
 
-- [ ] Task 10: Write EnvironmentService unit test (AC: #1, #11)
-  - [ ] Create `EnvironmentServiceTest.java` in `src/test/java/com/portal/environment/`
-  - [ ] Mock `ArgoCdAdapter` and `Application`/`Environment` Panache finders
-  - [ ] Test normal flow: environments + statuses merged correctly
-  - [ ] Test ArgoCD failure: partial response with error flag set
+- [x] Task 10: Write EnvironmentService unit test (AC: #1, #11)
+  - [x] Create `EnvironmentServiceTest.java` in `src/test/java/com/portal/environment/`
+  - [x] Mock `ArgoCdAdapter` and `Application`/`Environment` Panache finders
+  - [x] Test normal flow: environments + statuses merged correctly
+  - [x] Test ArgoCD failure: partial response with error flag set
 
-- [ ] Task 11: Write EnvironmentResource integration test (AC: #1)
-  - [ ] Create `EnvironmentResourceIT.java` in `src/test/java/com/portal/environment/`
-  - [ ] `@QuarkusTest` with `@TestSecurity` + `@OidcSecurity` claims
-  - [ ] `@InjectMock ArgoCdAdapter` to mock the adapter
-  - [ ] Test GET returns environment chain data
-  - [ ] Test cross-team access returns 404
-  - [ ] Test ArgoCD failure returns partial data with warning
+- [x] Task 11: Write EnvironmentResource integration test (AC: #1)
+  - [x] Create `EnvironmentResourceIT.java` in `src/test/java/com/portal/environment/`
+  - [x] `@QuarkusTest` with `@TestSecurity` + `@OidcSecurity` claims
+  - [x] `@InjectMock ArgoCdAdapter` to mock the adapter
+  - [x] Test GET returns environment chain data
+  - [x] Test cross-team access returns 404
+  - [x] Test ArgoCD failure returns partial data with warning
 
-- [ ] Task 12: Write frontend component tests (AC: #2, #3, #4, #5, #6, #8, #9, #10, #11)
-  - [ ] Create `EnvironmentCard.test.tsx` — test all four status states, expanded detail, accessibility
-  - [ ] Create `EnvironmentChain.test.tsx` — test dynamic rendering, arrow connectors, keyboard navigation, overflow behavior
-  - [ ] Create `ApplicationOverviewPage.test.tsx` — test loading, success, error states
+- [x] Task 12: Write frontend component tests (AC: #2, #3, #4, #5, #6, #8, #9, #10, #11)
+  - [x] Create `EnvironmentCard.test.tsx` — test all four status states, expanded detail, accessibility
+  - [x] Create `EnvironmentChain.test.tsx` — test dynamic rendering, arrow connectors, keyboard navigation, overflow behavior
+  - [x] Create `ApplicationOverviewPage.test.tsx` — test loading, success, error states
+
+### Review Findings
+
+- [x] [Review][Patch] Prevent nested controls from toggling the card [`developer-portal/src/main/webui/src/components/environment/EnvironmentCard.tsx:107`] — Fixed: added `stopPropagation` on expanded CardBody and CardFooter
+- [x] [Review][Patch] Respect the AC6 release prerequisite before showing the `Deploy` placeholder action [`developer-portal/src/main/webui/src/components/environment/EnvironmentCard.tsx:220`] — Fixed: removed Deploy button since release data is not yet available (Epic 5)
 
 ## Dev Notes
 
@@ -802,8 +807,56 @@ Place in `src/main/webui/src/components/environment/EnvironmentCard.tsx` or a sh
 
 ### Agent Model Used
 
+Claude claude-4.6-opus (Cursor Agent)
+
 ### Debug Log References
+
+- Frontend tests: 2 initial failures in EnvironmentChain.test.tsx (arrow connector selector `[aria-hidden="true"]` matched PF icons too); fixed by scoping query to direct children of the list container.
+- Backend tests: 2 pre-existing failures in `CasbinEnforcerTest.memberCannotCrudClusters` and `PermissionFilterTest.memberDeniedAdminClusters` (unrelated to this story — cluster admin endpoint access control tests).
 
 ### Completion Notes List
 
+- ✅ Task 1: Created `EnvironmentService.java` with `getEnvironmentChain()` method that loads environments from DB, calls ArgoCdAdapter for live status, resolves cluster names, and merges results. Graceful degradation when ArgoCD is unreachable (catches PortalIntegrationException, returns partial data with error message).
+- ✅ Task 2: Created `EnvironmentChainEntryDto.java` record (combined DB + live data) and `EnvironmentChainResponse.java` record (list + optional argocdError). Created `EnvironmentMapper.java` for entity + status → DTO merge with cluster name resolution.
+- ✅ Task 3: Created `EnvironmentResource.java` REST endpoint at `/api/v1/teams/{teamId}/applications/{appId}/environments`. Team isolation enforced via `TeamContext` comparison (404 for cross-team). Thin resource delegates to service.
+- ✅ Task 4: Created `environment.ts` with `EnvironmentStatus` union type, `EnvironmentChainEntry` and `EnvironmentChainResponse` interfaces.
+- ✅ Task 5: Created `environments.ts` API function using `apiFetch` wrapper.
+- ✅ Task 6: Created `useEnvironments.ts` hook using `useApiFetch` pattern with null-path skip for conditional fetching.
+- ✅ Task 7: Created `EnvironmentCard.tsx` with status-driven PF6 Card + Label composition, expandable detail section, hover elevation, keyboard interaction, aria-labels, promote/deploy placeholder buttons.
+- ✅ Task 8: Created `EnvironmentChain.tsx` with flexbox row, ArrowRight connectors, `role="list"`/`role="listitem"` semantics, ArrowLeft/ArrowRight keyboard navigation, `overflow-x: auto` with 180px min-width, ArgoCD warning Alert.
+- ✅ Task 9: Updated `ApplicationOverviewPage.tsx` — integrated EnvironmentChain, added RefreshButton, ArgoCD loading spinner, error handling, two-column grid with placeholder "Recent Builds" and "Activity" cards. Preserved existing app description list.
+- ✅ Task 10: Created `EnvironmentServiceTest.java` — 4 tests: happy path merge, ArgoCD failure graceful degradation, not-found app, cross-team access.
+- ✅ Task 11: Created `EnvironmentResourceIT.java` — 4 tests: GET returns chain data with 200, cross-team 404, ArgoCD failure returns partial data, non-existent app 404.
+- ✅ Task 12: Created 3 frontend test files — `EnvironmentCard.test.tsx` (13 tests: all status states, expand/collapse, buttons, accessibility), `EnvironmentChain.test.tsx` (10 tests: rendering, arrows, keyboard nav, alert, overflow), `ApplicationOverviewPage.test.tsx` (13 tests: loading/error/success states, env chain integration, placeholders, refresh button).
+
 ### File List
+
+**New backend files:**
+- `developer-portal/src/main/java/com/portal/environment/EnvironmentResource.java`
+- `developer-portal/src/main/java/com/portal/environment/EnvironmentService.java`
+- `developer-portal/src/main/java/com/portal/environment/EnvironmentChainEntryDto.java`
+- `developer-portal/src/main/java/com/portal/environment/EnvironmentChainResponse.java`
+- `developer-portal/src/main/java/com/portal/environment/EnvironmentMapper.java`
+
+**New frontend files:**
+- `developer-portal/src/main/webui/src/types/environment.ts`
+- `developer-portal/src/main/webui/src/api/environments.ts`
+- `developer-portal/src/main/webui/src/hooks/useEnvironments.ts`
+- `developer-portal/src/main/webui/src/components/environment/EnvironmentCard.tsx`
+- `developer-portal/src/main/webui/src/components/environment/EnvironmentChain.tsx`
+
+**Modified frontend files:**
+- `developer-portal/src/main/webui/src/routes/ApplicationOverviewPage.tsx`
+
+**New test files:**
+- `developer-portal/src/test/java/com/portal/environment/EnvironmentServiceTest.java`
+- `developer-portal/src/test/java/com/portal/environment/EnvironmentResourceIT.java`
+- `developer-portal/src/main/webui/src/components/environment/EnvironmentCard.test.tsx`
+- `developer-portal/src/main/webui/src/components/environment/EnvironmentChain.test.tsx`
+
+**Modified test files:**
+- `developer-portal/src/main/webui/src/routes/ApplicationOverviewPage.test.tsx`
+
+### Change Log
+
+- 2026-04-06: Implemented Story 2.8 — Environment Chain Visualization. Created backend REST endpoint with EnvironmentService, DTOs, and EnvironmentMapper. Built frontend EnvironmentCard and EnvironmentChain components with PF6 styling, accessibility, keyboard navigation, and responsive overflow. Integrated into ApplicationOverviewPage with RefreshButton, loading/error states, and placeholder grids. Added 8 backend tests and 36 frontend tests.
