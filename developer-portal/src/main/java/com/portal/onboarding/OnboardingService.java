@@ -4,6 +4,7 @@ import com.portal.application.Application;
 import com.portal.auth.TeamContext;
 import com.portal.cluster.ClusterDto;
 import com.portal.cluster.ClusterService;
+import com.portal.deeplink.DeepLinkService;
 import com.portal.environment.Environment;
 import com.portal.gitops.ManifestGenerator;
 import com.portal.gitops.OnboardingPrBuilder;
@@ -53,6 +54,9 @@ public class OnboardingService {
     @Inject
     OnboardingPrBuilder onboardingPrBuilder;
 
+    @Inject
+    DeepLinkService deepLinkService;
+
     @Transactional
     public OnboardingResultDto confirmOnboarding(OnboardingConfirmRequest request) {
         String teamName = teamContext.getTeamIdentifier();
@@ -94,7 +98,8 @@ public class OnboardingService {
         return new OnboardingResultDto(
                 app.id, app.name, pr.url(),
                 plan.namespaces().size(), plan.argoCdApps().size(),
-                orderedEnvs);
+                orderedEnvs,
+                deepLinkService.generateDevSpacesLink(request.gitRepoUrl()).orElse(null));
     }
 
     public OnboardingPlanResult buildPlan(String appName, OnboardingPlanRequest request) {

@@ -12,6 +12,8 @@ const testApps: ApplicationSummary[] = [
     runtimeType: 'quarkus',
     onboardedAt: '2026-04-01T10:00:00Z',
     onboardingPrUrl: '',
+    gitRepoUrl: 'https://github.com/org/payments-api.git',
+    devSpacesDeepLink: null,
   },
 ];
 

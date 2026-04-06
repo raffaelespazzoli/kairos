@@ -29,6 +29,8 @@ const sampleApps: ApplicationSummary[] = [
     runtimeType: 'quarkus',
     onboardedAt: '2026-04-01T10:00:00Z',
     onboardingPrUrl: 'https://github.com/org/infra/pull/1',
+    gitRepoUrl: 'https://github.com/org/alpha-api.git',
+    devSpacesDeepLink: null,
   },
   {
     id: 2,
@@ -36,6 +38,8 @@ const sampleApps: ApplicationSummary[] = [
     runtimeType: 'spring-boot',
     onboardedAt: '2026-04-02T10:00:00Z',
     onboardingPrUrl: '',
+    gitRepoUrl: 'https://github.com/org/beta-service.git',
+    devSpacesDeepLink: null,
   },
 ];
 

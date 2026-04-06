@@ -14,6 +14,7 @@ const threeEnvs: EnvironmentChainEntry[] = [
     deployedVersion: 'v1.4.2',
     lastDeployedAt: new Date(Date.now() - 7200000).toISOString(),
     argocdDeepLink: 'https://argocd/applications/payments-run-dev',
+    vaultDeepLink: 'https://vault.example.com/ui/vault/secrets/applications/team/team-payments-dev/static-secrets',
   },
   {
     environmentName: 'staging',
@@ -24,6 +25,7 @@ const threeEnvs: EnvironmentChainEntry[] = [
     deployedVersion: 'v1.4.2',
     lastDeployedAt: null,
     argocdDeepLink: 'https://argocd/applications/payments-run-staging',
+    vaultDeepLink: 'https://vault.example.com/ui/vault/secrets/applications/team/team-payments-staging/static-secrets',
   },
   {
     environmentName: 'prod',
@@ -34,6 +36,7 @@ const threeEnvs: EnvironmentChainEntry[] = [
     deployedVersion: null,
     lastDeployedAt: null,
     argocdDeepLink: null,
+    vaultDeepLink: null,
   },
 ];
 

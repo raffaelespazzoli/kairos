@@ -147,15 +147,21 @@ class EnvironmentServiceTest {
         assertEquals("HEALTHY", dev.status());
         assertEquals("v1.4.2", dev.deployedVersion());
         assertNotNull(dev.lastDeployedAt());
+        assertNotNull(dev.vaultDeepLink());
+        assertTrue(dev.vaultDeepLink().contains("/applications/env-svc-team/env-svc-team-env-svc-payments-dev/static-secrets"));
 
         EnvironmentChainEntryDto staging = response.environments().get(1);
         assertEquals("staging", staging.environmentName());
         assertEquals("DEPLOYING", staging.status());
+        assertNotNull(staging.vaultDeepLink());
+        assertTrue(staging.vaultDeepLink().contains("/env-svc-team-env-svc-payments-staging/"));
 
         EnvironmentChainEntryDto prod = response.environments().get(2);
         assertEquals("prod", prod.environmentName());
         assertEquals("NOT_DEPLOYED", prod.status());
         assertNull(prod.deployedVersion());
+        assertNotNull(prod.vaultDeepLink());
+        assertTrue(prod.vaultDeepLink().contains("/env-svc-team-env-svc-payments-prod/"));
     }
 
     @Test

@@ -51,13 +51,15 @@ class ApplicationTest {
         app.onboardedAt = Instant.parse("2026-04-01T10:00:00Z");
         app.onCreate();
 
-        ApplicationSummaryDto dto = ApplicationSummaryDto.from(app);
+        ApplicationSummaryDto dto = ApplicationSummaryDto.from(app, "https://devspaces.example.com/#/https://github.com/org/payments-api.git");
 
         assertEquals(42L, dto.id());
         assertEquals("payments-api", dto.name());
         assertEquals("spring-boot", dto.runtimeType());
         assertEquals(Instant.parse("2026-04-01T10:00:00Z"), dto.onboardedAt());
         assertEquals("https://github.com/org/infra/pull/123", dto.onboardingPrUrl());
+        assertEquals("https://github.com/org/payments-api.git", dto.gitRepoUrl());
+        assertEquals("https://devspaces.example.com/#/https://github.com/org/payments-api.git", dto.devSpacesDeepLink());
     }
 
     @Test
@@ -70,9 +72,11 @@ class ApplicationTest {
         app.runtimeType = "quarkus";
         app.onCreate();
 
-        ApplicationSummaryDto dto = ApplicationSummaryDto.from(app);
+        ApplicationSummaryDto dto = ApplicationSummaryDto.from(app, null);
 
         assertNull(dto.onboardingPrUrl());
         assertNull(dto.onboardedAt());
+        assertEquals("https://github.com/org/my-app.git", dto.gitRepoUrl());
+        assertNull(dto.devSpacesDeepLink());
     }
 }

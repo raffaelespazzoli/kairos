@@ -19,6 +19,7 @@ import { useParams } from 'react-router-dom';
 import { useApplications } from '../contexts/ApplicationsContext';
 import { useEnvironments } from '../hooks/useEnvironments';
 import { EnvironmentChain } from '../components/environment/EnvironmentChain';
+import { DeepLinkButton } from '../components/shared/DeepLinkButton';
 import { LoadingSpinner } from '../components/shared/LoadingSpinner';
 import { ErrorAlert } from '../components/shared/ErrorAlert';
 import { RefreshButton } from '../components/shared/RefreshButton';
@@ -57,6 +58,11 @@ export function ApplicationOverviewPage() {
           <FlexItem grow={{ default: 'grow' }}>
             <Title headingLevel="h2">{app.name}</Title>
           </FlexItem>
+          {app.devSpacesDeepLink && (
+            <FlexItem>
+              <DeepLinkButton href={app.devSpacesDeepLink} toolName="DevSpaces" />
+            </FlexItem>
+          )}
           <FlexItem>
             <RefreshButton onRefresh={refresh} isRefreshing={envLoading} />
           </FlexItem>

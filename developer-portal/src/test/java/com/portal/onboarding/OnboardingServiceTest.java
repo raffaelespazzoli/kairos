@@ -4,6 +4,7 @@ import com.portal.application.Application;
 import com.portal.auth.TeamContext;
 import com.portal.cluster.ClusterDto;
 import com.portal.cluster.ClusterService;
+import com.portal.deeplink.DeepLinkService;
 import com.portal.environment.Environment;
 import com.portal.gitops.ManifestGenerator;
 import com.portal.gitops.OnboardingPrBuilder;
@@ -27,25 +28,29 @@ class OnboardingServiceTest {
     private ClusterService mockClusterService;
     private TeamContext mockTeamContext;
     private OnboardingPrBuilder mockPrBuilder;
+    private DeepLinkService mockDeepLinkService;
 
     @BeforeEach
     void setUp() throws Exception {
         mockManifestGenerator = mock(ManifestGenerator.class);
         mockClusterService = mock(ClusterService.class);
         mockTeamContext = mock(TeamContext.class);
-
         mockPrBuilder = mock(OnboardingPrBuilder.class);
+        mockDeepLinkService = mock(DeepLinkService.class);
 
         when(mockTeamContext.getTeamIdentifier()).thenReturn("payments");
         when(mockTeamContext.getTeamId()).thenReturn(1L);
         when(mockManifestGenerator.generateAllManifests(any(), anyString(), any()))
                 .thenReturn(Map.of("path/file.yaml", "content"));
+        when(mockDeepLinkService.generateDevSpacesLink(anyString()))
+                .thenReturn(java.util.Optional.empty());
 
         service = new OnboardingService();
         setField("manifestGenerator", mockManifestGenerator);
         setField("clusterService", mockClusterService);
         setField("teamContext", mockTeamContext);
         setField("onboardingPrBuilder", mockPrBuilder);
+        setField("deepLinkService", mockDeepLinkService);
     }
 
     @Test

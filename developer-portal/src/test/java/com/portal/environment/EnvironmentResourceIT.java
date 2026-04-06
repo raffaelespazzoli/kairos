@@ -138,10 +138,16 @@ class EnvironmentResourceIT {
                 .body("environments[0].deployedVersion", equalTo("v1.4.2"))
                 .body("environments[0].clusterName", equalTo("envres-ocp-dev"))
                 .body("environments[0].namespace", equalTo("payments-dev"))
+                .body("environments[0].vaultDeepLink",
+                        equalTo("https://vault.test.example.com/ui/vault/secrets/applications/envres-test-team/envres-test-team-envres-payments-dev/static-secrets"))
                 .body("environments[1].environmentName", equalTo("staging"))
                 .body("environments[1].status", equalTo("DEPLOYING"))
+                .body("environments[1].vaultDeepLink",
+                        equalTo("https://vault.test.example.com/ui/vault/secrets/applications/envres-test-team/envres-test-team-envres-payments-staging/static-secrets"))
                 .body("environments[2].environmentName", equalTo("prod"))
-                .body("environments[2].status", equalTo("NOT_DEPLOYED"));
+                .body("environments[2].status", equalTo("NOT_DEPLOYED"))
+                .body("environments[2].vaultDeepLink",
+                        equalTo("https://vault.test.example.com/ui/vault/secrets/applications/envres-test-team/envres-test-team-envres-payments-prod/static-secrets"));
     }
 
     @Test

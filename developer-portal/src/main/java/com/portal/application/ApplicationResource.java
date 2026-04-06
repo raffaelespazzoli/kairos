@@ -1,6 +1,7 @@
 package com.portal.application;
 
 import com.portal.auth.TeamContext;
+import com.portal.deeplink.DeepLinkService;
 import com.portal.team.Team;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
@@ -21,6 +22,9 @@ public class ApplicationResource {
     @Inject
     ApplicationService applicationService;
 
+    @Inject
+    DeepLinkService deepLinkService;
+
     @GET
     public List<ApplicationSummaryDto> listApplications(
             @PathParam("teamId") Long teamId) {
@@ -29,7 +33,9 @@ public class ApplicationResource {
             throw new NotFoundException();
         }
         return applicationService.getApplicationsForTeam(teamId).stream()
-                .map(ApplicationSummaryDto::from)
+                .map(app -> ApplicationSummaryDto.from(
+                        app,
+                        deepLinkService.generateDevSpacesLink(app.gitRepoUrl).orElse(null)))
                 .toList();
     }
 }

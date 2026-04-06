@@ -8,5 +8,6 @@ public record OnboardingResultDto(
     String onboardingPrUrl,
     int namespacesCreated,
     int argoCdAppsCreated,
-    List<String> promotionChain
+    List<String> promotionChain,
+    String devSpacesDeepLink
 ) {}

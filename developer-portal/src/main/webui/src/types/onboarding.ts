@@ -66,6 +66,7 @@ export interface OnboardingResult {
   namespacesCreated: number;
   argoCdAppsCreated: number;
   promotionChain: string[];
+  devSpacesDeepLink: string | null;
 }
 
 export interface ProvisioningStep {

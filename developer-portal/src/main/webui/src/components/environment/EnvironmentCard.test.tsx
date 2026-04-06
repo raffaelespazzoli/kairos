@@ -14,6 +14,7 @@ function makeEntry(overrides: Partial<EnvironmentChainEntry> = {}): EnvironmentC
     deployedVersion: 'v1.4.2',
     lastDeployedAt: new Date(Date.now() - 7200000).toISOString(),
     argocdDeepLink: 'https://argocd/applications/payments-run-dev',
+    vaultDeepLink: 'https://vault.example.com/ui/vault/secrets/applications/team/team-payments-dev/static-secrets',
     ...overrides,
   };
 }

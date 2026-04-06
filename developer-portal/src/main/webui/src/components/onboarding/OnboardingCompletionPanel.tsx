@@ -7,10 +7,10 @@ import {
   Button,
   Content,
   Label,
-  Tooltip,
 } from '@patternfly/react-core';
 import { CheckCircleIcon, ArrowRightIcon } from '@patternfly/react-icons';
 import type { OnboardingResult } from '../../types/onboarding';
+import { DeepLinkButton } from '../shared/DeepLinkButton';
 
 interface OnboardingCompletionPanelProps {
   result: OnboardingResult;
@@ -53,7 +53,7 @@ export function OnboardingCompletionPanel({
             variant="primary"
             onClick={() =>
               navigate(
-                `/teams/${teamId}/applications/${result.applicationId}`,
+                `/teams/${teamId}/apps/${result.applicationId}`,
               )
             }
           >
@@ -70,11 +70,7 @@ export function OnboardingCompletionPanel({
           >
             View onboarding PR ↗
           </Button>
-          <Tooltip content="Available after Epic 3">
-            <Button variant="link" isDisabled>
-              Open in DevSpaces ↗
-            </Button>
-          </Tooltip>
+          <DeepLinkButton href={result.devSpacesDeepLink} toolName="DevSpaces" />
         </EmptyStateActions>
       </EmptyStateFooter>
     </EmptyState>

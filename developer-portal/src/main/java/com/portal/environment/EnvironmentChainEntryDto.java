@@ -10,5 +10,6 @@ public record EnvironmentChainEntryDto(
     String status,
     String deployedVersion,
     Instant lastDeployedAt,
-    String argocdDeepLink
+    String argocdDeepLink,
+    String vaultDeepLink
 ) {}

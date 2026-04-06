@@ -108,7 +108,27 @@ class ApplicationResourceIT {
                 .body("[1].name", equalTo("res-beta-service"))
                 .body("[1].runtimeType", equalTo("quarkus"))
                 .body("[1].onboardedAt", notNullValue())
-                .body("[1].onboardingPrUrl", equalTo("https://github.com/org/infra/pull/1"));
+                .body("[1].onboardingPrUrl", equalTo("https://github.com/org/infra/pull/1"))
+                .body("[1].gitRepoUrl", equalTo("https://github.com/org/beta.git"))
+                .body("[1].devSpacesDeepLink",
+                        equalTo("https://devspaces.test.example.com/#/https://github.com/org/beta.git"));
+    }
+
+    @Test
+    @TestSecurity(user = "dev@example.com", roles = "member")
+    @OidcSecurity(claims = {
+            @Claim(key = "team", value = "appres-test-team"),
+            @Claim(key = "role", value = "member")
+    })
+    void listApplicationsIncludesDevSpacesDeepLink() {
+        given()
+                .when()
+                .get("/api/v1/teams/{teamId}/applications", testTeam.id)
+                .then()
+                .statusCode(200)
+                .body("[0].devSpacesDeepLink",
+                        equalTo("https://devspaces.test.example.com/#/https://github.com/org/alpha.git"))
+                .body("[0].gitRepoUrl", equalTo("https://github.com/org/alpha.git"));
     }
 
     @Test

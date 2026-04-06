@@ -1,11 +1,16 @@
 import { Button } from '@patternfly/react-core';
 
 interface DeepLinkButtonProps {
-  href: string;
+  href?: string | null;
   toolName: string;
+  label?: string;
 }
 
-export function DeepLinkButton({ href, toolName }: DeepLinkButtonProps) {
+export function DeepLinkButton({ href, toolName, label }: DeepLinkButtonProps) {
+  if (!href) {
+    return null;
+  }
+
   return (
     <Button
       variant="link"
@@ -15,7 +20,7 @@ export function DeepLinkButton({ href, toolName }: DeepLinkButtonProps) {
       rel="noopener noreferrer"
       isInline
     >
-      Open in {toolName} ↗
+      {label ?? `Open in ${toolName} ↗`}
     </Button>
   );
 }

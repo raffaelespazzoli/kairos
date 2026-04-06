@@ -11,6 +11,7 @@ const mockResult: OnboardingResult = {
   namespacesCreated: 4,
   argoCdAppsCreated: 4,
   promotionChain: ['dev', 'qa', 'prod'],
+  devSpacesDeepLink: 'https://devspaces.example.com/#/https://github.com/org/payment-svc.git',
 };
 
 function renderPanel(result = mockResult, teamId = '1') {
@@ -54,11 +55,23 @@ describe('OnboardingCompletionPanel', () => {
     expect(screen.getByText('prod')).toBeInTheDocument();
   });
 
-  it('shows disabled DevSpaces button', () => {
+  it('shows functional DevSpaces link when configured', () => {
     renderPanel();
-    const devSpacesBtn = screen.getByRole('button', {
+    const devSpacesLink = screen.getByRole('link', {
       name: /open in devspaces/i,
     });
-    expect(devSpacesBtn).toBeDisabled();
+    expect(devSpacesLink).toHaveAttribute(
+      'href',
+      'https://devspaces.example.com/#/https://github.com/org/payment-svc.git',
+    );
+    expect(devSpacesLink).toHaveAttribute('target', '_blank');
+  });
+
+  it('hides DevSpaces link when not configured', () => {
+    renderPanel({
+      ...mockResult,
+      devSpacesDeepLink: null,
+    });
+    expect(screen.queryByText(/open in devspaces/i)).not.toBeInTheDocument();
   });
 });

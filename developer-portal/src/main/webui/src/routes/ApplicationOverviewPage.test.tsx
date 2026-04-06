@@ -15,6 +15,8 @@ const sampleApps: ApplicationSummary[] = [
     runtimeType: 'quarkus',
     onboardedAt: '2026-04-01T10:00:00Z',
     onboardingPrUrl: 'https://github.com/org/infra/pull/123',
+    gitRepoUrl: 'https://github.com/org/payments-api.git',
+    devSpacesDeepLink: 'https://devspaces.example.com/#/https://github.com/org/payments-api.git',
   },
   {
     id: 99,
@@ -22,6 +24,8 @@ const sampleApps: ApplicationSummary[] = [
     runtimeType: 'spring-boot',
     onboardedAt: '',
     onboardingPrUrl: '',
+    gitRepoUrl: 'https://github.com/org/no-pr-app.git',
+    devSpacesDeepLink: null,
   },
 ];
 
@@ -36,6 +40,7 @@ const sampleEnvData: EnvironmentChainResponse = {
       deployedVersion: 'v1.4.2',
       lastDeployedAt: new Date(Date.now() - 7200000).toISOString(),
       argocdDeepLink: 'https://argocd/applications/payments-run-dev',
+      vaultDeepLink: 'https://vault.example.com/ui/vault/secrets/applications/team/team-payments-dev/static-secrets',
     },
     {
       environmentName: 'staging',
@@ -46,6 +51,7 @@ const sampleEnvData: EnvironmentChainResponse = {
       deployedVersion: null,
       lastDeployedAt: null,
       argocdDeepLink: null,
+      vaultDeepLink: 'https://vault.example.com/ui/vault/secrets/applications/team/team-payments-staging/static-secrets',
     },
   ],
   argocdError: null,
@@ -187,5 +193,22 @@ describe('ApplicationOverviewPage', () => {
     mockEnvResult = { data: sampleEnvData, error: null, isLoading: false, refresh: vi.fn() };
     renderPage('/teams/1/apps/42');
     expect(screen.getByRole('button', { name: /Refresh/i })).toBeInTheDocument();
+  });
+
+  it('shows DevSpaces button when devSpacesDeepLink is present', () => {
+    mockEnvResult = { data: sampleEnvData, error: null, isLoading: false, refresh: vi.fn() };
+    renderPage('/teams/1/apps/42');
+    const link = screen.getByText('Open in DevSpaces ↗');
+    expect(link.closest('a')).toHaveAttribute(
+      'href',
+      'https://devspaces.example.com/#/https://github.com/org/payments-api.git',
+    );
+    expect(link.closest('a')).toHaveAttribute('target', '_blank');
+  });
+
+  it('hides DevSpaces button when devSpacesDeepLink is null', () => {
+    mockEnvResult = { data: sampleEnvData, error: null, isLoading: false, refresh: vi.fn() };
+    renderPage('/teams/1/apps/99');
+    expect(screen.queryByText('Open in DevSpaces ↗')).not.toBeInTheDocument();
   });
 });

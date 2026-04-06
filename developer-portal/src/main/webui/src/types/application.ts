@@ -4,4 +4,6 @@ export interface ApplicationSummary {
   runtimeType: string;
   onboardedAt: string;
   onboardingPrUrl: string;
+  gitRepoUrl: string;
+  devSpacesDeepLink: string | null;
 }
