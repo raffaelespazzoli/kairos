@@ -23,6 +23,9 @@ p, admin, clusters, create
 p, admin, clusters, update
 p, admin, clusters, delete
 
+# Test stub resources (ExceptionMapperTestStubResource)
+p, member, test-exceptions, read
+
 # Role inheritance
 g, lead, member
 g, admin, lead

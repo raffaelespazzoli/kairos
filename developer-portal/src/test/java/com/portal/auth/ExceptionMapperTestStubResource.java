@@ -1,4 +1,4 @@
-package com.portal.common;
+package com.portal.auth;
 
 import com.portal.integration.PortalIntegrationException;
 import jakarta.ws.rs.GET;
@@ -10,8 +10,9 @@ import jakarta.ws.rs.core.MediaType;
 /**
  * Test-only resource that throws specific exceptions so integration tests
  * can verify GlobalExceptionMapper produces the correct HTTP responses.
+ * The /test/ path prefix is outside /api/v1/ so no auth is required.
  */
-@Path("/test/exceptions")
+@Path("/api/v1/admin/test-exceptions")
 @Produces(MediaType.APPLICATION_JSON)
 public class ExceptionMapperTestStubResource {
 

@@ -6,22 +6,29 @@ import io.quarkus.test.security.oidc.Claim;
 import io.quarkus.test.security.oidc.OidcSecurity;
 import org.junit.jupiter.api.Test;
 
+import io.restassured.http.ContentType;
+
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
 /**
  * Integration tests for {@link GlobalExceptionMapper}.
- * Uses {@link ExceptionMapperTestStubResource} at /test/exceptions/ (outside /api/v1/
- * to bypass Casbin) for direct exception testing, and the real PermissionFilter path
+ * Uses ExceptionMapperTestStubResource at /api/v1/admin/test-exceptions/
+ * for direct exception testing, and the real PermissionFilter path
  * for authorization exception testing.
  */
 @QuarkusTest
 class GlobalExceptionMapperIT {
 
     @Test
+    @TestSecurity(user = "admin@example.com", roles = "admin")
+    @OidcSecurity(claims = {
+            @Claim(key = "team", value = "platform"),
+            @Claim(key = "role", value = "admin")
+    })
     void integrationExceptionReturns502WithStandardFormat() {
         given()
-                .when().get("/test/exceptions/integration")
+                .when().get("/api/v1/admin/test-exceptions/integration")
                 .then()
                 .statusCode(502)
                 .body("error", equalTo("integration-error"))
@@ -40,7 +47,9 @@ class GlobalExceptionMapperIT {
     })
     void authorizationExceptionReturns403WithStandardFormat() {
         given()
-                .when().get("/api/v1/admin/clusters")
+                .contentType(ContentType.JSON)
+                .body("{\"name\":\"test\",\"apiServerUrl\":\"https://api:6443\"}")
+                .when().post("/api/v1/admin/clusters")
                 .then()
                 .statusCode(403)
                 .body("error", equalTo("forbidden"))
@@ -51,9 +60,14 @@ class GlobalExceptionMapperIT {
     }
 
     @Test
+    @TestSecurity(user = "admin@example.com", roles = "admin")
+    @OidcSecurity(claims = {
+            @Claim(key = "team", value = "platform"),
+            @Claim(key = "role", value = "admin")
+    })
     void validationExceptionReturns400WithStandardFormat() {
         given()
-                .when().get("/test/exceptions/validation")
+                .when().get("/api/v1/admin/test-exceptions/validation")
                 .then()
                 .statusCode(400)
                 .body("error", equalTo("validation-error"))
@@ -64,9 +78,14 @@ class GlobalExceptionMapperIT {
     }
 
     @Test
+    @TestSecurity(user = "admin@example.com", roles = "admin")
+    @OidcSecurity(claims = {
+            @Claim(key = "team", value = "platform"),
+            @Claim(key = "role", value = "admin")
+    })
     void notFoundExceptionReturns404WithStandardFormat() {
         given()
-                .when().get("/test/exceptions/not-found")
+                .when().get("/api/v1/admin/test-exceptions/not-found")
                 .then()
                 .statusCode(404)
                 .body("error", equalTo("not-found"))
@@ -76,9 +95,14 @@ class GlobalExceptionMapperIT {
     }
 
     @Test
+    @TestSecurity(user = "admin@example.com", roles = "admin")
+    @OidcSecurity(claims = {
+            @Claim(key = "team", value = "platform"),
+            @Claim(key = "role", value = "admin")
+    })
     void unexpectedExceptionReturns500WithStandardFormat() {
         given()
-                .when().get("/test/exceptions/unexpected")
+                .when().get("/api/v1/admin/test-exceptions/unexpected")
                 .then()
                 .statusCode(500)
                 .body("error", equalTo("internal-error"))

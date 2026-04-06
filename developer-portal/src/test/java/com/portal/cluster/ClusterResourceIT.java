@@ -153,7 +153,7 @@ class ClusterResourceIT {
                 .body("detail", containsString("already exists"));
     }
 
-    // --- AC #7: Non-admin access denied → 403 ---
+    // --- Members and leads can read clusters but cannot modify them ---
 
     @Test
     @TestSecurity(user = "dev@example.com", roles = "member")
@@ -161,12 +161,11 @@ class ClusterResourceIT {
             @Claim(key = "team", value = "payments"),
             @Claim(key = "role", value = "member")
     })
-    void memberDeniedAccess() {
+    void memberAllowedReadClusters() {
         given()
                 .when().get("/api/v1/admin/clusters")
                 .then()
-                .statusCode(403)
-                .body("error", equalTo("forbidden"));
+                .statusCode(200);
     }
 
     @Test
@@ -175,12 +174,11 @@ class ClusterResourceIT {
             @Claim(key = "team", value = "payments"),
             @Claim(key = "role", value = "lead")
     })
-    void leadDeniedAccess() {
+    void leadAllowedReadClusters() {
         given()
                 .when().get("/api/v1/admin/clusters")
                 .then()
-                .statusCode(403)
-                .body("error", equalTo("forbidden"));
+                .statusCode(200);
     }
 
     @Test

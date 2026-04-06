@@ -64,12 +64,12 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - Use Quarkus REST (formerly RESTEasy Reactive) annotation style — `@Path`, `@GET`, `@POST`, etc. Do NOT use Spring-style annotations
 - CDI injection via `@Inject` or constructor injection — Quarkus uses ArC (build-time CDI), not Spring DI
 - All CDI beans that are integration adapters must be `@ApplicationScoped` — not `@RequestScoped` or `@Dependent`
-- Panache Active Record pattern for entities — extend `PanacheEntity`, use static finder methods (e.g., `Application.find("team.id", teamId).list()`)
+- Panache Active Record pattern for entities — extend `PanacheEntityBase` (NOT `PanacheEntity`), use `@Id @GeneratedValue(strategy = GenerationType.IDENTITY)` explicitly. `PanacheEntity` defaults to SEQUENCE strategy which requires a `<table>_seq` sequence object; our PostgreSQL schema uses `BIGSERIAL` (identity columns). Use static finder methods (e.g., `Application.find("team.id", teamId).list()`)
 - Entity fields use `camelCase` in Java; Hibernate maps to `snake_case` DB columns automatically — do NOT add `@Column(name=...)` for simple mappings
 - Use `@ConfigProperty` for portal-specific configuration with `portal.*` prefix (e.g., `portal.oidc.role-claim`, `portal.git.provider`)
 - Quarkus config profiles: `application.properties` (shared), `application-dev.properties` (dev), `application-test.properties` (test) — environment variables override in production
 - All REST resource methods must return DTOs, never Panache entities — entities are internal to their domain package
-- `CompletableFuture` or Mutiny reactive types for parallel integration calls — views aggregating multiple platform systems must call adapters concurrently, not sequentially
+- `CompletableFuture` or Mutiny reactive types for parallel integration calls — views aggregating multiple platform systems must call adapters concurrently, not sequentially. When using `CompletableFuture::join`, always unwrap `CompletionException` to extract the real cause — `join()` wraps checked exceptions in `CompletionException`
 - Global `ExceptionMapper` converts `PortalIntegrationException` → standardized error JSON with `502` status
 - Flyway migration files named `V<number>__<description>.sql` — sequential, never modify existing migrations
 
@@ -83,6 +83,7 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - No automatic polling or client-side caching between navigations — each view fetches fresh data on mount
 - React Router v6 for client-side routing — use `<Outlet>` for nested layouts, `useParams()` for path params
 - No barrel files (`index.ts` re-exports) — import directly from the source file
+- All `useEffect` side-effects must handle cleanup: use `AbortController` for fetch calls, clear timeouts/intervals, and guard against state updates on unmounted components. Always verify the effect's dependencies are exhaustive — stale closures over state cause subtle bugs in multi-step flows (wizards, progress trackers)
 
 ### Framework-Specific Rules
 
@@ -99,7 +100,7 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - Casbin policy is a static file (`src/main/resources/casbin/model.conf` + `policy.csv`) — three roles with inheritance: `member` → `lead` → `admin`
 - All integration adapters throw `PortalIntegrationException` with: system name, operation, message, and optional deep link — never throw raw HTTP/connection exceptions from adapters
 - `SecretManagerCredentialProvider` wraps `SecretManagerAdapter` with TTL-aware in-memory cache keyed by `(cluster, role)` — credentials never written to database or disk
-- Qute templates in `src/main/java/com/portal/gitops/templates/` for Namespace and ArgoCD Application YAML generation
+- Qute templates in `src/main/resources/templates/gitops/` for Namespace and ArgoCD Application YAML generation — template files must use plain `.yaml` extension (NOT `.qute.yaml`); the `.qute.*` suffix prevents Qute engine resolution at runtime despite being recommended by some docs for IDE syntax highlighting
 - SmallRye Health endpoints at `/q/health/ready` and `/q/health/live` for OpenShift probes
 - Quarkus Dev UI at `/q/dev` — available in dev mode only
 
@@ -124,7 +125,8 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - Integration tests: `<Class>IT.java` — use `@QuarkusTest` annotation; these start the full Quarkus runtime
 - REST endpoint tests use REST Assured fluent API: `given().when().get("/api/v1/...").then().statusCode(200)`
 - Mock platform integrations in tests — never call real ArgoCD, Tekton, Vault, etc. from tests
-- Use `@InjectMock` (Quarkus CDI mock) for adapter mocking in integration tests — not Mockito standalone
+- Use `@InjectMock` (Quarkus CDI mock) for adapter mocking in integration tests — not Mockito standalone. `@InjectMock` works even for beans produced by CDI factory methods (e.g., `GitProvider` from `GitProviderFactory`) — it replaces the CDI bean regardless of how it was produced
+- Never use `assertInstanceOf` or `instanceof` checks on `@ApplicationScoped` CDI beans in tests — Quarkus wraps them in `ClientProxy` subclasses. Verify behavior instead of concrete type
 - Test Casbin authorization separately: verify each role's allowed/denied operations against the policy file
 - Test `TeamContext` isolation: verify that queries scoped to one team cannot return data from another team
 - Test that cross-team resource access returns `404` (not `403`) — this is a security requirement
@@ -137,6 +139,7 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - Mock API responses at the `apiFetch()` level — not at the browser fetch level
 - Test loading, success, and error states for every data-fetching component
 - Test that PF6 `Alert` components appear for error states with the correct variant (`danger` for errors, `warning` for degraded)
+- Account for React 18 StrictMode in all effect-driven logic — StrictMode double-invokes `useEffect` mount callbacks in development. Side-effects (API calls, subscriptions, timers) must be idempotent or use cleanup functions / AbortController guards to prevent duplicate work and stale state
 
 **Testing Boundaries:**
 
@@ -208,6 +211,11 @@ quarkus.quinoa.enable-spa-routing=true
 quarkus.quinoa.package-manager-install=true
 quarkus.quinoa.ui-dir=src/main/webui
 ```
+
+**Story Completion Gate:**
+
+- Before a story can be marked `done` in `sprint-status.yaml`, its story file in `implementation-artifacts/` MUST be fully updated: `Status: done`, all task checkboxes checked, Dev Agent Record populated (Agent Model Used, Debug Log References, Completion Notes List, File List). This is a prerequisite gate — the next story MUST NOT start until the previous story file is complete
+- If the dev agent finishes code but forgets to update the story file, the SM or next agent must reject the `done` transition until the documentation is current
 
 **Database Migrations:**
 
@@ -308,4 +316,4 @@ The portal is a developer abstraction layer. All user-facing content (API respon
 - Review quarterly for outdated rules
 - Remove rules that become obvious over time
 
-Last Updated: 2026-04-03
+Last Updated: 2026-04-06

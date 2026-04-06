@@ -1,6 +1,6 @@
 # Story 2.5: Onboarding PR Creation & Completion
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -62,129 +62,129 @@ So that my application is registered and the platform team can review and approv
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create OnboardingPrBuilder service (AC: #1)
-  - [ ] Create `OnboardingPrBuilder.java` in `com.portal.gitops`, `@ApplicationScoped`
-  - [ ] Inject `GitProvider` and `GitProviderConfig`
-  - [ ] Method: `PullRequest createOnboardingPr(String teamName, String appName, Map<String, String> manifests)` orchestrates the 3-step sequence:
+- [x] Task 1: Create OnboardingPrBuilder service (AC: #1)
+  - [x] Create `OnboardingPrBuilder.java` in `com.portal.gitops`, `@ApplicationScoped`
+  - [x] Inject `GitProvider` and `GitProviderConfig`
+  - [x] Method: `PullRequest createOnboardingPr(String teamName, String appName, Map<String, String> manifests)` orchestrates the 3-step sequence:
     1. `gitProvider.createBranch(infraRepoUrl, "onboard/" + teamName + "-" + appName, "main")`
     2. `gitProvider.commitFiles(infraRepoUrl, "onboard/" + teamName + "-" + appName, manifests, "Onboard " + teamName + "/" + appName)`
     3. `gitProvider.createPullRequest(infraRepoUrl, "onboard/" + teamName + "-" + appName, "main", title, description)`
-  - [ ] PR title: `"Onboard " + teamName + "/" + appName + " — " + namespaceCount + " namespaces, " + argoAppCount + " ArgoCD applications"`
-  - [ ] PR description: list all file paths being created (one per line)
-  - [ ] Wrap errors in `PortalIntegrationException(system="git", operation="createOnboardingPr")`
+  - [x] PR title: `"Onboard " + teamName + "/" + appName + " — " + namespaceCount + " namespaces, " + argoAppCount + " ArgoCD applications"`
+  - [x] PR description: list all file paths being created (one per line)
+  - [x] Wrap errors in `PortalIntegrationException(system="git", operation="createOnboardingPr")`
 
-- [ ] Task 2: Create OnboardingConfirmRequest and OnboardingResultDto (AC: #1, #3)
-  - [ ] Create `OnboardingConfirmRequest.java` record in `com.portal.onboarding` with fields: `@NotBlank String appName`, `@NotBlank String gitRepoUrl`, `@NotBlank String runtimeType`, `@NotNull List<String> detectedEnvironments`, `@NotNull Map<String, Long> environmentClusterMap`, `@NotNull Long buildClusterId`
-  - [ ] Create `OnboardingResultDto.java` record in `com.portal.onboarding` with fields: `Long applicationId`, `String applicationName`, `String onboardingPrUrl`, `int namespacesCreated`, `int argoCdAppsCreated`, `List<String> promotionChain`
+- [x] Task 2: Create OnboardingConfirmRequest and OnboardingResultDto (AC: #1, #3)
+  - [x] Create `OnboardingConfirmRequest.java` record in `com.portal.onboarding` with fields: `@NotBlank String appName`, `@NotBlank String gitRepoUrl`, `@NotBlank String runtimeType`, `@NotNull List<String> detectedEnvironments`, `@NotNull Map<String, Long> environmentClusterMap`, `@NotNull Long buildClusterId`
+  - [x] Create `OnboardingResultDto.java` record in `com.portal.onboarding` with fields: `Long applicationId`, `String applicationName`, `String onboardingPrUrl`, `int namespacesCreated`, `int argoCdAppsCreated`, `List<String> promotionChain`
 
-- [ ] Task 3: Extend OnboardingService with confirm method (AC: #1, #3)
-  - [ ] Add method to `OnboardingService.java`: `OnboardingResultDto confirmOnboarding(OnboardingConfirmRequest request)`
-  - [ ] Inject `OnboardingPrBuilder`, `ManifestGenerator`, `TeamContext`
-  - [ ] Step 1: Build the provisioning plan via existing `buildPlan()` method
-  - [ ] Step 2: Generate all manifests via `ManifestGenerator.generateAllManifests()`
-  - [ ] Step 3: Create PR via `OnboardingPrBuilder.createOnboardingPr()`
-  - [ ] Step 4: Persist Application entity — set name, teamId (from TeamContext), gitRepoUrl, runtimeType, onboardingPrUrl (PR URL), onboardedAt (Instant.now())
-  - [ ] Step 5: Persist Environment entities — one per environment in the promotion chain with correct clusterId, namespace (`<team>-<app>-<env>`), and promotionOrder
-  - [ ] Return `OnboardingResultDto` with all details
-  - [ ] Wrap the entire operation in `@Transactional` — if PR creation succeeds but DB persist fails, the PR still exists (acceptable — idempotent re-onboard would create a new PR)
+- [x] Task 3: Extend OnboardingService with confirm method (AC: #1, #3)
+  - [x] Add method to `OnboardingService.java`: `OnboardingResultDto confirmOnboarding(OnboardingConfirmRequest request)`
+  - [x] Inject `OnboardingPrBuilder`, `ManifestGenerator`, `TeamContext`
+  - [x] Step 1: Build the provisioning plan via existing `buildPlan()` method
+  - [x] Step 2: Generate all manifests via `ManifestGenerator.generateAllManifests()`
+  - [x] Step 3: Create PR via `OnboardingPrBuilder.createOnboardingPr()`
+  - [x] Step 4: Persist Application entity — set name, teamId (from TeamContext), gitRepoUrl, runtimeType, onboardingPrUrl (PR URL), onboardedAt (Instant.now())
+  - [x] Step 5: Persist Environment entities — one per environment in the promotion chain with correct clusterId, namespace (`<team>-<app>-<env>`), and promotionOrder
+  - [x] Return `OnboardingResultDto` with all details
+  - [x] Wrap the entire operation in `@Transactional` — if PR creation succeeds but DB persist fails, the PR still exists (acceptable — idempotent re-onboard would create a new PR)
 
-- [ ] Task 4: Add confirm endpoint to OnboardingResource (AC: #1, #6)
-  - [ ] Add `POST /api/v1/teams/{teamId}/applications/onboard/confirm` to `OnboardingResource.java`
-  - [ ] Accepts `@Valid OnboardingConfirmRequest`, returns `OnboardingResultDto` as 201 JSON
-  - [ ] Verify `teamContext.getTeamId()` matches `{teamId}` — return 404 if mismatch
-  - [ ] PermissionFilter: path `teams/{teamId}/applications/onboard/confirm` — "onboard" is in ACTION_SEGMENTS, "confirm" appears after it → filter finds "onboard" first → Casbin check: `(member, applications, onboard)` → ALLOWED
+- [x] Task 4: Add confirm endpoint to OnboardingResource (AC: #1, #6)
+  - [x] Add `POST /api/v1/teams/{teamId}/applications/onboard/confirm` to `OnboardingResource.java`
+  - [x] Accepts `@Valid OnboardingConfirmRequest`, returns `OnboardingResultDto` as 201 JSON
+  - [x] Verify `teamContext.getTeamId()` matches `{teamId}` — return 404 if mismatch
+  - [x] PermissionFilter: path `teams/{teamId}/applications/onboard/confirm` — "onboard" is in ACTION_SEGMENTS, "confirm" appears after it → filter finds "onboard" first → Casbin check: `(member, applications, onboard)` → ALLOWED
 
-- [ ] Task 5: Create frontend types for onboarding completion (AC: #1, #2, #4)
-  - [ ] Add to `src/main/webui/src/types/onboarding.ts`:
+- [x] Task 5: Create frontend types for onboarding completion (AC: #1, #2, #4)
+  - [x] Add to `src/main/webui/src/types/onboarding.ts`:
     - `OnboardingConfirmRequest` (appName, gitRepoUrl, runtimeType, detectedEnvironments, environmentClusterMap, buildClusterId)
     - `OnboardingResult` (applicationId, applicationName, onboardingPrUrl, namespacesCreated, argoCdAppsCreated, promotionChain)
     - `ProvisioningStep` (id, label, status: 'pending' | 'in-progress' | 'completed' | 'failed', error?: string)
 
-- [ ] Task 6: Create frontend API function for confirm (AC: #1)
-  - [ ] Add to `src/main/webui/src/api/onboarding.ts`:
+- [x] Task 6: Create frontend API function for confirm (AC: #1)
+  - [x] Add to `src/main/webui/src/api/onboarding.ts`:
     - `confirmOnboarding(teamId: string, request: OnboardingConfirmRequest): Promise<OnboardingResult>`
 
-- [ ] Task 7: Create ProvisioningProgressTracker component (AC: #2, #5)
-  - [ ] Create `src/main/webui/src/components/onboarding/ProvisioningProgressTracker.tsx`
-  - [ ] Props: `steps: ProvisioningStep[]`, `totalSteps: number`, `onRetry: () => void`
-  - [ ] Header: "{appName} onboarding" with counter "{N}/{total} complete"
-  - [ ] Each step renders with state icon: ○ pending (grey), ⟳ in-progress (yellow Spinner), ✓ completed (green CheckCircleIcon), ✕ failed (red TimesCircleIcon)
-  - [ ] Failed step expands to show error message + "Retry" button + optional deep link
-  - [ ] Completed steps remain ✓ and do not re-render as pending on retry
-  - [ ] Use PF6 `ProgressStepper` / `ProgressStep` as the base component
-  - [ ] Wrap step list in `aria-live="polite"` region for screen reader announcements
-  - [ ] Counter in header updates as steps complete
+- [x] Task 7: Create ProvisioningProgressTracker component (AC: #2, #5)
+  - [x] Create `src/main/webui/src/components/onboarding/ProvisioningProgressTracker.tsx`
+  - [x] Props: `steps: ProvisioningStep[]`, `totalSteps: number`, `onRetry: () => void`
+  - [x] Header: "{appName} onboarding" with counter "{N}/{total} complete"
+  - [x] Each step renders with state icon: ○ pending (grey), ⟳ in-progress (yellow Spinner), ✓ completed (green CheckCircleIcon), ✕ failed (red TimesCircleIcon)
+  - [x] Failed step expands to show error message + "Retry" button + optional deep link
+  - [x] Completed steps remain ✓ and do not re-render as pending on retry
+  - [x] Use PF6 `ProgressStepper` / `ProgressStep` as the base component
+  - [x] Wrap step list in `aria-live="polite"` region for screen reader announcements
+  - [x] Counter in header updates as steps complete
 
-- [ ] Task 8: Create OnboardingCompletionPanel component (AC: #4)
-  - [ ] Create `src/main/webui/src/components/onboarding/OnboardingCompletionPanel.tsx`
-  - [ ] Props: `result: OnboardingResult`, `teamId: string`
-  - [ ] Display success message: "Application onboarded successfully"
-  - [ ] "View onboarding PR ↗" — PF6 Button (link variant) opening PR URL in new tab
-  - [ ] "View {appName}" — PF6 Button (primary) navigating to `/teams/{teamId}/applications/{appId}`
-  - [ ] "Open in DevSpaces ↗" — PF6 Button (link variant), disabled with tooltip "Available after Epic 3"
-  - [ ] Resource summary: "Created N namespaces, M ArgoCD applications"
-  - [ ] Promotion chain display: e.g., "dev → qa → prod"
+- [x] Task 8: Create OnboardingCompletionPanel component (AC: #4)
+  - [x] Create `src/main/webui/src/components/onboarding/OnboardingCompletionPanel.tsx`
+  - [x] Props: `result: OnboardingResult`, `teamId: string`
+  - [x] Display success message: "Application onboarded successfully"
+  - [x] "View onboarding PR ↗" — PF6 Button (link variant) opening PR URL in new tab
+  - [x] "View {appName}" — PF6 Button (primary) navigating to `/teams/{teamId}/applications/{appId}`
+  - [x] "Open in DevSpaces ↗" — PF6 Button (link variant), disabled with tooltip "Available after Epic 3"
+  - [x] Resource summary: "Created N namespaces, M ArgoCD applications"
+  - [x] Promotion chain display: e.g., "dev → qa → prod"
 
-- [ ] Task 9: Update OnboardingWizardPage steps 4 and 5 (AC: #2, #4, #5)
-  - [ ] Replace step 4 placeholder with functional ProvisioningProgressTracker
-  - [ ] Replace step 5 placeholder with OnboardingCompletionPanel
-  - [ ] Carry state from step 3: plan, clusterAssignments, buildClusterId, appName, gitRepoUrl, runtimeType, detectedEnvironments
-  - [ ] Step 4 flow:
+- [x] Task 9: Update OnboardingWizardPage steps 4 and 5 (AC: #2, #4, #5)
+  - [x] Replace step 4 placeholder with functional ProvisioningProgressTracker
+  - [x] Replace step 5 placeholder with OnboardingCompletionPanel
+  - [x] Carry state from step 3: plan, clusterAssignments, buildClusterId, appName, gitRepoUrl, runtimeType, detectedEnvironments
+  - [x] Step 4 flow:
     1. On entering step 4, build `OnboardingConfirmRequest` from wizard state
     2. Call `confirmOnboarding()` API
     3. Simulate step progression: update step states as API executes (creating branch → committing → creating PR)
     4. On success: advance to step 5 with OnboardingResult
     5. On failure: show failed step with error, enable retry
-  - [ ] Step 5 flow: render OnboardingCompletionPanel with result
-  - [ ] Disable wizard "Back" button on step 4 (irreversible once PR creation starts)
-  - [ ] Disable wizard "Next" on step 4 until all steps complete
+  - [x] Step 5 flow: render OnboardingCompletionPanel with result
+  - [x] Disable wizard "Back" button on step 4 (irreversible once PR creation starts)
+  - [x] Disable wizard "Next" on step 4 until all steps complete
 
-- [ ] Task 10: Write OnboardingPrBuilder unit tests (AC: #1)
-  - [ ] Create `OnboardingPrBuilderTest.java` in `src/test/java/com/portal/gitops/`
-  - [ ] Mock `GitProvider` and `GitProviderConfig`
-  - [ ] Test successful PR creation: verify 3-step call sequence (createBranch → commitFiles → createPullRequest)
-  - [ ] Test branch name format: `onboard/<team>-<app>`
-  - [ ] Test PR title format: `"Onboard <team>/<app> — N namespaces, M ArgoCD applications"`
-  - [ ] Test PR description lists all file paths
-  - [ ] Test GitProvider failure on createBranch: verify PortalIntegrationException propagates
-  - [ ] Test GitProvider failure on commitFiles: verify PortalIntegrationException propagates
-  - [ ] Test GitProvider failure on createPullRequest: verify PortalIntegrationException propagates
+- [x] Task 10: Write OnboardingPrBuilder unit tests (AC: #1)
+  - [x] Create `OnboardingPrBuilderTest.java` in `src/test/java/com/portal/gitops/`
+  - [x] Mock `GitProvider` and `GitProviderConfig`
+  - [x] Test successful PR creation: verify 3-step call sequence (createBranch → commitFiles → createPullRequest)
+  - [x] Test branch name format: `onboard/<team>-<app>`
+  - [x] Test PR title format: `"Onboard <team>/<app> — N namespaces, M ArgoCD applications"`
+  - [x] Test PR description lists all file paths
+  - [x] Test GitProvider failure on createBranch: verify PortalIntegrationException propagates
+  - [x] Test GitProvider failure on commitFiles: verify PortalIntegrationException propagates
+  - [x] Test GitProvider failure on createPullRequest: verify PortalIntegrationException propagates
 
-- [ ] Task 11: Write OnboardingService confirm method unit tests (AC: #3)
-  - [ ] Extend `OnboardingServiceTest.java` in `src/test/java/com/portal/onboarding/`
-  - [ ] Mock `OnboardingPrBuilder`, `ManifestGenerator`, `TeamContext`
-  - [ ] Test `confirmOnboarding`: verify Application entity persisted with correct fields (name, teamId, gitRepoUrl, runtimeType, onboardingPrUrl, onboardedAt)
-  - [ ] Test Environment entities persisted: one per environment with correct clusterId, namespace, promotionOrder
-  - [ ] Test PR URL from OnboardingPrBuilder flows into Application.onboardingPrUrl
-  - [ ] Test OnboardingResultDto contains correct counts and promotion chain
+- [x] Task 11: Write OnboardingService confirm method unit tests (AC: #3)
+  - [x] Extend `OnboardingServiceTest.java` in `src/test/java/com/portal/onboarding/`
+  - [x] Mock `OnboardingPrBuilder`, `ManifestGenerator`, `TeamContext`
+  - [x] Test `confirmOnboarding`: verify Application entity persisted with correct fields (name, teamId, gitRepoUrl, runtimeType, onboardingPrUrl, onboardedAt)
+  - [x] Test Environment entities persisted: one per environment with correct clusterId, namespace, promotionOrder
+  - [x] Test PR URL from OnboardingPrBuilder flows into Application.onboardingPrUrl
+  - [x] Test OnboardingResultDto contains correct counts and promotion chain
 
-- [ ] Task 12: Write confirm endpoint integration test (AC: #1, #3, #6)
-  - [ ] Create or extend `OnboardingResourceIT.java` in `src/test/java/com/portal/onboarding/`
-  - [ ] `@QuarkusTest` + `@TestSecurity` + `@OidcSecurity` with member role
-  - [ ] `@InjectMock GitProvider` to mock Git operations
-  - [ ] Test POST `/api/v1/teams/{teamId}/applications/onboard/confirm` with valid request → 201 + OnboardingResultDto JSON
-  - [ ] Verify Application persisted in DB (query by team + name)
-  - [ ] Verify Environment entities persisted (query by application)
-  - [ ] Test Git failure → 502 error response, no Application/Environment persisted
-  - [ ] Test cross-team access → 404
-  - [ ] Test duplicate app name → 409 conflict (unique constraint)
+- [x] Task 12: Write confirm endpoint integration test (AC: #1, #3, #6)
+  - [x] Create or extend `OnboardingResourceIT.java` in `src/test/java/com/portal/onboarding/`
+  - [x] `@QuarkusTest` + `@TestSecurity` + `@OidcSecurity` with member role
+  - [x] `@InjectMock GitProvider` to mock Git operations
+  - [x] Test POST `/api/v1/teams/{teamId}/applications/onboard/confirm` with valid request → 201 + OnboardingResultDto JSON
+  - [x] Verify Application persisted in DB (query by team + name)
+  - [x] Verify Environment entities persisted (query by application)
+  - [x] Test Git failure → 502 error response, no Application/Environment persisted
+  - [x] Test cross-team access → 404
+  - [x] Test duplicate app name → 409 conflict (unique constraint)
 
-- [ ] Task 13: Write frontend component tests (AC: #2, #4, #5)
-  - [ ] Create `src/main/webui/src/components/onboarding/ProvisioningProgressTracker.test.tsx`
-  - [ ] Test all steps pending: grey icons, counter "0/3 complete"
-  - [ ] Test step 1 in-progress: spinner shown for step 1
-  - [ ] Test step 1 completed, step 2 in-progress: check icon for step 1, spinner for step 2
-  - [ ] Test step failed: red icon, error message, retry button visible
-  - [ ] Test retry button calls onRetry callback
-  - [ ] Test aria-live region present
-  - [ ] Create `src/main/webui/src/components/onboarding/OnboardingCompletionPanel.test.tsx`
-  - [ ] Test success message displayed
-  - [ ] Test PR link opens in new tab (target="_blank")
-  - [ ] Test "View app" button navigates correctly
-  - [ ] Test resource summary shows correct counts
-  - [ ] Extend `src/main/webui/src/routes/OnboardingWizardPage.test.tsx`
-  - [ ] Test step 4 renders ProvisioningProgressTracker
-  - [ ] Test step 5 renders OnboardingCompletionPanel after success
+- [x] Task 13: Write frontend component tests (AC: #2, #4, #5)
+  - [x] Create `src/main/webui/src/components/onboarding/ProvisioningProgressTracker.test.tsx`
+  - [x] Test all steps pending: grey icons, counter "0/3 complete"
+  - [x] Test step 1 in-progress: spinner shown for step 1
+  - [x] Test step 1 completed, step 2 in-progress: check icon for step 1, spinner for step 2
+  - [x] Test step failed: red icon, error message, retry button visible
+  - [x] Test retry button calls onRetry callback
+  - [x] Test aria-live region present
+  - [x] Create `src/main/webui/src/components/onboarding/OnboardingCompletionPanel.test.tsx`
+  - [x] Test success message displayed
+  - [x] Test PR link opens in new tab (target="_blank")
+  - [x] Test "View app" button navigates correctly
+  - [x] Test resource summary shows correct counts
+  - [x] Extend `src/main/webui/src/routes/OnboardingWizardPage.test.tsx`
+  - [x] Test step 4 renders ProvisioningProgressTracker
+  - [x] Test step 5 renders OnboardingCompletionPanel after success
 
 ## Dev Notes
 
@@ -837,8 +837,41 @@ src/main/webui/src/routes/OnboardingWizardPage.test.tsx  (add steps 4-5 tests)
 
 ### Agent Model Used
 
+claude-4-sonnet (reconstructed during Epic 2 retrospective — original agent session did not update this file)
+
 ### Debug Log References
+
+No debug log was preserved — this record was reconstructed post-hoc during the Epic 2 retrospective. This gap led to the "Story Completion Gate" rule being added to project-context.md.
 
 ### Completion Notes List
 
+- All 13 tasks completed: OnboardingPrBuilder, OnboardingConfirmRequest/ResultDto, OnboardingService.confirmOnboarding(), confirm endpoint, frontend types/API, ProvisioningProgressTracker, OnboardingCompletionPanel, wizard steps 4-5 integration, unit tests, integration tests, frontend component tests
+- Simulated step progression implemented as designed (timed state updates during single API call)
+- Wizard Back button disabled on step 4 as specified
+- DevSpaces link rendered as disabled placeholder per spec
+
 ### File List
+
+**New backend files:**
+- `src/main/java/com/portal/gitops/OnboardingPrBuilder.java`
+- `src/main/java/com/portal/onboarding/OnboardingConfirmRequest.java`
+- `src/main/java/com/portal/onboarding/OnboardingResultDto.java`
+- `src/test/java/com/portal/gitops/OnboardingPrBuilderTest.java`
+
+**Modified backend files:**
+- `src/main/java/com/portal/onboarding/OnboardingResource.java`
+- `src/main/java/com/portal/onboarding/OnboardingService.java`
+- `src/test/java/com/portal/onboarding/OnboardingResourceIT.java`
+- `src/test/java/com/portal/onboarding/OnboardingServiceTest.java`
+
+**New frontend files:**
+- `src/main/webui/src/components/onboarding/ProvisioningProgressTracker.tsx`
+- `src/main/webui/src/components/onboarding/ProvisioningProgressTracker.test.tsx`
+- `src/main/webui/src/components/onboarding/OnboardingCompletionPanel.tsx`
+- `src/main/webui/src/components/onboarding/OnboardingCompletionPanel.test.tsx`
+
+**Modified frontend files:**
+- `src/main/webui/src/types/onboarding.ts`
+- `src/main/webui/src/api/onboarding.ts`
+- `src/main/webui/src/routes/OnboardingWizardPage.tsx`
+- `src/main/webui/src/routes/OnboardingWizardPage.test.tsx`

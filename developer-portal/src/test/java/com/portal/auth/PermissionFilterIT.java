@@ -60,7 +60,7 @@ class PermissionFilterIT {
                 .statusCode(200);
     }
 
-    // --- AC #5: Members cannot access admin endpoints → 403 ---
+    // --- Members can read clusters but cannot modify them ---
 
     @Test
     @TestSecurity(user = "dev@example.com", roles = "member")
@@ -74,6 +74,8 @@ class PermissionFilterIT {
                 .then()
                 .statusCode(200);
     }
+
+    // --- AC #5: Members cannot modify admin resources → 403 ---
 
     @Test
     @TestSecurity(user = "dev@example.com", roles = "member")

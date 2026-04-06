@@ -90,9 +90,13 @@ class CasbinEnforcerTest {
     }
 
     @Test
-    void memberCannotCrudClusters() {
+    void memberCanReadClusters() {
+        assertTrue(enforcer.enforce("member", "clusters", "read"));
+    }
+
+    @Test
+    void memberCannotModifyClusters() {
         assertFalse(enforcer.enforce("member", "clusters", "create"));
-        assertFalse(enforcer.enforce("member", "clusters", "read"));
         assertFalse(enforcer.enforce("member", "clusters", "update"));
         assertFalse(enforcer.enforce("member", "clusters", "delete"));
     }

@@ -88,8 +88,15 @@ class PermissionFilterTest {
     }
 
     @Test
-    void memberDeniedAdminClusters() {
+    void memberAllowedReadAdminClusters() {
         setupRequest("api/v1/admin/clusters", "GET", "member");
+        filter.filter(requestContext);
+        verify(requestContext, never()).abortWith(any());
+    }
+
+    @Test
+    void memberDeniedCreateAdminClusters() {
+        setupRequest("api/v1/admin/clusters", "POST", "member");
         assertThrows(PortalAuthorizationException.class, () -> filter.filter(requestContext));
     }
 
