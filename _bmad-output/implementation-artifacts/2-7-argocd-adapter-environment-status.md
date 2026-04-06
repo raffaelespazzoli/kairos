@@ -1,6 +1,6 @@
 # Story 2.7: ArgoCD Adapter & Environment Status
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -50,65 +50,65 @@ So that the portal can display live environment state without exposing ArgoCD co
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Add ArgoCD configuration properties (AC: #1)
-  - [ ] Add `portal.argocd.url`, `portal.argocd.token`, `portal.argocd.provider` to `application.properties`
-  - [ ] Add `%dev.portal.argocd.provider=dev` for dev mode activation
-  - [ ] Create `ArgoCdConfig.java` using `@ConfigMapping(prefix = "portal.argocd")`
-  - [ ] Configure Quarkus REST Client: `quarkus.rest-client.argocd-api.url` referencing `ARGOCD_URL`
+- [x] Task 1: Add ArgoCD configuration properties (AC: #1)
+  - [x] Add `portal.argocd.url`, `portal.argocd.token`, `portal.argocd.provider` to `application.properties`
+  - [x] Add `%dev.portal.argocd.provider=dev` for dev mode activation
+  - [x] Create `ArgoCdConfig.java` using `@ConfigMapping(prefix = "portal.argocd")`
+  - [x] Configure Quarkus REST Client: `quarkus.rest-client.argocd-api.url` referencing `ARGOCD_URL`
 
-- [ ] Task 2: Create ArgoCD REST Client interface (AC: #1)
-  - [ ] Create `ArgoCdRestClient.java` in `com.portal.integration.argocd` using `@RegisterRestClient(configKey = "argocd-api")`
-  - [ ] Define `@GET @Path("/applications/{name}") JsonNode getApplication(...)` accepting `@HeaderParam("Authorization")` and `@PathParam("name")`
-  - [ ] Jackson-compatible response binding to `JsonNode` for flexibility with ArgoCD API response shape
+- [x] Task 2: Create ArgoCD REST Client interface (AC: #1)
+  - [x] Create `ArgoCdRestClient.java` in `com.portal.integration.argocd` using `@RegisterRestClient(configKey = "argocd-api")`
+  - [x] Define `@GET @Path("/applications/{name}") JsonNode getApplication(...)` accepting `@HeaderParam("Authorization")` and `@PathParam("name")`
+  - [x] Jackson-compatible response binding to `JsonNode` for flexibility with ArgoCD API response shape
 
-- [ ] Task 3: Create internal ArgoCD response models (AC: #2, #3)
-  - [ ] Create `ArgoCdApplication.java` record in `com.portal.integration.argocd.model` — parsed from ArgoCD API JSON
-  - [ ] Create `ArgoCdSyncStatus.java` record in `com.portal.integration.argocd.model` — holds syncStatus, healthStatus, deployedVersion, operationFinishedAt
+- [x] Task 3: Create internal ArgoCD response models (AC: #2, #3)
+  - [x] Create `ArgoCdApplication.java` record in `com.portal.integration.argocd.model` — parsed from ArgoCD API JSON
+  - [x] Create `ArgoCdSyncStatus.java` record in `com.portal.integration.argocd.model` — holds syncStatus, healthStatus, deployedVersion, operationFinishedAt
 
-- [ ] Task 4: Create EnvironmentStatusDto (AC: #6)
-  - [ ] Create `EnvironmentStatusDto.java` record in `com.portal.environment`
-  - [ ] Fields: `String environmentName`, `PortalEnvironmentStatus status`, `String deployedVersion`, `Instant lastDeployedAt`, `String argocdAppName`, `String argocdDeepLink`
-  - [ ] Create `PortalEnvironmentStatus` enum in `com.portal.environment`: `HEALTHY`, `UNHEALTHY`, `DEPLOYING`, `NOT_DEPLOYED`
+- [x] Task 4: Create EnvironmentStatusDto (AC: #6)
+  - [x] Create `EnvironmentStatusDto.java` record in `com.portal.environment`
+  - [x] Fields: `String environmentName`, `PortalEnvironmentStatus status`, `String deployedVersion`, `Instant lastDeployedAt`, `String argocdAppName`, `String argocdDeepLink`
+  - [x] Create `PortalEnvironmentStatus` enum in `com.portal.environment`: `HEALTHY`, `UNHEALTHY`, `DEPLOYING`, `NOT_DEPLOYED`
 
-- [ ] Task 5: Create ArgoCdAdapter interface (AC: #2)
-  - [ ] Create `ArgoCdAdapter.java` interface in `com.portal.integration.argocd`
-  - [ ] Method: `List<EnvironmentStatusDto> getEnvironmentStatuses(String appName, List<Environment> environments)`
+- [x] Task 5: Create ArgoCdAdapter interface (AC: #2)
+  - [x] Create `ArgoCdAdapter.java` interface in `com.portal.integration.argocd`
+  - [x] Method: `List<EnvironmentStatusDto> getEnvironmentStatuses(String appName, List<Environment> environments)`
 
-- [ ] Task 6: Implement ArgoCdRestAdapter (AC: #1, #2, #3, #4, #5, #6)
-  - [ ] Create `ArgoCdRestAdapter.java` in `com.portal.integration.argocd`, `@ApplicationScoped`
-  - [ ] Activate via `@IfBuildProperty(name = "portal.argocd.provider", stringValue = "argocd", enableIfMissing = true)`
-  - [ ] Inject `@RestClient ArgoCdRestClient` and `ArgoCdConfig`
-  - [ ] Implement `getEnvironmentStatuses`: build ArgoCD app name per environment (`<appName>-run-<envName>`), query each in parallel via `CompletableFuture`, aggregate results
-  - [ ] Implement status translation: parse ArgoCD sync + health into `PortalEnvironmentStatus`
-  - [ ] Extract deployed version from ArgoCD response summary images
-  - [ ] Build deep link URL: `{argocdUrl}/applications/{argocdAppName}`
-  - [ ] Catch `WebApplicationException` / connection failures → throw `PortalIntegrationException(system="argocd", ...)`
+- [x] Task 6: Implement ArgoCdRestAdapter (AC: #1, #2, #3, #4, #5, #6)
+  - [x] Create `ArgoCdRestAdapter.java` in `com.portal.integration.argocd`, `@ApplicationScoped`
+  - [x] Activate via `@IfBuildProperty(name = "portal.argocd.provider", stringValue = "argocd", enableIfMissing = true)`
+  - [x] Inject `@RestClient ArgoCdRestClient` and `ArgoCdConfig`
+  - [x] Implement `getEnvironmentStatuses`: build ArgoCD app name per environment (`<appName>-run-<envName>`), query each in parallel via `CompletableFuture`, aggregate results
+  - [x] Implement status translation: parse ArgoCD sync + health into `PortalEnvironmentStatus`
+  - [x] Extract deployed version from ArgoCD response summary images
+  - [x] Build deep link URL: `{argocdUrl}/applications/{argocdAppName}`
+  - [x] Catch `WebApplicationException` / connection failures → throw `PortalIntegrationException(system="argocd", ...)`
 
-- [ ] Task 7: Implement DevArgoCdAdapter (AC: #1)
-  - [ ] Create `DevArgoCdAdapter.java` in `com.portal.integration.argocd`, `@ApplicationScoped`
-  - [ ] Activate via `@IfBuildProperty(name = "portal.argocd.provider", stringValue = "dev")`
-  - [ ] Return mock EnvironmentStatusDto data: first env as HEALTHY with "v1.2.3", second as DEPLOYING, others as NOT_DEPLOYED
-  - [ ] Follow the `DevSecretManagerAdapter` pattern exactly
+- [x] Task 7: Implement DevArgoCdAdapter (AC: #1)
+  - [x] Create `DevArgoCdAdapter.java` in `com.portal.integration.argocd`, `@ApplicationScoped`
+  - [x] Activate via `@IfBuildProperty(name = "portal.argocd.provider", stringValue = "dev")`
+  - [x] Return mock EnvironmentStatusDto data: first env as HEALTHY with "v1.2.3", second as DEPLOYING, others as NOT_DEPLOYED
+  - [x] Follow the `DevSecretManagerAdapter` pattern exactly
 
-- [ ] Task 8: Write ArgoCdRestAdapter unit tests (AC: #2, #3, #4, #5)
-  - [ ] Create `ArgoCdRestAdapterTest.java` in `src/test/java/com/portal/integration/argocd/`
-  - [ ] Mock `ArgoCdRestClient` and `ArgoCdConfig` via reflection (same pattern as VaultSecretManagerAdapterTest)
-  - [ ] Test `getEnvironmentStatuses` with single environment: verify correct ArgoCD app name, correct status mapping
-  - [ ] Test status mapping: Synced+Healthy → HEALTHY, Synced+Degraded → UNHEALTHY, OutOfSync → DEPLOYING, 404 → NOT_DEPLOYED
-  - [ ] Test deployed version extraction from ArgoCD response
-  - [ ] Test deep link URL construction
-  - [ ] Test ArgoCD unreachable → PortalIntegrationException with system="argocd"
-  - [ ] Test parallel execution: verify multiple environments queried and results aggregated
+- [x] Task 8: Write ArgoCdRestAdapter unit tests (AC: #2, #3, #4, #5)
+  - [x] Create `ArgoCdRestAdapterTest.java` in `src/test/java/com/portal/integration/argocd/`
+  - [x] Mock `ArgoCdRestClient` and `ArgoCdConfig` via reflection (same pattern as VaultSecretManagerAdapterTest)
+  - [x] Test `getEnvironmentStatuses` with single environment: verify correct ArgoCD app name, correct status mapping
+  - [x] Test status mapping: Synced+Healthy → HEALTHY, Synced+Degraded → UNHEALTHY, OutOfSync → DEPLOYING, 404 → NOT_DEPLOYED
+  - [x] Test deployed version extraction from ArgoCD response
+  - [x] Test deep link URL construction
+  - [x] Test ArgoCD unreachable → PortalIntegrationException with system="argocd"
+  - [x] Test parallel execution: verify multiple environments queried and results aggregated
 
-- [ ] Task 9: Write ArgoCdAdapter integration test (AC: #1, #2, #5)
-  - [ ] Create `ArgoCdAdapterIT.java` in `src/test/java/com/portal/integration/argocd/`
-  - [ ] `@QuarkusTest` with `@InjectMock ArgoCdRestClient` to mock the REST client
-  - [ ] Test full adapter lifecycle: config injected, REST client called, response translated, DTO returned
-  - [ ] Test error propagation: REST client throws → PortalIntegrationException
+- [x] Task 9: Write ArgoCdAdapter integration test (AC: #1, #2, #5)
+  - [x] Create `ArgoCdAdapterIT.java` in `src/test/java/com/portal/integration/argocd/`
+  - [x] `@QuarkusTest` with `@InjectMock ArgoCdRestClient` to mock the REST client
+  - [x] Test full adapter lifecycle: config injected, REST client called, response translated, DTO returned
+  - [x] Test error propagation: REST client throws → PortalIntegrationException
 
-- [ ] Task 10: Write EnvironmentStatusDto serialization test (AC: #6)
-  - [ ] Create `EnvironmentStatusDtoTest.java` in `src/test/java/com/portal/environment/`
-  - [ ] Verify JSON serialization: all fields present, enum serialized as string, Instant as ISO 8601
+- [x] Task 10: Write EnvironmentStatusDto serialization test (AC: #6)
+  - [x] Create `EnvironmentStatusDtoTest.java` in `src/test/java/com/portal/environment/`
+  - [x] Verify JSON serialization: all fields present, enum serialized as string, Instant as ISO 8601
 
 ## Dev Notes
 
@@ -824,9 +824,42 @@ src/test/resources/application.properties             (add portal.argocd.provide
 ## Dev Agent Record
 
 ### Agent Model Used
+Claude claude-4.6-opus-high-thinking
 
 ### Debug Log References
+- Initial unit test run failed: AssertJ not available (project uses JUnit 5 assertions) — rewrote all tests with JUnit 5 assertions
+- WebApplicationException mock caused UnfinishedStubbing — switched to `new WebApplicationException(statusCode)` constructor
+- CompletableFuture::join wraps exceptions in CompletionException — added unwrap logic in getEnvironmentStatuses
+- translateStatus check order: OutOfSync matched before Degraded health — reordered to check Degraded/Missing health first (matches spec matrix)
 
 ### Completion Notes List
+- Implemented full ArgoCD adapter following the SecretManagerAdapter/DevSecretManagerAdapter pattern
+- ArgoCdRestAdapter queries ArgoCD REST API via Quarkus REST Client, translates sync+health status to portal domain
+- Parallel environment queries via CompletableFuture with CompletionException unwrapping
+- Status translation covers full matrix: Synced+Healthy→HEALTHY, Degraded/Missing→UNHEALTHY, OutOfSync/Progressing/Suspended→DEPLOYING, Unknown/404→NOT_DEPLOYED
+- DevArgoCdAdapter returns mock data for dev mode (first env HEALTHY, second DEPLOYING, rest NOT_DEPLOYED)
+- 26 tests total: 18 unit tests (ArgoCdRestAdapterTest), 4 integration tests (ArgoCdAdapterIT), 4 serialization tests (EnvironmentStatusDtoTest)
+- All new tests pass; pre-existing auth test failures (CasbinEnforcer, PermissionFilter, ClusterResource, GlobalExceptionMapper) are unrelated
 
 ### File List
+New files:
+- developer-portal/src/main/java/com/portal/integration/argocd/ArgoCdAdapter.java
+- developer-portal/src/main/java/com/portal/integration/argocd/ArgoCdConfig.java
+- developer-portal/src/main/java/com/portal/integration/argocd/ArgoCdRestClient.java
+- developer-portal/src/main/java/com/portal/integration/argocd/ArgoCdRestAdapter.java
+- developer-portal/src/main/java/com/portal/integration/argocd/DevArgoCdAdapter.java
+- developer-portal/src/main/java/com/portal/integration/argocd/model/ArgoCdApplication.java
+- developer-portal/src/main/java/com/portal/integration/argocd/model/ArgoCdSyncStatus.java
+- developer-portal/src/main/java/com/portal/environment/EnvironmentStatusDto.java
+- developer-portal/src/main/java/com/portal/environment/PortalEnvironmentStatus.java
+- developer-portal/src/test/java/com/portal/integration/argocd/ArgoCdRestAdapterTest.java
+- developer-portal/src/test/java/com/portal/integration/argocd/ArgoCdAdapterIT.java
+- developer-portal/src/test/java/com/portal/environment/EnvironmentStatusDtoTest.java
+
+Modified files:
+- developer-portal/src/main/resources/application.properties
+- developer-portal/src/test/resources/application.properties
+
+### Change Log
+- 2026-04-06: Implemented Story 2.7 — ArgoCD Adapter & Environment Status. Created ArgoCdAdapter interface with ArgoCdRestAdapter (production) and DevArgoCdAdapter (dev mode). Added EnvironmentStatusDto and PortalEnvironmentStatus to portal environment domain. Full test coverage with 26 tests.
+- 2026-04-06: Addressed code review findings — (1) REST client URL now derives from portal.argocd.url to prevent config divergence, (2) malformed finishedAt timestamps caught gracefully instead of masquerading as "unreachable", (3) image version extraction handles digest-pinned and registry:port formats, (4) serialization test now asserts ISO-8601 timestamp format. Added 4 new unit tests. Total: 30 tests.
