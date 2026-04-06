@@ -26,8 +26,10 @@
 }
 
 /* ── Masthead: dark background ─────────────────────────────────── */
-.pf-v6-c-masthead {
+/* Doubled selector to beat PF6 base specificity (both are single-class) */
+.pf-v6-c-masthead.pf-v6-c-masthead {
   --pf-v6-c-masthead--BackgroundColor: var(--portal--chrome--bg-dark);
+  background-color: var(--portal--chrome--bg-dark);
   color: var(--portal--chrome--text);
 }
 
@@ -47,8 +49,9 @@
 }
 
 /* ── Sidebar: dark background ──────────────────────────────────── */
-.pf-v6-c-page__sidebar {
+.pf-v6-c-page__sidebar.pf-v6-c-page__sidebar {
   --pf-v6-c-page__sidebar--BackgroundColor: var(--portal--chrome--bg-sidebar);
+  background-color: var(--portal--chrome--bg-sidebar);
 }
 
 .pf-v6-c-page__sidebar .pf-v6-c-nav {
@@ -82,7 +85,31 @@
 .pf-v6-c-page__sidebar .pf-v6-c-label {
   --pf-v6-c-label--BackgroundColor: var(--portal--chrome--label-bg);
   --pf-v6-c-label--Color: var(--portal--chrome--text);
-  border-color: var(--portal--chrome--border-subtle);
+  --pf-v6-c-label--BorderColor: var(--portal--chrome--border-medium);
+}
+
+.pf-v6-c-page__sidebar .pf-v6-c-label__content,
+.pf-v6-c-page__sidebar .pf-v6-c-label__text,
+.pf-v6-c-page__sidebar .pf-v6-c-label__icon {
+  color: var(--portal--chrome--text-bright);
+}
+
+/* Team switcher dropdown toggle on dark sidebar */
+.portal-team-toggle.pf-v6-c-menu-toggle {
+  --pf-v6-c-menu-toggle--Color: var(--portal--chrome--text-bright);
+  --pf-v6-c-menu-toggle--BackgroundColor: transparent;
+  --pf-v6-c-menu-toggle--BorderColor: var(--portal--chrome--border-medium);
+  --pf-v6-c-menu-toggle--hover--Color: var(--portal--chrome--text-bright);
+  --pf-v6-c-menu-toggle--hover--BackgroundColor: var(--portal--chrome--hover-bg);
+  --pf-v6-c-menu-toggle--hover--BorderColor: var(--portal--chrome--border-hover);
+  --pf-v6-c-menu-toggle--expanded--Color: var(--portal--chrome--text-bright);
+  --pf-v6-c-menu-toggle--expanded--BackgroundColor: var(--portal--chrome--hover-bg);
+  --pf-v6-c-menu-toggle--expanded--BorderColor: var(--portal--chrome--border-hover);
+}
+
+.portal-team-toggle .pf-v6-c-menu-toggle__icon,
+.portal-team-toggle .pf-v6-c-menu-toggle__toggle-icon {
+  color: var(--portal--chrome--text);
 }
 
 /* Expandable nav toggle (Admin section) */

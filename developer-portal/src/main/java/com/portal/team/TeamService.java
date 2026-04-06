@@ -32,14 +32,12 @@ public class TeamService {
     }
 
     /**
-     * Returns teams matching the given OIDC group identifiers.
-     * For MVP, a user belongs to a single team.
+     * Returns all teams matching any of the given OIDC group identifiers.
      */
-    public List<Team> getTeamsForUser(String teamIdentifier) {
-        Team team = Team.findByOidcGroupId(teamIdentifier);
-        if (team == null) {
+    public List<Team> getTeamsForUser(List<String> teamGroups) {
+        if (teamGroups == null || teamGroups.isEmpty()) {
             return List.of();
         }
-        return List.of(team);
+        return Team.list("oidcGroupId in ?1", teamGroups);
     }
 }

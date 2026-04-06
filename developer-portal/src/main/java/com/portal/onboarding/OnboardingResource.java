@@ -63,9 +63,21 @@ public class OnboardingResource {
     }
 
     private void verifyTeamAccess(String teamId) {
-        if (!teamId.equals(teamContext.getTeamIdentifier())
-                && (teamContext.getTeamId() == null || !teamId.equals(teamContext.getTeamId().toString()))) {
-            throw new NotFoundException("Team not found");
+        // Check if teamId matches by numeric ID or by OIDC group
+        if (teamContext.getTeamId() != null && teamId.equals(teamContext.getTeamId().toString())) {
+            return;
         }
+        if (teamContext.hasAccessToGroup(teamId)) {
+            return;
+        }
+        // Try resolving numeric ID to oidcGroupId
+        try {
+            com.portal.team.Team team = com.portal.team.Team.findById(Long.parseLong(teamId));
+            if (team != null && teamContext.hasAccessToGroup(team.oidcGroupId)) {
+                return;
+            }
+        } catch (NumberFormatException ignored) {
+        }
+        throw new NotFoundException("Team not found");
     }
 }

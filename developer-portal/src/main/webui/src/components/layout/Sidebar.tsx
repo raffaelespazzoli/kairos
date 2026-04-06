@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   PageSidebarBody,
   Nav,
@@ -6,10 +7,15 @@ import {
   NavExpandable,
   Button,
   Label,
+  Dropdown,
+  DropdownItem,
+  DropdownList,
+  MenuToggle,
 } from '@patternfly/react-core';
 import { UsersIcon, CogIcon } from '@patternfly/react-icons';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import type { TeamSummary } from '../../types/team';
 
 function deriveTabFromPath(pathname: string): string {
   const segments = pathname.split('/').filter(Boolean);
@@ -27,19 +33,32 @@ export interface SidebarApp {
 
 interface SidebarProps {
   applications?: SidebarApp[];
+  teams?: TeamSummary[];
+  activeTeamId?: number | null;
 }
 
 /**
  * Sidebar with team selector, application nav, and onboard CTA.
  * Uses route params for team context so URLs stay consistent.
  */
-export function Sidebar({ applications = [] }: SidebarProps) {
+export function Sidebar({ applications = [], teams = [], activeTeamId }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { teamId: routeTeamId, appId } = useParams();
-  const { teamName, teamId: authTeamId, role } = useAuth();
+  const { teamId: authTeamId, role } = useAuth();
+  const [isTeamDropdownOpen, setIsTeamDropdownOpen] = useState(false);
 
   const teamId = routeTeamId ?? authTeamId;
+  const activeTeam = teams.find((t) => t.id === activeTeamId);
+  const activeTeamName = activeTeam?.name ?? teamId ?? 'Select team';
+  const hasMultipleTeams = teams.length > 1;
+
+  const onTeamSelect = (selectedId: number) => {
+    setIsTeamDropdownOpen(false);
+    if (selectedId !== activeTeamId) {
+      navigate(`/teams/${selectedId}`);
+    }
+  };
 
   const navigateToApp = (newAppId: string) => {
     const currentTab = deriveTabFromPath(location.pathname);
@@ -50,9 +69,43 @@ export function Sidebar({ applications = [] }: SidebarProps) {
     <>
       <PageSidebarBody isFilled={false}>
         <div className="pf-v6-u-p-md">
-          <Label icon={<UsersIcon />} variant="outline">
-            {teamName}
-          </Label>
+          {hasMultipleTeams ? (
+            <Dropdown
+              isOpen={isTeamDropdownOpen}
+              onSelect={() => setIsTeamDropdownOpen(false)}
+              onOpenChange={setIsTeamDropdownOpen}
+              toggle={(toggleRef) => (
+                <MenuToggle
+                  ref={toggleRef}
+                  onClick={() => setIsTeamDropdownOpen((prev) => !prev)}
+                  isExpanded={isTeamDropdownOpen}
+                  isFullWidth
+                  icon={<UsersIcon />}
+                  className="portal-team-toggle"
+                >
+                  {activeTeamName}
+                </MenuToggle>
+              )}
+              popperProps={{ position: 'left' }}
+            >
+              <DropdownList>
+                {teams.map((t) => (
+                  <DropdownItem
+                    key={t.id}
+                    onClick={() => onTeamSelect(t.id)}
+                    isSelected={t.id === activeTeamId}
+                    icon={<UsersIcon />}
+                  >
+                    {t.name}
+                  </DropdownItem>
+                ))}
+              </DropdownList>
+            </Dropdown>
+          ) : (
+            <Label icon={<UsersIcon />} variant="outline">
+              {activeTeamName}
+            </Label>
+          )}
         </div>
       </PageSidebarBody>
 

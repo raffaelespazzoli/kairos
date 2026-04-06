@@ -1,6 +1,7 @@
 package com.portal.application;
 
 import com.portal.auth.TeamContext;
+import com.portal.team.Team;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
@@ -23,10 +24,11 @@ public class ApplicationResource {
     @GET
     public List<ApplicationSummaryDto> listApplications(
             @PathParam("teamId") Long teamId) {
-        if (!teamContext.getTeamId().equals(teamId)) {
+        Team team = Team.findById(teamId);
+        if (team == null || !teamContext.hasAccessToGroup(team.oidcGroupId)) {
             throw new NotFoundException();
         }
-        return applicationService.getTeamApplications().stream()
+        return applicationService.getApplicationsForTeam(teamId).stream()
                 .map(ApplicationSummaryDto::from)
                 .toList();
     }

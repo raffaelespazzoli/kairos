@@ -1,6 +1,7 @@
 package com.portal.environment;
 
 import com.portal.auth.TeamContext;
+import com.portal.team.Team;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
@@ -24,7 +25,8 @@ public class EnvironmentResource {
     public EnvironmentChainResponse getEnvironmentChain(
             @PathParam("teamId") Long teamId,
             @PathParam("appId") Long appId) {
-        if (!teamContext.getTeamId().equals(teamId)) {
+        Team team = Team.findById(teamId);
+        if (team == null || !teamContext.hasAccessToGroup(team.oidcGroupId)) {
             throw new NotFoundException();
         }
         return environmentService.getEnvironmentChain(teamId, appId);

@@ -20,6 +20,10 @@ public class ApplicationService {
         return Application.findByTeam(teamContext.getTeamId());
     }
 
+    public List<Application> getApplicationsForTeam(Long teamId) {
+        return Application.findByTeam(teamId);
+    }
+
     /**
      * Returns an application by ID if it belongs to the caller's team.
      * Returns 404 for both missing and cross-team resources.

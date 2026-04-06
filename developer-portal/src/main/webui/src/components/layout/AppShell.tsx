@@ -12,10 +12,12 @@ import {
   PageToggleButton,
 } from '@patternfly/react-core';
 import { BarsIcon, UserIcon } from '@patternfly/react-icons';
-import { Outlet, useParams } from 'react-router-dom';
+import { Outlet, useParams, useNavigate, useLocation } from 'react-router-dom';
+import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { useAuth } from '../../hooks/useAuth';
 import { useApiFetch } from '../../hooks/useApiFetch';
 import { ApplicationsProvider } from '../../contexts/ApplicationsContext';
+import { TeamsProvider } from '../../contexts/TeamsContext';
 import { Sidebar } from './Sidebar';
 import { AppBreadcrumb } from './AppBreadcrumb';
 import type { SidebarApp } from './Sidebar';
@@ -62,6 +64,20 @@ export function AppShell() {
     return teams[0].id;
   }, [teams, routeTeamId, authTeamId]);
 
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (numericTeamId === null || routeTeamId === undefined) return;
+    if (routeTeamId !== String(numericTeamId)) {
+      const newPath = location.pathname.replace(
+        `/teams/${routeTeamId}`,
+        `/teams/${numericTeamId}`,
+      );
+      navigate(newPath + location.search, { replace: true });
+    }
+  }, [numericTeamId, routeTeamId, location.pathname, location.search, navigate]);
+
   const {
     data: applications,
     error: appsError,
@@ -77,6 +93,20 @@ export function AppShell() {
   const sidebarApps: SidebarApp[] = useMemo(
     () => appList.map((app) => ({ id: String(app.id), name: app.name })),
     [appList],
+  );
+
+  const activeTeam = useMemo(
+    () => (teams ?? []).find((t) => t.id === numericTeamId) ?? null,
+    [teams, numericTeamId],
+  );
+
+  const teamsContextValue = useMemo(
+    () => ({
+      teams: teams ?? [],
+      activeTeamId: numericTeamId,
+      activeTeam,
+    }),
+    [teams, numericTeamId, activeTeam],
   );
 
   const appsContextValue = useMemo(
@@ -114,7 +144,7 @@ export function AppShell() {
           </span>
           <span>{username}</span>
           <span className="pf-v6-u-color-300">|</span>
-          <span>{teamName}</span>
+          <span>{activeTeam?.name ?? teamName}</span>
         </span>
       </MastheadContent>
     </Masthead>
@@ -122,26 +152,37 @@ export function AppShell() {
 
   const sidebar = (
     <PageSidebar isSidebarOpen={isSidebarOpen}>
-      <Sidebar applications={sidebarApps} />
+      <Sidebar
+        applications={sidebarApps}
+        teams={teams ?? []}
+        activeTeamId={numericTeamId}
+      />
     </PageSidebar>
   );
 
+  const needsRedirect =
+    numericTeamId !== null &&
+    routeTeamId !== undefined &&
+    routeTeamId !== String(numericTeamId);
+
   return (
-    <ApplicationsProvider value={appsContextValue}>
-      <Page
-        masthead={masthead}
-        sidebar={sidebar}
-        style={
-          { '--pf-v6-c-page__sidebar--Width--base': '256px' } as React.CSSProperties
-        }
-      >
-        <PageSection variant="default" isWidthLimited>
-          <AppBreadcrumb />
-        </PageSection>
-        <PageSection isFilled>
-          <Outlet />
-        </PageSection>
-      </Page>
-    </ApplicationsProvider>
+    <TeamsProvider value={teamsContextValue}>
+      <ApplicationsProvider value={appsContextValue}>
+        <Page
+          masthead={masthead}
+          sidebar={sidebar}
+          style={
+            { '--pf-v6-c-page__sidebar--Width--base': '256px' } as React.CSSProperties
+          }
+        >
+          <PageSection variant="default" isWidthLimited>
+            <AppBreadcrumb />
+          </PageSection>
+          <PageSection isFilled>
+            {teamsLoading || needsRedirect ? <LoadingSpinner systemName="Portal" /> : <Outlet />}
+          </PageSection>
+        </Page>
+      </ApplicationsProvider>
+    </TeamsProvider>
   );
 }

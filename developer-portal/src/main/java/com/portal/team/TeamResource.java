@@ -22,7 +22,7 @@ public class TeamResource {
 
     @GET
     public List<TeamSummaryDto> getTeams() {
-        return teamService.getTeamsForUser(teamContext.getTeamIdentifier())
+        return teamService.getTeamsForUser(teamContext.getTeamGroups())
                 .stream()
                 .map(TeamSummaryDto::from)
                 .toList();
@@ -37,7 +37,7 @@ public class TeamResource {
     @Path("/{teamId}")
     public TeamSummaryDto getTeamById(@PathParam("teamId") Long teamId) {
         Team team = Team.findById(teamId);
-        if (team == null || !team.id.equals(teamContext.getTeamId())) {
+        if (team == null || !teamContext.getTeamGroups().contains(team.oidcGroupId)) {
             throw new NotFoundException();
         }
         return TeamSummaryDto.from(team);

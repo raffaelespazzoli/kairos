@@ -239,7 +239,7 @@ function AdminClustersPageContent() {
                 <Th>{columnNames.name}</Th>
                 <Th>{columnNames.apiServerUrl}</Th>
                 <Th>{columnNames.createdAt}</Th>
-                <Th />
+                <Th screenReaderText="Actions" />
               </Tr>
             </Thead>
             <Tbody>

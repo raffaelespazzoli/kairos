@@ -18,7 +18,9 @@ import com.portal.team.Team;
 import com.portal.team.TeamService;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Extracts team and role from JWT claims and populates the request-scoped {@link TeamContext}.
@@ -50,8 +52,8 @@ public class TeamContextFilter implements ContainerRequestFilter {
             return;
         }
 
-        String team = extractStringClaim(teamClaim);
-        if (team == null || team.isBlank()) {
+        List<String> groups = extractAllStringClaims(teamClaim);
+        if (groups.isEmpty()) {
             requestContext.abortWith(buildErrorResponse(
                     Response.Status.FORBIDDEN,
                     "missing_team_claim",
@@ -61,12 +63,46 @@ public class TeamContextFilter implements ContainerRequestFilter {
             return;
         }
 
+        String primaryTeam = groups.get(0);
         String role = extractStringClaim(roleClaim);
-        teamContext.setTeamIdentifier(team);
+        teamContext.setTeamIdentifier(primaryTeam);
+        teamContext.setTeamGroups(groups);
         teamContext.setRole(role != null && !role.isBlank() ? role : "member");
 
-        Team persisted = teamService.findOrCreate(team);
+        Team persisted = teamService.findOrCreate(primaryTeam);
         teamContext.setTeamId(persisted.id);
+    }
+
+    /**
+     * Extracts all values from a claim as a list, handling comma-separated strings,
+     * JSON arrays, and collections.
+     */
+    List<String> extractAllStringClaims(String claimName) {
+        Object raw = jwt.getClaim(claimName);
+        if (raw == null) {
+            return List.of();
+        }
+        if (raw instanceof String s) {
+            List<String> result = new ArrayList<>();
+            for (String part : s.split(",")) {
+                String trimmed = part.trim();
+                if (!trimmed.isEmpty()) result.add(trimmed);
+            }
+            return result;
+        }
+        if (raw instanceof JsonArray arr) {
+            List<String> result = new ArrayList<>();
+            for (int i = 0; i < arr.size(); i++) {
+                result.add(arr.getString(i).trim());
+            }
+            return result;
+        }
+        if (raw instanceof Collection<?> col) {
+            return col.stream().map(o -> o.toString().trim())
+                    .filter(s -> !s.isEmpty()).toList();
+        }
+        String val = raw.toString().trim();
+        return val.isEmpty() ? List.of() : List.of(val);
     }
 
     /**

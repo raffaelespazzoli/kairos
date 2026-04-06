@@ -22,7 +22,7 @@ function App() {
   }, [token]);
 
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         <Route element={<AppShell />}>
           <Route path="/teams/:teamId" element={<TeamDashboardPage />} />

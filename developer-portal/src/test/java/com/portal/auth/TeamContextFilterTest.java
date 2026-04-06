@@ -59,6 +59,7 @@ class TeamContextFilterTest {
         filter.filter(requestContext);
 
         assertEquals("payments", teamContext.getTeamIdentifier());
+        assertEquals(List.of("payments"), teamContext.getTeamGroups());
         assertEquals("lead", teamContext.getRole());
         assertEquals(42L, teamContext.getTeamId());
         verify(requestContext, never()).abortWith(any());
@@ -171,6 +172,7 @@ class TeamContextFilterTest {
         filter.filter(requestContext);
 
         assertEquals("payments", teamContext.getTeamIdentifier());
+        assertEquals(List.of("payments", "checkout", "platform"), teamContext.getTeamGroups());
     }
 
     @Test
@@ -184,6 +186,7 @@ class TeamContextFilterTest {
         filter.filter(requestContext);
 
         assertEquals("payments", teamContext.getTeamIdentifier());
+        assertEquals(List.of("payments", "checkout"), teamContext.getTeamGroups());
         assertEquals("lead", teamContext.getRole());
     }
 
