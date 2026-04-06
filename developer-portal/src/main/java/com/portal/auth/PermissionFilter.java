@@ -32,7 +32,7 @@ public class PermissionFilter implements ContainerRequestFilter {
     @Inject
     TeamContext teamContext;
 
-    private static final Set<String> ACTION_SEGMENTS = Set.of("onboard");
+    private static final Set<String> ACTION_SEGMENTS = Set.of("onboard", "plan", "confirm");
 
     @Override
     public void filter(ContainerRequestContext ctx) {

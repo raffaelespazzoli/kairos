@@ -1,33 +1,31 @@
-import { PageSection, Title } from '@patternfly/react-core';
-import { useApiFetch } from '../hooks/useApiFetch';
-import { ErrorAlert } from '../components/shared/ErrorAlert';
+import { PageSection, Title, Content } from '@patternfly/react-core';
+import { useAuth } from '../hooks/useAuth';
+import { useApplications } from '../contexts/ApplicationsContext';
 import { LoadingSpinner } from '../components/shared/LoadingSpinner';
-import { RefreshButton } from '../components/shared/RefreshButton';
+import { ErrorAlert } from '../components/shared/ErrorAlert';
 import { NoApplicationsEmptyState } from '../components/shared/NoApplicationsEmptyState';
-import type { TeamSummary } from '../types/team';
 
 export function TeamDashboardPage() {
-  const {
-    data: teams,
-    error,
-    isLoading,
-    refresh,
-  } = useApiFetch<TeamSummary[]>('/api/v1/teams');
+  const { teamName } = useAuth();
+  const { applications, isLoading, error } = useApplications();
 
   if (isLoading) return <LoadingSpinner systemName="Portal" />;
   if (error) return <ErrorAlert error={error} />;
 
+  if (applications.length === 0) {
+    return (
+      <PageSection>
+        <NoApplicationsEmptyState />
+      </PageSection>
+    );
+  }
+
   return (
     <PageSection>
-      <Title headingLevel="h1">
-        {teams?.[0]?.name ?? 'Dashboard'}
-        <RefreshButton
-          onRefresh={refresh}
-          isRefreshing={isLoading}
-          aria-label="Refresh teams"
-        />
-      </Title>
-      <NoApplicationsEmptyState />
+      <Title headingLevel="h1">{teamName} Dashboard</Title>
+      <Content component="p">
+        {applications.length} application{applications.length !== 1 ? 's' : ''} onboarded
+      </Content>
     </PageSection>
   );
 }

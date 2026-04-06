@@ -9,12 +9,17 @@ interface UseApiFetchResult<T> {
   refresh: () => void;
 }
 
-export function useApiFetch<T>(path: string): UseApiFetchResult<T> {
+/**
+ * Generic data-fetching hook. Pass null to skip the fetch (useful for
+ * conditional fetching when a prerequisite value is not yet available).
+ */
+export function useApiFetch<T>(path: string | null): UseApiFetchResult<T> {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<PortalError | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(path !== null);
 
   const fetchData = useCallback(async () => {
+    if (path === null) return;
     setIsLoading(true);
     setError(null);
     try {
@@ -37,8 +42,14 @@ export function useApiFetch<T>(path: string): UseApiFetchResult<T> {
   }, [path]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (path !== null) {
+      fetchData();
+    } else {
+      setData(null);
+      setError(null);
+      setIsLoading(false);
+    }
+  }, [fetchData, path]);
 
   return { data, error, isLoading, refresh: fetchData };
 }

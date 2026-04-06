@@ -14,14 +14,7 @@ export function LoadingSpinner({ systemName }: LoadingSpinnerProps) {
   }, []);
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        padding: 'var(--pf-t--global--spacer--xl)',
-      }}
-    >
+    <div className="pf-v6-u-display-flex pf-v6-u-flex-direction-column pf-v6-u-align-items-center pf-v6-u-p-xl">
       <Spinner aria-label="Loading" />
       {showSystemHint && systemName && (
         <Content component="p">Fetching status from {systemName}...</Content>

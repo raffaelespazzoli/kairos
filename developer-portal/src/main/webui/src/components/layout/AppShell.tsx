@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Page,
   Masthead,
@@ -12,15 +12,21 @@ import {
   PageToggleButton,
 } from '@patternfly/react-core';
 import { BarsIcon, UserIcon } from '@patternfly/react-icons';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { useApiFetch } from '../../hooks/useApiFetch';
+import { ApplicationsProvider } from '../../contexts/ApplicationsContext';
 import { Sidebar } from './Sidebar';
 import { AppBreadcrumb } from './AppBreadcrumb';
+import type { SidebarApp } from './Sidebar';
+import type { TeamSummary } from '../../types/team';
+import type { ApplicationSummary } from '../../types/application';
 
 const BREAKPOINT_XL = 1200;
 
 export function AppShell() {
-  const { username, teamName } = useAuth();
+  const { username, teamName, teamId: authTeamId } = useAuth();
+  const { teamId: routeTeamId } = useParams();
   const [isSidebarOpen, setIsSidebarOpen] = useState(
     () => window.innerWidth >= BREAKPOINT_XL,
   );
@@ -34,6 +40,53 @@ export function AppShell() {
     mq.addEventListener('change', handleResize);
     return () => mq.removeEventListener('change', handleResize);
   }, [handleResize]);
+
+  const {
+    data: teams,
+    error: teamsError,
+    isLoading: teamsLoading,
+  } = useApiFetch<TeamSummary[]>('/api/v1/teams');
+
+  const numericTeamId = useMemo(() => {
+    if (!teams || teams.length === 0) return null;
+    const identifier = routeTeamId ?? authTeamId;
+    if (identifier) {
+      const parsed = Number(identifier);
+      if (!isNaN(parsed)) {
+        const byId = teams.find((t) => t.id === parsed);
+        if (byId) return byId.id;
+      }
+      const byOidc = teams.find((t) => t.oidcGroupId === identifier);
+      if (byOidc) return byOidc.id;
+    }
+    return teams[0].id;
+  }, [teams, routeTeamId, authTeamId]);
+
+  const {
+    data: applications,
+    error: appsError,
+    isLoading: appsLoading,
+  } = useApiFetch<ApplicationSummary[]>(
+    numericTeamId !== null
+      ? `/api/v1/teams/${numericTeamId}/applications`
+      : null,
+  );
+
+  const appList = applications ?? [];
+
+  const sidebarApps: SidebarApp[] = useMemo(
+    () => appList.map((app) => ({ id: String(app.id), name: app.name })),
+    [appList],
+  );
+
+  const appsContextValue = useMemo(
+    () => ({
+      applications: appList,
+      isLoading: teamsLoading || (numericTeamId !== null && appsLoading),
+      error: teamsError ?? appsError ?? null,
+    }),
+    [appList, teamsLoading, numericTeamId, appsLoading, teamsError, appsError],
+  );
 
   const masthead = (
     <Masthead>
@@ -56,9 +109,11 @@ export function AppShell() {
       </MastheadMain>
       <MastheadContent>
         <span className="pf-v6-u-display-flex pf-v6-u-align-items-center pf-v6-u-gap-sm">
-          <UserIcon />
+          <span className="portal-user-avatar" aria-hidden="true">
+            <UserIcon />
+          </span>
           <span>{username}</span>
-          <span style={{ opacity: 0.6 }}>|</span>
+          <span className="pf-v6-u-color-300">|</span>
           <span>{teamName}</span>
         </span>
       </MastheadContent>
@@ -67,24 +122,26 @@ export function AppShell() {
 
   const sidebar = (
     <PageSidebar isSidebarOpen={isSidebarOpen}>
-      <Sidebar />
+      <Sidebar applications={sidebarApps} />
     </PageSidebar>
   );
 
   return (
-    <Page
-      masthead={masthead}
-      sidebar={sidebar}
-      style={
-        { '--pf-v6-c-page__sidebar--Width--base': '256px' } as React.CSSProperties
-      }
-    >
-      <PageSection variant="default" isWidthLimited>
-        <AppBreadcrumb />
-      </PageSection>
-      <PageSection isFilled>
-        <Outlet />
-      </PageSection>
-    </Page>
+    <ApplicationsProvider value={appsContextValue}>
+      <Page
+        masthead={masthead}
+        sidebar={sidebar}
+        style={
+          { '--pf-v6-c-page__sidebar--Width--base': '256px' } as React.CSSProperties
+        }
+      >
+        <PageSection variant="default" isWidthLimited>
+          <AppBreadcrumb />
+        </PageSection>
+        <PageSection isFilled>
+          <Outlet />
+        </PageSection>
+      </Page>
+    </ApplicationsProvider>
   );
 }

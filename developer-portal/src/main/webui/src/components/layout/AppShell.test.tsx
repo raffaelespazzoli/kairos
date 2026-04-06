@@ -34,9 +34,9 @@ describe('AppShell', () => {
     expect(mastheadContent).toHaveTextContent('My Team');
   });
 
-  it('renders the user avatar image', () => {
+  it('renders the user avatar placeholder', () => {
     renderShell();
-    expect(screen.getByAltText('developer')).toBeInTheDocument();
+    expect(document.querySelector('.portal-user-avatar')).toBeInTheDocument();
   });
 
   it('renders the sidebar toggle button', () => {

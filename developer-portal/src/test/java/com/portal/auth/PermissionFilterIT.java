@@ -68,9 +68,24 @@ class PermissionFilterIT {
             @Claim(key = "team", value = "payments"),
             @Claim(key = "role", value = "member")
     })
-    void memberDeniedAdminClusters() {
+    void memberAllowedReadClusters() {
         given()
                 .when().get("/api/v1/admin/clusters")
+                .then()
+                .statusCode(200);
+    }
+
+    @Test
+    @TestSecurity(user = "dev@example.com", roles = "member")
+    @OidcSecurity(claims = {
+            @Claim(key = "team", value = "payments"),
+            @Claim(key = "role", value = "member")
+    })
+    void memberDeniedCreateClusters() {
+        given()
+                .contentType(ContentType.JSON)
+                .body("{\"name\":\"test\",\"apiServerUrl\":\"https://api:6443\"}")
+                .when().post("/api/v1/admin/clusters")
                 .then()
                 .statusCode(403)
                 .body("error", equalTo("forbidden"))
@@ -208,7 +223,9 @@ class PermissionFilterIT {
     })
     void forbiddenResponseFollowsStandardErrorFormat() {
         given()
-                .when().get("/api/v1/admin/clusters")
+                .contentType(ContentType.JSON)
+                .body("{\"name\":\"test\",\"apiServerUrl\":\"https://api:6443\"}")
+                .when().post("/api/v1/admin/clusters")
                 .then()
                 .statusCode(403)
                 .body("error", equalTo("forbidden"))

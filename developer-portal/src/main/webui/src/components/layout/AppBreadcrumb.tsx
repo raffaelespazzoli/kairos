@@ -1,6 +1,7 @@
 import { Breadcrumb, BreadcrumbItem } from '@patternfly/react-core';
 import { Link, useParams, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { useApplications } from '../../contexts/ApplicationsContext';
 
 function deriveViewFromPath(
   pathname: string,
@@ -20,6 +21,11 @@ export function AppBreadcrumb() {
   const { teamId, appId } = useParams();
   const location = useLocation();
   const { teamName } = useAuth();
+  const { applications } = useApplications();
+
+  const appName = appId
+    ? applications.find((a) => String(a.id) === appId)?.name ?? appId
+    : undefined;
 
   const currentView = deriveViewFromPath(location.pathname, !!appId);
 
@@ -32,7 +38,7 @@ export function AppBreadcrumb() {
       </BreadcrumbItem>
       {appId && (
         <BreadcrumbItem>
-          <Link to={`/teams/${teamId}/apps/${appId}`}>{appId}</Link>
+          <Link to={`/teams/${teamId}/apps/${appId}`}>{appName}</Link>
         </BreadcrumbItem>
       )}
       {currentView && (

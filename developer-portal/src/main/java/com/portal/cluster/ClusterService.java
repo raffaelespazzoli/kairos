@@ -14,6 +14,14 @@ public class ClusterService {
             .toList();
     }
 
+    public ClusterDto findById(Long id) {
+        Cluster cluster = Cluster.findById(id);
+        if (cluster == null) {
+            throw new NotFoundException("Cluster with ID " + id + " not found");
+        }
+        return ClusterDto.from(cluster);
+    }
+
     @Transactional
     public ClusterDto create(CreateClusterRequest request) {
         if (Cluster.findByName(request.name()) != null) {

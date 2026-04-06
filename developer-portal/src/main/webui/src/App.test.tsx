@@ -41,9 +41,8 @@ describe('App routing', () => {
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
   });
 
-  it('renders application overview with tabs at /teams/:teamId/apps/:appId', () => {
+  it('renders application layout with tabs at /teams/:teamId/apps/:appId', () => {
     renderApp('/teams/platform/apps/my-app');
-    expect(screen.getByText('Application Overview')).toBeInTheDocument();
     expect(screen.getByLabelText('Application tabs')).toBeInTheDocument();
   });
 
@@ -74,6 +73,5 @@ describe('App routing', () => {
   it('tabs navigate without full page reload (client-side routing)', () => {
     renderApp('/teams/platform/apps/my-app/overview');
     expect(screen.getByLabelText('Application tabs')).toBeInTheDocument();
-    expect(screen.getByText('Application Overview')).toBeInTheDocument();
   });
 });

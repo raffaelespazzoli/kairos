@@ -54,8 +54,7 @@ public class GlobalExceptionMapper implements ExceptionMapper<Exception> {
                     iae.getMessage()));
         }
 
-        if (e instanceof PersistenceException pe
-                && pe.getCause() instanceof org.hibernate.exception.ConstraintViolationException) {
+        if (hasConstraintViolation(e)) {
             return buildResponse(409, ErrorResponse.of(
                     "conflict",
                     "A record with the same unique value already exists",
@@ -73,6 +72,15 @@ public class GlobalExceptionMapper implements ExceptionMapper<Exception> {
                 "internal-error",
                 "An unexpected error occurred",
                 e.getMessage()));
+    }
+
+    private boolean hasConstraintViolation(Throwable t) {
+        for (Throwable cause = t; cause != null; cause = cause.getCause()) {
+            if (cause instanceof org.hibernate.exception.ConstraintViolationException) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private Response buildResponse(int status, ErrorResponse error) {

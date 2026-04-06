@@ -48,13 +48,15 @@ export function Sidebar({ applications = [] }: SidebarProps) {
 
   return (
     <>
-      <PageSidebarBody isFilled>
+      <PageSidebarBody isFilled={false}>
         <div className="pf-v6-u-p-md">
           <Label icon={<UsersIcon />} variant="outline">
             {teamName}
           </Label>
         </div>
+      </PageSidebarBody>
 
+      <PageSidebarBody isFilled>
         <Nav aria-label="Application navigation">
           <NavList>
             <NavItem

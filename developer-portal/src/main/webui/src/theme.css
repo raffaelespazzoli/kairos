@@ -1,30 +1,54 @@
 /*
  * Portal dark-chrome theme — matches UX design directions.
- * Overrides PF6 defaults for masthead + sidebar to the classic dark look.
+ * Uses portal-level custom properties for the dark masthead + sidebar chrome,
+ * and PatternFly component-level CSS variables where available.
+ *
+ * Color values correspond to the PatternFly 6 palette:
+ *   --portal--chrome--bg-dark       ≈ PF grey-900
+ *   --portal--chrome--bg-sidebar    ≈ PF dark surface
+ *   --portal--chrome--text          ≈ PF grey-200
+ *   --portal--chrome--text-muted    ≈ PF grey-200
+ *   --portal--chrome--text-bright   ≈ PF white
  */
+
+:root {
+  --portal--chrome--bg-dark: #151515;
+  --portal--chrome--bg-sidebar: #212427;
+  --portal--chrome--text: #e0e0e0;
+  --portal--chrome--text-muted: #d2d2d2;
+  --portal--chrome--text-bright: #ffffff;
+  --portal--chrome--hover-bg: rgba(255, 255, 255, 0.08);
+  --portal--chrome--active-bg: rgba(0, 102, 204, 0.25);
+  --portal--chrome--border-subtle: rgba(255, 255, 255, 0.2);
+  --portal--chrome--border-medium: rgba(255, 255, 255, 0.25);
+  --portal--chrome--border-hover: rgba(255, 255, 255, 0.4);
+  --portal--chrome--label-bg: rgba(255, 255, 255, 0.1);
+}
 
 /* ── Masthead: dark background ─────────────────────────────────── */
 .pf-v6-c-masthead {
-  background-color: #151515 !important;
-  color: #e0e0e0;
+  --pf-v6-c-masthead--BackgroundColor: var(--portal--chrome--bg-dark);
+  color: var(--portal--chrome--text);
 }
 
-.pf-v6-c-masthead * {
-  color: #e0e0e0;
+.pf-v6-c-masthead .pf-v6-c-masthead__brand,
+.pf-v6-c-masthead .pf-v6-c-masthead__content,
+.pf-v6-c-masthead .pf-v6-c-masthead__toggle {
+  color: var(--portal--chrome--text);
 }
 
 .pf-v6-c-masthead a {
-  color: #ffffff !important;
+  color: var(--portal--chrome--text-bright);
   text-decoration: none;
 }
 
-.pf-v6-c-masthead .pf-v6-c-button {
-  color: #e0e0e0 !important;
+.pf-v6-c-masthead .pf-v6-c-button.pf-m-plain {
+  --pf-v6-c-button--m-plain--Color: var(--portal--chrome--text);
 }
 
 /* ── Sidebar: dark background ──────────────────────────────────── */
 .pf-v6-c-page__sidebar {
-  --pf-v6-c-page__sidebar--BackgroundColor: #212427;
+  --pf-v6-c-page__sidebar--BackgroundColor: var(--portal--chrome--bg-sidebar);
 }
 
 .pf-v6-c-page__sidebar .pf-v6-c-nav {
@@ -33,22 +57,22 @@
 
 .pf-v6-c-page__sidebar,
 .pf-v6-c-page__sidebar .pf-v6-c-page__sidebar-body {
-  color: #d2d2d2;
+  color: var(--portal--chrome--text-muted);
 }
 
 .pf-v6-c-page__sidebar .pf-v6-c-nav__link {
-  color: #d2d2d2;
+  color: var(--portal--chrome--text-muted);
 }
 
 .pf-v6-c-page__sidebar .pf-v6-c-nav__link:hover {
-  color: #ffffff;
-  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--portal--chrome--text-bright);
+  background-color: var(--portal--chrome--hover-bg);
 }
 
 .pf-v6-c-page__sidebar .pf-v6-c-nav__link.pf-m-current,
 .pf-v6-c-page__sidebar .pf-v6-c-nav__item.pf-m-current > .pf-v6-c-nav__link {
-  color: #ffffff;
-  background-color: rgba(0, 102, 204, 0.25);
+  color: var(--portal--chrome--text-bright);
+  background-color: var(--portal--chrome--active-bg);
 }
 
 .pf-v6-c-page__sidebar .pf-v6-c-nav__subnav {
@@ -56,28 +80,41 @@
 }
 
 .pf-v6-c-page__sidebar .pf-v6-c-label {
-  --pf-v6-c-label--BackgroundColor: rgba(255, 255, 255, 0.1);
-  --pf-v6-c-label--Color: #e0e0e0;
-  border-color: rgba(255, 255, 255, 0.2);
+  --pf-v6-c-label--BackgroundColor: var(--portal--chrome--label-bg);
+  --pf-v6-c-label--Color: var(--portal--chrome--text);
+  border-color: var(--portal--chrome--border-subtle);
 }
 
 /* Expandable nav toggle (Admin section) */
 .pf-v6-c-page__sidebar .pf-v6-c-nav__link.pf-v6-c-expandable-section__toggle {
-  color: #d2d2d2;
+  color: var(--portal--chrome--text-muted);
 }
 
 .pf-v6-c-page__sidebar .pf-v6-c-expandable-section__toggle-icon {
-  color: #d2d2d2;
+  color: var(--portal--chrome--text-muted);
 }
 
 /* Sidebar button */
 .pf-v6-c-page__sidebar .pf-v6-c-button.pf-m-secondary {
-  --pf-v6-c-button--m-secondary--Color: #e0e0e0;
-  --pf-v6-c-button--m-secondary--BorderColor: rgba(255, 255, 255, 0.25);
+  --pf-v6-c-button--m-secondary--Color: var(--portal--chrome--text);
+  --pf-v6-c-button--m-secondary--BorderColor: var(--portal--chrome--border-medium);
 }
 
 .pf-v6-c-page__sidebar .pf-v6-c-button.pf-m-secondary:hover {
-  --pf-v6-c-button--m-secondary--hover--Color: #ffffff;
-  --pf-v6-c-button--m-secondary--hover--BorderColor: rgba(255, 255, 255, 0.4);
-  background-color: rgba(255, 255, 255, 0.08);
+  --pf-v6-c-button--m-secondary--hover--Color: var(--portal--chrome--text-bright);
+  --pf-v6-c-button--m-secondary--hover--BorderColor: var(--portal--chrome--border-hover);
+  background-color: var(--portal--chrome--hover-bg);
+}
+
+/* ── User avatar placeholder ───────────────────────────────────── */
+.portal-user-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: var(--portal--chrome--hover-bg);
+  flex-shrink: 0;
+  font-size: var(--pf-t--global--font--size--xs, 12px);
 }

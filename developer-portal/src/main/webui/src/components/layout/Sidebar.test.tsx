@@ -34,12 +34,13 @@ describe('Sidebar', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders empty nav list when no applications exist', () => {
+  it('renders only the dashboard item when no applications exist', () => {
     renderSidebar();
     const nav = screen.getByLabelText('Application navigation');
     const list = nav.querySelector('[role="list"]');
     expect(list).toBeInTheDocument();
-    expect(list!.children).toHaveLength(0);
+    expect(list!.children).toHaveLength(1);
+    expect(screen.getByText('Team Dashboard')).toBeInTheDocument();
   });
 
   it('renders application items when applications are provided', () => {

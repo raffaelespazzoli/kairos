@@ -2,6 +2,7 @@
 p, member, teams, read
 p, member, applications, read
 p, member, applications, onboard
+p, member, clusters, read
 p, member, environments, read
 p, member, builds, read
 p, member, builds, trigger

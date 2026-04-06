@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {appName}-run-{env}
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: {gitRepoUrl}
+    targetRevision: HEAD
+    path: .helm/run
+    helm:
+      valueFiles:
+        - values-run-{env}.yaml
+  destination:
+    server: {clusterApiUrl}
+    namespace: {namespace}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
