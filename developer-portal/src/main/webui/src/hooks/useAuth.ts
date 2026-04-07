@@ -35,8 +35,8 @@ function resolveDevRole(): AuthInfo['role'] {
 export function useAuth(): AuthInfo {
   return {
     username: 'developer',
-    teamName: 'team-1',
-    teamId: 'team-1',
+    teamName: 'My Team',
+    teamId: '1',
     role: resolveDevRole(),
     isAuthenticated: true,
     token: 'dev-token',

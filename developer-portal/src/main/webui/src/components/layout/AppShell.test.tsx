@@ -1,10 +1,23 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { AppShell } from './AppShell';
 
-function renderShell(route = '/teams/default') {
+vi.mock('../../hooks/useApiFetch', () => ({
+  useApiFetch: (path: string | null) => ({
+    data: path !== null && path.endsWith('/teams')
+      ? [{ id: 1, name: 'My Team', oidcGroupId: 'default' }]
+      : path !== null && path.includes('/applications')
+        ? []
+        : null,
+    error: null,
+    isLoading: false,
+    refresh: vi.fn(),
+  }),
+}));
+
+function renderShell(route = '/teams/1') {
   return render(
     <MemoryRouter initialEntries={[route]}>
       <Routes>

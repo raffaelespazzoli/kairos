@@ -4,17 +4,28 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import { Sidebar } from './Sidebar';
 import type { SidebarApp } from './Sidebar';
+import type { TeamSummary } from '../../types/team';
+
+const defaultTeam: TeamSummary = { id: 1, name: 'My Team', oidcGroupId: 'acme' };
 
 function renderSidebar(
-  route = '/teams/acme',
+  route = '/teams/1',
   applications: SidebarApp[] = [],
+  teams: TeamSummary[] = [defaultTeam],
+  activeTeamId: number | null = 1,
 ) {
   return render(
     <MemoryRouter initialEntries={[route]}>
       <Routes>
         <Route
           path="/teams/:teamId/*"
-          element={<Sidebar applications={applications} />}
+          element={
+            <Sidebar
+              applications={applications}
+              teams={teams}
+              activeTeamId={activeTeamId}
+            />
+          }
         />
       </Routes>
     </MemoryRouter>,
@@ -48,7 +59,7 @@ describe('Sidebar', () => {
       { id: 'app-a', name: 'App Alpha' },
       { id: 'app-b', name: 'App Beta' },
     ];
-    renderSidebar('/teams/acme', apps);
+    renderSidebar('/teams/1', apps);
     expect(screen.getByText('App Alpha')).toBeInTheDocument();
     expect(screen.getByText('App Beta')).toBeInTheDocument();
   });
@@ -68,7 +79,7 @@ describe('Sidebar', () => {
 
   it('uses route teamId for onboard navigation, not hardcoded default', async () => {
     const user = userEvent.setup();
-    renderSidebar('/teams/acme');
+    renderSidebar('/teams/1');
     const button = screen.getByText('+ Onboard Application');
     await user.click(button);
     expect(button).toBeInTheDocument();
@@ -80,7 +91,7 @@ describe('Sidebar', () => {
       { id: 'app-a', name: 'App Alpha' },
       { id: 'app-b', name: 'App Beta' },
     ];
-    renderSidebar('/teams/acme/apps/app-a/builds', apps);
+    renderSidebar('/teams/1/apps/app-a/builds', apps);
     const appB = screen.getByText('App Beta');
     await user.click(appB);
     expect(appB).toBeInTheDocument();

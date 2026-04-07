@@ -42,27 +42,27 @@ function renderBreadcrumb(
 
 describe('AppBreadcrumb', () => {
   it('renders team-level breadcrumb', () => {
-    renderBreadcrumb('/teams/platform');
+    renderBreadcrumb('/teams/1');
     const breadcrumb = screen.getByLabelText('Breadcrumb');
     expect(breadcrumb).toBeInTheDocument();
     expect(breadcrumb).toHaveTextContent('My Team');
   });
 
   it('shows application name from context instead of raw ID', () => {
-    renderBreadcrumb('/teams/platform/apps/42', testApps);
+    renderBreadcrumb('/teams/1/apps/42', testApps);
     const breadcrumb = screen.getByLabelText('Breadcrumb');
     expect(breadcrumb).toHaveTextContent('Payments API');
     expect(breadcrumb).toHaveTextContent('Overview');
   });
 
   it('falls back to raw appId when app not in context', () => {
-    renderBreadcrumb('/teams/platform/apps/999');
+    renderBreadcrumb('/teams/1/apps/999');
     const breadcrumb = screen.getByLabelText('Breadcrumb');
     expect(breadcrumb).toHaveTextContent('999');
   });
 
   it('renders team + application + view breadcrumb', () => {
-    renderBreadcrumb('/teams/platform/apps/42/builds', testApps);
+    renderBreadcrumb('/teams/1/apps/42/builds', testApps);
     const breadcrumb = screen.getByLabelText('Breadcrumb');
     expect(breadcrumb).toHaveTextContent('My Team');
     expect(breadcrumb).toHaveTextContent('Payments API');
@@ -70,28 +70,28 @@ describe('AppBreadcrumb', () => {
   });
 
   it('capitalizes the view name', () => {
-    renderBreadcrumb('/teams/platform/apps/42/releases', testApps);
+    renderBreadcrumb('/teams/1/apps/42/releases', testApps);
     const breadcrumb = screen.getByLabelText('Breadcrumb');
     expect(breadcrumb).toHaveTextContent('Releases');
   });
 
   it('team breadcrumb segment links to team page', () => {
-    renderBreadcrumb('/teams/platform/apps/42/builds', testApps);
+    renderBreadcrumb('/teams/1/apps/42/builds', testApps);
     const teamLink = screen.getByText('My Team');
-    expect(teamLink.closest('a')).toHaveAttribute('href', '/teams/platform');
+    expect(teamLink.closest('a')).toHaveAttribute('href', '/teams/1');
   });
 
   it('app breadcrumb segment links to app overview', () => {
-    renderBreadcrumb('/teams/platform/apps/42/builds', testApps);
+    renderBreadcrumb('/teams/1/apps/42/builds', testApps);
     const appLink = screen.getByText('Payments API');
     expect(appLink.closest('a')).toHaveAttribute(
       'href',
-      '/teams/platform/apps/42',
+      '/teams/1/apps/42',
     );
   });
 
   it('current view is not a link (isActive)', () => {
-    renderBreadcrumb('/teams/platform/apps/42/builds', testApps);
+    renderBreadcrumb('/teams/1/apps/42/builds', testApps);
     const breadcrumb = screen.getByLabelText('Breadcrumb');
     const items = breadcrumb.querySelectorAll('.pf-v6-c-breadcrumb__item');
     const lastItem = items[items.length - 1];

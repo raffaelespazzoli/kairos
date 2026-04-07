@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { MemoryRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppShell } from './components/layout/AppShell';
 import { ApplicationLayout } from './components/layout/ApplicationLayout';
@@ -8,6 +8,19 @@ import { ApplicationOverviewPage } from './routes/ApplicationOverviewPage';
 import { ApplicationBuildsPage } from './routes/ApplicationBuildsPage';
 import { OnboardingWizardPage } from './routes/OnboardingWizardPage';
 import { AdminClustersPage } from './routes/AdminClustersPage';
+
+vi.mock('./hooks/useApiFetch', () => ({
+  useApiFetch: (path: string | null) => ({
+    data: path !== null && path.endsWith('/teams')
+      ? [{ id: 1, name: 'My Team', oidcGroupId: 'default' }]
+      : path !== null && path.includes('/applications')
+        ? []
+        : null,
+    error: null,
+    isLoading: false,
+    refresh: vi.fn(),
+  }),
+}));
 
 function renderApp(initialRoute: string) {
   return render(
@@ -28,7 +41,7 @@ function renderApp(initialRoute: string) {
             element={<OnboardingWizardPage />}
           />
           <Route path="/admin/clusters" element={<AdminClustersPage />} />
-          <Route index element={<Navigate to="/teams/default" replace />} />
+          <Route index element={<Navigate to="/teams/1" replace />} />
         </Route>
       </Routes>
     </MemoryRouter>,
@@ -37,17 +50,19 @@ function renderApp(initialRoute: string) {
 
 describe('App routing', () => {
   it('renders team dashboard at /teams/:teamId', () => {
-    renderApp('/teams/platform');
-    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+    renderApp('/teams/1');
+    expect(
+      screen.getByText('No applications onboarded yet'),
+    ).toBeInTheDocument();
   });
 
   it('renders application layout with tabs at /teams/:teamId/apps/:appId', () => {
-    renderApp('/teams/platform/apps/my-app');
+    renderApp('/teams/1/apps/my-app');
     expect(screen.getByLabelText('Application tabs')).toBeInTheDocument();
   });
 
   it('renders builds page at /teams/:teamId/apps/:appId/builds', () => {
-    renderApp('/teams/platform/apps/my-app/builds');
+    renderApp('/teams/1/apps/my-app/builds');
     expect(
       screen.getByText('Coming soon — build history and pipeline status.'),
     ).toBeInTheDocument();
@@ -56,7 +71,7 @@ describe('App routing', () => {
   });
 
   it('renders onboarding page at /teams/:teamId/onboard', () => {
-    renderApp('/teams/platform/onboard');
+    renderApp('/teams/1/onboard');
     expect(screen.getByText('Onboard Application')).toBeInTheDocument();
   });
 
@@ -65,13 +80,15 @@ describe('App routing', () => {
     expect(screen.getByText('Access Denied')).toBeInTheDocument();
   });
 
-  it('redirects root to /teams/default', () => {
+  it('redirects root to /teams/1', () => {
     renderApp('/');
-    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+    expect(
+      screen.getByText('No applications onboarded yet'),
+    ).toBeInTheDocument();
   });
 
   it('tabs navigate without full page reload (client-side routing)', () => {
-    renderApp('/teams/platform/apps/my-app/overview');
+    renderApp('/teams/1/apps/my-app/overview');
     expect(screen.getByLabelText('Application tabs')).toBeInTheDocument();
   });
 });

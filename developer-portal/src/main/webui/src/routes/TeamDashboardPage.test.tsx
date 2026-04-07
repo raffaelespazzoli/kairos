@@ -3,8 +3,11 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import { TeamDashboardPage } from './TeamDashboardPage';
 import { ApplicationsProvider } from '../contexts/ApplicationsContext';
+import { TeamsProvider } from '../contexts/TeamsContext';
 import type { ApplicationSummary } from '../types/application';
 import type { PortalError } from '../types/error';
+
+const activeTeam = { id: 1, name: 'My Team', oidcGroupId: 'default' };
 
 function renderPage(
   applications: ApplicationSummary[] = [],
@@ -12,13 +15,15 @@ function renderPage(
   error: PortalError | null = null,
 ) {
   return render(
-    <ApplicationsProvider value={{ applications, isLoading, error }}>
-      <MemoryRouter initialEntries={['/teams/1']}>
-        <Routes>
-          <Route path="/teams/:teamId" element={<TeamDashboardPage />} />
-        </Routes>
-      </MemoryRouter>
-    </ApplicationsProvider>,
+    <TeamsProvider value={{ teams: [activeTeam], activeTeamId: 1, activeTeam }}>
+      <ApplicationsProvider value={{ applications, isLoading, error }}>
+        <MemoryRouter initialEntries={['/teams/1']}>
+          <Routes>
+            <Route path="/teams/:teamId" element={<TeamDashboardPage />} />
+          </Routes>
+        </MemoryRouter>
+      </ApplicationsProvider>
+    </TeamsProvider>,
   );
 }
 

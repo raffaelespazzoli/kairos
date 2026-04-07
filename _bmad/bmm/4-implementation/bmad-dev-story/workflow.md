@@ -225,7 +225,39 @@ Load config from `{project-root}/_bmad/bmm/config.yaml` and resolve:
     </check>
   </step>
 
-  <step n="4" goal="Mark story in-progress" tag="sprint-status">
+  <step n="4" goal="Pre-flight test gate and mark story in-progress" tag="sprint-status">
+
+    <!-- PRE-FLIGHT TEST GATE -->
+    <critical>The test suite MUST be green before starting any new story implementation</critical>
+
+    <action>Detect the project's test runner(s) from project structure and {project_context}</action>
+    <action>Run the full existing test suite (all test layers: unit, integration, frontend, backend as applicable)</action>
+
+    <check if="any tests fail">
+      <output>🚫 **PRE-FLIGHT TEST GATE FAILED**
+
+        **{{failure_count}} test(s) failing before story work began.**
+
+        The test suite must be green before starting new story development.
+        Failing tests mask regressions and create compounding technical debt.
+
+        **Failing tests:**
+        {{failure_summary}}
+
+        **Options:**
+        1. Fix the failing tests now (recommended)
+        2. Abort story development until tests are fixed
+
+        Story {{story_key}} remains in ready-for-dev status — no work has started.
+      </output>
+      <action>HALT: "Cannot start story development with failing tests. Fix test failures first."</action>
+    </check>
+
+    <check if="all tests pass">
+      <output>✅ **Pre-flight test gate passed** — {{total_tests}} tests green
+      </output>
+    </check>
+
     <check if="{{sprint_status}} file exists">
       <action>Load the FULL file: {{sprint_status}}</action>
       <action>Read all development_status entries to find {{story_key}}</action>
