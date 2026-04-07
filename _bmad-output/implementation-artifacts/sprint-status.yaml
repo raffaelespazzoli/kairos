@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-03
-last_updated: 2026-04-07T13:00:00
+last_updated: 2026-04-07T17:00:00
 project: bmad
 project_key: NOKEY
 tracking_system: file-system
@@ -73,12 +73,12 @@ development_status:
   epic-3-retrospective: done
 
   # Epic 4: CI Pipeline, Build & Release Management
-  epic-4: backlog
-  4-1-tekton-adapter-pipeline-triggering: backlog
-  4-2-build-monitoring-log-retrieval: backlog
-  4-3-builds-page-build-table: backlog
-  4-4-release-creation-from-successful-builds: backlog
-  4-5-releases-page-release-list: backlog
+  epic-4: in-progress
+  4-1-tekton-adapter-pipeline-triggering: ready-for-dev
+  4-2-build-monitoring-log-retrieval: ready-for-dev
+  4-3-builds-page-build-table: ready-for-dev
+  4-4-release-creation-from-successful-builds: ready-for-dev
+  4-5-releases-page-release-list: ready-for-dev
   epic-4-retrospective: optional
 
   # Epic 5: Deployment & Environment Promotion
