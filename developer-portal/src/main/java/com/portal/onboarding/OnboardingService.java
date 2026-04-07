@@ -79,6 +79,8 @@ public class OnboardingService {
         app.runtimeType = request.runtimeType();
         app.onboardingPrUrl = pr.url();
         app.onboardedAt = Instant.now();
+        app.buildClusterId = request.buildClusterId();
+        app.buildNamespace = buildNamespaceName(teamName, slugify(request.appName()), "build");
         app.persistAndFlush();
 
         List<String> orderedEnvs = plan.promotionChain();

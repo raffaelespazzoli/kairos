@@ -39,6 +39,12 @@ public class Application extends PanacheEntityBase {
     @Column(name = "onboarded_at")
     public Instant onboardedAt;
 
+    @Column(name = "build_cluster_id")
+    public Long buildClusterId;
+
+    @Column(name = "build_namespace")
+    public String buildNamespace;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     public Instant createdAt;
 

@@ -1,6 +1,6 @@
 # Story 4.1: Tekton Adapter & Pipeline Triggering
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -46,43 +46,48 @@ So that I can start a pipeline without opening the Tekton UI or using kubectl.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Add Kubernetes and Tekton client dependencies to pom.xml (AC: #1)
-  - [ ] Add `quarkus-kubernetes-client` extension
-  - [ ] Add Fabric8 `tekton-client` dependency (version aligned with Quarkus BOM's Fabric8 version)
+- [x] Task 1: Add Kubernetes and Tekton client dependencies to pom.xml (AC: #1)
+  - [x] Add `quarkus-kubernetes-client` extension
+  - [x] Add Fabric8 `tekton-client` dependency (version aligned with Quarkus BOM's Fabric8 version)
 
-- [ ] Task 2: Add build config columns to Application entity + migration (AC: #1)
-  - [ ] Create `V5__add_build_config_to_applications.sql` migration
-  - [ ] Add `buildClusterId` and `buildNamespace` fields to `Application.java`
+- [x] Task 2: Add build config columns to Application entity + migration (AC: #1)
+  - [x] Create `V5__add_build_config_to_applications.sql` migration
+  - [x] Add `buildClusterId` and `buildNamespace` fields to `Application.java`
 
-- [ ] Task 3: Update OnboardingService to persist build config (AC: #1)
-  - [ ] Persist `buildClusterId` and `buildNamespace` on the Application entity during `confirmOnboarding()`
+- [x] Task 3: Update OnboardingService to persist build config (AC: #1)
+  - [x] Persist `buildClusterId` and `buildNamespace` on the Application entity during `confirmOnboarding()`
 
-- [ ] Task 4: Create TektonAdapter interface and implementations (AC: #1, #4, #5)
-  - [ ] Create `TektonAdapter.java` interface in `com.portal.integration.tekton`
-  - [ ] Create `TektonKubeAdapter.java` production implementation
-  - [ ] Create `DevTektonAdapter.java` dev-mode mock
-  - [ ] Create `TektonConfig.java` configuration class
+- [x] Task 4: Create TektonAdapter interface and implementations (AC: #1, #4, #5)
+  - [x] Create `TektonAdapter.java` interface in `com.portal.integration.tekton`
+  - [x] Create `TektonKubeAdapter.java` production implementation
+  - [x] Create `DevTektonAdapter.java` dev-mode mock
+  - [x] Create `TektonConfig.java` configuration class
 
-- [ ] Task 5: Create BuildService (AC: #1, #2, #3, #5)
-  - [ ] Create `BuildService.java` in `com.portal.build`
-  - [ ] Implement `triggerBuild(Long teamId, Long appId)` orchestration
+- [x] Task 5: Create BuildService (AC: #1, #2, #3, #5)
+  - [x] Create `BuildService.java` in `com.portal.build`
+  - [x] Implement `triggerBuild(Long teamId, Long appId)` orchestration
 
-- [ ] Task 6: Create BuildResource REST endpoint (AC: #2, #3)
-  - [ ] Create `BuildResource.java` in `com.portal.build`
-  - [ ] Implement POST `/api/v1/teams/{teamId}/applications/{appId}/builds`
+- [x] Task 6: Create BuildResource REST endpoint (AC: #2, #3)
+  - [x] Create `BuildResource.java` in `com.portal.build`
+  - [x] Implement POST `/api/v1/teams/{teamId}/applications/{appId}/builds`
 
-- [ ] Task 7: Create BuildSummaryDto (AC: #2, #5)
-  - [ ] Create `BuildSummaryDto.java` in `com.portal.build`
+- [x] Task 7: Create BuildSummaryDto (AC: #2, #5)
+  - [x] Create `BuildSummaryDto.java` in `com.portal.build`
 
-- [ ] Task 8: Add configuration properties (AC: #1)
-  - [ ] Add `portal.tekton.provider` to application.properties
-  - [ ] Add dev profile defaults
-  - [ ] Add test profile configuration
+- [x] Task 8: Add configuration properties (AC: #1)
+  - [x] Add `portal.tekton.provider` to application.properties
+  - [x] Add dev profile defaults
+  - [x] Add test profile configuration
 
-- [ ] Task 9: Write backend tests (AC: #1-#5)
-  - [ ] Create `TektonKubeAdapterTest.java` — unit tests with mocked KubernetesClient
-  - [ ] Create `BuildServiceTest.java` — unit tests with mocked adapter and credential provider
-  - [ ] Create `BuildResourceIT.java` — integration test for POST endpoint
+- [x] Task 9: Write backend tests (AC: #1-#5)
+  - [x] Create `TektonKubeAdapterTest.java` — unit tests with mocked KubernetesClient
+  - [x] Create `BuildServiceTest.java` — unit tests with mocked adapter and credential provider
+  - [x] Create `BuildResourceIT.java` — integration test for POST endpoint
+
+### Review Findings
+
+- [x] [Review][Patch] Enforce caller team membership on the builds endpoint before triggering builds [`developer-portal/src/main/java/com/portal/build/BuildResource.java`]
+- [x] [Review][Patch] Return a clear client-facing error for missing build configuration instead of falling through as `internal-error` [`developer-portal/src/main/java/com/portal/build/BuildService.java`]
 
 ## Dev Notes
 
@@ -760,10 +765,44 @@ src/test/java/com/portal/integration/tekton/
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+claude-4.6-opus-high-thinking
 
 ### Debug Log References
 
+- Fabric8 Tekton model classes are in `io.fabric8.tekton.v1` (not `io.fabric8.tekton.pipeline.v1` as assumed in story spec). Fixed imports accordingly.
+- `@Consumes(MediaType.APPLICATION_JSON)` removed from BuildResource — POST has no request body, and REST Assured sends no Content-Type header for bodyless POSTs, causing a 500 mismatch error.
+
 ### Completion Notes List
 
+- AC #1: TektonAdapter is @ApplicationScoped CDI bean. Production impl (TektonKubeAdapter) uses Fabric8 kubernetes-client + tekton-client to create PipelineRun resources. Authenticates via SecretManagerCredentialProvider (Vault-issued). Target cluster resolved from Application.buildClusterId → Cluster entity.
+- AC #2: POST `/api/v1/teams/{teamId}/applications/{appId}/builds` creates PipelineRun via TektonAdapter, returns BuildSummaryDto with buildId, status "Building", startedAt, applicationName, tektonDeepLink. Returns 201 Created.
+- AC #3: Casbin policy `builds, trigger` already configured for member+lead. PermissionFilter maps POST on builds resource to "trigger" action. BuildService validates app.teamId matches requested teamId (404 for cross-team).
+- AC #4: TektonKubeAdapter catches all exceptions and wraps in PortalIntegrationException with system="tekton" and developer-friendly message. PortalIntegrationException already re-thrown without wrapping.
+- AC #5: PipelineRun → "Build" in all portal domain types. BuildSummaryDto uses "buildId", "Building" status — no Tekton jargon in API responses.
+- V5 migration adds build_cluster_id and build_namespace columns to applications table (nullable for pre-existing apps).
+- OnboardingService updated to persist buildClusterId and buildNamespace before persistAndFlush().
+- TektonConfig @ConfigMapping maps portal.tekton prefix including dashboard-url (dual-read with DeepLinkConfig).
+- DevTektonAdapter provides mock builds in dev/test profiles.
+- All 327 tests pass (0 failures, 0 regressions). 10 new tests added (3 TektonKubeAdapter unit, 4 BuildService @QuarkusTest, 4 BuildResource IT with REST Assured).
+
 ### File List
+
+New files:
+- developer-portal/src/main/java/com/portal/build/BuildResource.java
+- developer-portal/src/main/java/com/portal/build/BuildService.java
+- developer-portal/src/main/java/com/portal/build/BuildSummaryDto.java
+- developer-portal/src/main/java/com/portal/integration/tekton/TektonAdapter.java
+- developer-portal/src/main/java/com/portal/integration/tekton/TektonKubeAdapter.java
+- developer-portal/src/main/java/com/portal/integration/tekton/DevTektonAdapter.java
+- developer-portal/src/main/java/com/portal/integration/tekton/TektonConfig.java
+- developer-portal/src/main/resources/db/migration/V5__add_build_config_to_applications.sql
+- developer-portal/src/test/java/com/portal/integration/tekton/TektonKubeAdapterTest.java
+- developer-portal/src/test/java/com/portal/build/BuildServiceTest.java
+- developer-portal/src/test/java/com/portal/build/BuildResourceIT.java
+
+Modified files:
+- developer-portal/pom.xml (added quarkus-kubernetes-client and tekton-client dependencies)
+- developer-portal/src/main/java/com/portal/application/Application.java (added buildClusterId, buildNamespace fields)
+- developer-portal/src/main/java/com/portal/onboarding/OnboardingService.java (persist build config during confirmOnboarding)
+- developer-portal/src/main/resources/application.properties (added portal.tekton.provider, %dev.portal.tekton.provider=dev)
+- developer-portal/src/test/resources/application.properties (added portal.tekton.provider=dev)
