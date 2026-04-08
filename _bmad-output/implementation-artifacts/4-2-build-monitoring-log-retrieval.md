@@ -1,6 +1,6 @@
 # Story 4.2: Build Monitoring & Log Retrieval
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -58,54 +58,61 @@ So that I can understand what happened without switching to the Tekton UI.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Extend TektonAdapter interface with query methods (AC: #1, #2, #3, #4, #5, #6)
-  - [ ] Add `listBuilds(String appName, String namespace, String clusterApiUrl, String clusterToken)` → returns `List<BuildSummaryDto>`
-  - [ ] Add `getBuildDetail(String buildId, String namespace, String clusterApiUrl, String clusterToken)` → returns `BuildDetailDto`
-  - [ ] Add `getBuildLogs(String buildId, String namespace, String clusterApiUrl, String clusterToken)` → returns `String`
+- [x] Task 1: Extend TektonAdapter interface with query methods (AC: #1, #2, #3, #4, #5, #6)
+  - [x] Add `listBuilds(String appName, String namespace, String clusterApiUrl, String clusterToken)` → returns `List<BuildSummaryDto>`
+  - [x] Add `getBuildDetail(String buildId, String namespace, String clusterApiUrl, String clusterToken)` → returns `BuildDetailDto`
+  - [x] Add `getBuildLogs(String buildId, String namespace, String clusterApiUrl, String clusterToken)` → returns `String`
 
-- [ ] Task 2: Create BuildDetailDto (AC: #3, #4, #6)
-  - [ ] Create `BuildDetailDto.java` in `com.portal.build` — extends BuildSummaryDto fields with: completedAt, duration, imageReference, failedStageName, errorSummary, currentStage
+- [x] Task 2: Create BuildDetailDto (AC: #3, #4, #6)
+  - [x] Create `BuildDetailDto.java` in `com.portal.build` — extends BuildSummaryDto fields with: completedAt, duration, imageReference, failedStageName, errorSummary, currentStage
 
-- [ ] Task 3: Implement status translation utility (AC: #2)
-  - [ ] Create private helper in TektonKubeAdapter that maps PipelineRun conditions to portal status strings
-  - [ ] Handle all condition states: Running → "Building", Succeeded → "Passed", Failed/error reasons → "Failed", Cancelled → "Cancelled", pending/unknown → "Pending"
+- [x] Task 3: Implement status translation utility (AC: #2)
+  - [x] Create private helper in TektonKubeAdapter that maps PipelineRun conditions to portal status strings
+  - [x] Handle all condition states: Running → "Building", Succeeded → "Passed", Failed/error reasons → "Failed", Cancelled → "Cancelled", pending/unknown → "Pending"
 
-- [ ] Task 4: Implement `listBuilds` in TektonKubeAdapter (AC: #1, #2, #7)
-  - [ ] List PipelineRuns in namespace filtered by label `tekton.dev/pipeline={appName}`
-  - [ ] Translate each PipelineRun to BuildSummaryDto using status translation
-  - [ ] Sort by startTime descending
-  - [ ] Populate tektonDeepLink for each build
+- [x] Task 4: Implement `listBuilds` in TektonKubeAdapter (AC: #1, #2, #7)
+  - [x] List PipelineRuns in namespace filtered by label `tekton.dev/pipeline={appName}`
+  - [x] Translate each PipelineRun to BuildSummaryDto using status translation
+  - [x] Sort by startTime descending
+  - [x] Populate tektonDeepLink for each build
 
-- [ ] Task 5: Implement `getBuildDetail` in TektonKubeAdapter (AC: #3, #4, #6, #7)
-  - [ ] Get PipelineRun by name
-  - [ ] Extract image reference from PipelineRun results (for "Passed" builds)
-  - [ ] Find failed TaskRun via childReferences and extract failure info (for "Failed" builds)
-  - [ ] Determine current running TaskRun for in-progress builds
+- [x] Task 5: Implement `getBuildDetail` in TektonKubeAdapter (AC: #3, #4, #6, #7)
+  - [x] Get PipelineRun by name
+  - [x] Extract image reference from PipelineRun results (for "Passed" builds)
+  - [x] Find failed TaskRun via childReferences and extract failure info (for "Failed" builds)
+  - [x] Determine current running TaskRun for in-progress builds
 
-- [ ] Task 6: Implement `getBuildLogs` in TektonKubeAdapter (AC: #5)
-  - [ ] Resolve TaskRun names from PipelineRun's childReferences
-  - [ ] For each TaskRun, find the corresponding Pod (label `tekton.dev/taskRun={taskRunName}`)
-  - [ ] Retrieve logs from each Pod's step containers via KubernetesClient
-  - [ ] Concatenate logs with step/task headers as delimiters
+- [x] Task 6: Implement `getBuildLogs` in TektonKubeAdapter (AC: #5)
+  - [x] Resolve TaskRun names from PipelineRun's childReferences
+  - [x] For each TaskRun, find the corresponding Pod (label `tekton.dev/taskRun={taskRunName}`)
+  - [x] Retrieve logs from each Pod's step containers via KubernetesClient
+  - [x] Concatenate logs with step/task headers as delimiters
 
-- [ ] Task 7: Implement `listBuilds`, `getBuildDetail`, `getBuildLogs` in DevTektonAdapter (AC: #1-#7)
-  - [ ] Return deterministic mock data for dev-mode testing
-  - [ ] Mock data must cover all states: Building, Passed (with image ref), Failed (with stage + error), Cancelled
+- [x] Task 7: Implement `listBuilds`, `getBuildDetail`, `getBuildLogs` in DevTektonAdapter (AC: #1-#7)
+  - [x] Return deterministic mock data for dev-mode testing
+  - [x] Mock data must cover all states: Building, Passed (with image ref), Failed (with stage + error), Cancelled
 
-- [ ] Task 8: Add list/detail/log methods to BuildService (AC: #1, #3, #4, #5)
-  - [ ] `listBuilds(Long teamId, Long appId)` — team-scoped, delegates to adapter
-  - [ ] `getBuildDetail(Long teamId, Long appId, String buildId)` — team-scoped, delegates to adapter
-  - [ ] `getBuildLogs(Long teamId, Long appId, String buildId)` — team-scoped, delegates to adapter
+- [x] Task 8: Add list/detail/log methods to BuildService (AC: #1, #3, #4, #5)
+  - [x] `listBuilds(Long teamId, Long appId)` — team-scoped, delegates to adapter
+  - [x] `getBuildDetail(Long teamId, Long appId, String buildId)` — team-scoped, delegates to adapter
+  - [x] `getBuildLogs(Long teamId, Long appId, String buildId)` — team-scoped, delegates to adapter
 
-- [ ] Task 9: Add GET endpoints to BuildResource (AC: #1, #4, #5)
-  - [ ] GET `/api/v1/teams/{teamId}/applications/{appId}/builds` → list builds
-  - [ ] GET `/api/v1/teams/{teamId}/applications/{appId}/builds/{buildId}` → build detail
-  - [ ] GET `/api/v1/teams/{teamId}/applications/{appId}/builds/{buildId}/logs` → build logs (`text/plain`)
+- [x] Task 9: Add GET endpoints to BuildResource (AC: #1, #4, #5)
+  - [x] GET `/api/v1/teams/{teamId}/applications/{appId}/builds` → list builds
+  - [x] GET `/api/v1/teams/{teamId}/applications/{appId}/builds/{buildId}` → build detail
+  - [x] GET `/api/v1/teams/{teamId}/applications/{appId}/builds/{buildId}/logs` → build logs (`text/plain`)
 
-- [ ] Task 10: Write backend tests (AC: #1-#7)
-  - [ ] Create/extend `TektonKubeAdapterTest.java` — test status translation, list, detail, logs with mocked KubernetesClient
-  - [ ] Create/extend `BuildServiceTest.java` — test team scoping, delegation to adapter
-  - [ ] Create/extend `BuildResourceIT.java` — integration tests for all three GET endpoints
+- [x] Task 10: Write backend tests (AC: #1-#7)
+  - [x] Create/extend `TektonKubeAdapterTest.java` — test status translation, list, detail, logs with mocked KubernetesClient
+  - [x] Create/extend `BuildServiceTest.java` — test team scoping, delegation to adapter
+  - [x] Create/extend `BuildResourceIT.java` — integration tests for all three GET endpoints
+
+### Review Findings
+
+- [x] [Review][Patch] Successful builds in the list response are missing the required artifact reference — added `imageReference` field to `BuildSummaryDto`, populated for Passed builds via `extractImageReference()`
+- [x] [Review][Patch] `translateStatus()` maps every `Unknown` condition to `Building` — now only `Running`/`Started` reasons map to Building; other Unknown reasons return Pending
+- [x] [Review][Patch] Build detail and log lookups do not verify that the requested `buildId` belongs to the requested application — `BuildService` now verifies `applicationName` from adapter response matches the requested app; added `getBuildDetailRejectsCrossAppBuild` test
+- [x] [Review][Patch] Log retrieval exposes raw container/Kubernetes error messages directly in the API response body — replaced with generic `[Log unavailable]` message
 
 ## Dev Notes
 
@@ -822,10 +829,44 @@ src/test/java/com/portal/build/BuildResourceIT.java                      (extend
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude claude-4.6-opus-high-thinking (via Cursor)
 
 ### Debug Log References
 
+- Tekton Condition type: `io.fabric8.knative.pkg.apis.Condition` (NOT `io.fabric8.kubernetes.api.model.Condition`) — Fabric8 Tekton model uses KNative conditions for PipelineRun/TaskRun status
+- PipelineRunList.getItems() returns immutable list — must wrap in `new ArrayList<>()` before sorting
+- PermissionFilter `isId()` heuristic requires build IDs to be >8 chars and contain hyphens to be recognized as IDs; added "logs" to ACTION_SEGMENTS so `/builds/{buildId}/logs` resolves resource as "builds" not "logs"
+- BuildSummaryDto extended with `completedAt` (nullable) and `duration` (nullable) — backward compatible; updated all existing callers including tests
+- Refactored BuildService with `resolveTeamApplication()` and `resolveBuildCluster()` private helpers; changed exception from `IllegalArgumentException` to `IllegalStateException` per story spec
+
 ### Completion Notes List
 
+- All 10 tasks completed successfully
+- 372 tests pass (0 failures, 0 errors) — up from baseline after adding 34 new tests
+- Implemented 3 new TektonAdapter interface methods: listBuilds, getBuildDetail, getBuildLogs
+- Created BuildDetailDto record with full build detail fields
+- Implemented PipelineRun status translation: Running→Building, Succeeded→Passed, Failed→Failed, Cancelled→Cancelled, null→Pending
+- TektonKubeAdapter implements all 3 methods with full Kubernetes/Tekton API integration
+- DevTektonAdapter provides deterministic mock data covering all build states
+- BuildService delegates with team-scoped app/cluster resolution
+- BuildResource exposes 3 new GET endpoints including first text/plain endpoint (logs)
+- Duration computation utility: seconds, minutes+seconds, hours+minutes formats
+- Task name humanization: hyphen-separated slugs → Title Case
+- Error handling: NotFoundException for missing builds, PortalIntegrationException for cluster failures
+
 ### File List
+
+**New files:**
+- developer-portal/src/main/java/com/portal/build/BuildDetailDto.java
+
+**Modified files:**
+- developer-portal/src/main/java/com/portal/integration/tekton/TektonAdapter.java
+- developer-portal/src/main/java/com/portal/integration/tekton/TektonKubeAdapter.java
+- developer-portal/src/main/java/com/portal/integration/tekton/DevTektonAdapter.java
+- developer-portal/src/main/java/com/portal/build/BuildService.java
+- developer-portal/src/main/java/com/portal/build/BuildResource.java
+- developer-portal/src/main/java/com/portal/build/BuildSummaryDto.java
+- developer-portal/src/main/java/com/portal/auth/PermissionFilter.java
+- developer-portal/src/test/java/com/portal/integration/tekton/TektonKubeAdapterTest.java
+- developer-portal/src/test/java/com/portal/build/BuildServiceTest.java
+- developer-portal/src/test/java/com/portal/build/BuildResourceIT.java

@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 import java.time.Instant;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -110,14 +111,19 @@ class BuildServiceTest {
         });
     }
 
+    private void stubCredentials() {
+        when(credentialProvider.getCredentials("build-svc-ocp-dev", "portal"))
+                .thenReturn(ClusterCredential.of("test-vault-token", 3600));
+    }
+
+    // --- triggerBuild tests ---
+
     @Test
     void triggerBuildCallsAdapterWithCorrectParams() {
-        ClusterCredential credential = ClusterCredential.of("test-vault-token", 3600);
-        when(credentialProvider.getCredentials("build-svc-ocp-dev", "portal"))
-                .thenReturn(credential);
+        stubCredentials();
 
         BuildSummaryDto expected = new BuildSummaryDto(
-                "build-svc-payments-abc12", "Building", Instant.now(),
+                "build-svc-payments-abc12", "Building", Instant.now(), null, null, null,
                 "build-svc-payments", "https://tekton.example.com/#/pipelineruns/build-svc-payments-abc12");
         when(tektonAdapter.triggerBuild(
                 eq("build-svc-payments"),
@@ -153,8 +159,124 @@ class BuildServiceTest {
 
     @Test
     void triggerBuildThrowsWhenBuildConfigMissing() {
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
                 () -> buildService.triggerBuild(testTeam.id, appWithoutBuildConfig.id));
         assertTrue(ex.getMessage().contains("build configuration"));
+    }
+
+    // --- listBuilds tests ---
+
+    @Test
+    void listBuildsReturnsAdapterResult() {
+        stubCredentials();
+
+        List<BuildSummaryDto> expected = List.of(
+                new BuildSummaryDto("run-1", "Building", Instant.now(), null, null, null,
+                        "build-svc-payments", null),
+                new BuildSummaryDto("run-2", "Passed", Instant.now().minusSeconds(600),
+                        Instant.now().minusSeconds(300), "5m 0s", null, "build-svc-payments", null));
+        when(tektonAdapter.listBuilds(
+                eq("build-svc-payments"),
+                eq("build-svc-team-payments-build"),
+                eq("https://api.build-svc-dev.example.com:6443"),
+                eq("test-vault-token")))
+                .thenReturn(expected);
+
+        List<BuildSummaryDto> result = buildService.listBuilds(testTeam.id, appWithBuildConfig.id);
+
+        assertEquals(2, result.size());
+        assertEquals("run-1", result.get(0).buildId());
+    }
+
+    @Test
+    void listBuildsThrows404ForCrossTeamApp() {
+        assertThrows(NotFoundException.class,
+                () -> buildService.listBuilds(testTeam.id, crossTeamApp.id));
+    }
+
+    @Test
+    void listBuildsThrowsWhenBuildConfigMissing() {
+        assertThrows(IllegalStateException.class,
+                () -> buildService.listBuilds(testTeam.id, appWithoutBuildConfig.id));
+    }
+
+    // --- getBuildDetail tests ---
+
+    @Test
+    void getBuildDetailReturnsAdapterResult() {
+        stubCredentials();
+
+        BuildDetailDto expected = new BuildDetailDto(
+                "run-detail-1", "Passed", Instant.now().minusSeconds(600),
+                Instant.now().minusSeconds(300), "5m 0s", "build-svc-payments",
+                "registry.example.com/team/app:sha123", null, null, null,
+                "https://tekton.example.com/#/pipelineruns/run-detail-1");
+        when(tektonAdapter.getBuildDetail(
+                eq("run-detail-1"),
+                eq("build-svc-team-payments-build"),
+                eq("https://api.build-svc-dev.example.com:6443"),
+                eq("test-vault-token")))
+                .thenReturn(expected);
+
+        BuildDetailDto result = buildService.getBuildDetail(testTeam.id, appWithBuildConfig.id, "run-detail-1");
+
+        assertEquals("run-detail-1", result.buildId());
+        assertEquals("Passed", result.status());
+        assertEquals("registry.example.com/team/app:sha123", result.imageReference());
+    }
+
+    @Test
+    void getBuildDetailThrows404ForCrossTeamApp() {
+        assertThrows(NotFoundException.class,
+                () -> buildService.getBuildDetail(testTeam.id, crossTeamApp.id, "run-1"));
+    }
+
+    // --- getBuildLogs tests ---
+
+    @Test
+    void getBuildLogsReturnsAdapterResult() {
+        stubCredentials();
+
+        when(tektonAdapter.getBuildDetail(
+                eq("run-logs-1"),
+                eq("build-svc-team-payments-build"),
+                eq("https://api.build-svc-dev.example.com:6443"),
+                eq("test-vault-token")))
+                .thenReturn(new BuildDetailDto("run-logs-1", "Passed",
+                        Instant.now(), null, null, "build-svc-payments",
+                        null, null, null, null, null));
+        when(tektonAdapter.getBuildLogs(
+                eq("run-logs-1"),
+                eq("build-svc-team-payments-build"),
+                eq("https://api.build-svc-dev.example.com:6443"),
+                eq("test-vault-token")))
+                .thenReturn("=== Run Tests / run ===\nAll tests passed.\n");
+
+        String result = buildService.getBuildLogs(testTeam.id, appWithBuildConfig.id, "run-logs-1");
+
+        assertTrue(result.contains("All tests passed"));
+    }
+
+    @Test
+    void getBuildDetailRejectsCrossAppBuild() {
+        stubCredentials();
+
+        when(tektonAdapter.getBuildDetail(
+                eq("run-detail-1"),
+                eq("build-svc-team-payments-build"),
+                eq("https://api.build-svc-dev.example.com:6443"),
+                eq("test-vault-token")))
+                .thenReturn(new BuildDetailDto("run-detail-1", "Passed",
+                        Instant.now(), null, null, "some-other-app",
+                        null, null, null, null, null));
+
+        assertThrows(NotFoundException.class,
+                () -> buildService.getBuildDetail(testTeam.id, appWithBuildConfig.id, "run-detail-1"));
+    }
+
+    @Test
+    void getBuildLogsThrows404ForCrossTeamApp() {
+        assertThrows(NotFoundException.class,
+                () -> buildService.getBuildLogs(testTeam.id, crossTeamApp.id, "run-1"));
     }
 }

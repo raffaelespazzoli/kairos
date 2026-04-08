@@ -1,6 +1,9 @@
 package com.portal.integration.tekton;
 
+import com.portal.build.BuildDetailDto;
 import com.portal.build.BuildSummaryDto;
+
+import java.util.List;
 
 /**
  * Adapter for creating and querying builds on the CI platform.
@@ -20,4 +23,22 @@ public interface TektonAdapter {
      */
     BuildSummaryDto triggerBuild(String appName, String namespace,
                                  String clusterApiUrl, String clusterToken);
+
+    /**
+     * Lists all builds for an application, most recent first.
+     */
+    List<BuildSummaryDto> listBuilds(String appName, String namespace,
+                                      String clusterApiUrl, String clusterToken);
+
+    /**
+     * Returns detailed build information including failure context or current stage.
+     */
+    BuildDetailDto getBuildDetail(String buildId, String namespace,
+                                   String clusterApiUrl, String clusterToken);
+
+    /**
+     * Retrieves concatenated logs from all steps of a build's pipeline run.
+     */
+    String getBuildLogs(String buildId, String namespace,
+                         String clusterApiUrl, String clusterToken);
 }

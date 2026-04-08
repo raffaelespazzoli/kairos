@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 import java.time.Instant;
+import java.util.List;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
@@ -96,6 +97,13 @@ class BuildResourceIT {
         });
     }
 
+    private void stubCredentials() {
+        when(credentialProvider.getCredentials(anyString(), anyString()))
+                .thenReturn(ClusterCredential.of("test-token", 3600));
+    }
+
+    // --- POST trigger build ---
+
     @Test
     @TestSecurity(user = "dev@example.com", roles = "member")
     @OidcSecurity(claims = {
@@ -103,15 +111,14 @@ class BuildResourceIT {
             @Claim(key = "role", value = "member")
     })
     void triggerBuildReturns201() {
-        when(credentialProvider.getCredentials(anyString(), anyString()))
-                .thenReturn(ClusterCredential.of("test-token", 3600));
+        stubCredentials();
         when(tektonAdapter.triggerBuild(
                 eq("buildres-payments"),
                 eq("buildres-team-payments-build"),
                 eq("https://api.buildres-dev.example.com:6443"),
                 eq("test-token")))
                 .thenReturn(new BuildSummaryDto(
-                        "buildres-payments-abc12", "Building", Instant.now(),
+                        "buildres-payments-abc12", "Building", Instant.now(), null, null, null,
                         "buildres-payments",
                         "https://tekton.example.com/#/pipelineruns/buildres-payments-abc12"));
 
@@ -135,11 +142,10 @@ class BuildResourceIT {
             @Claim(key = "role", value = "lead")
     })
     void leadCanTriggerBuild() {
-        when(credentialProvider.getCredentials(anyString(), anyString()))
-                .thenReturn(ClusterCredential.of("test-token", 3600));
+        stubCredentials();
         when(tektonAdapter.triggerBuild(anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(new BuildSummaryDto(
-                        "run-123", "Building", Instant.now(), "buildres-payments", null));
+                        "run-123", "Building", Instant.now(), null, null, null, "buildres-payments", null));
 
         given()
                 .when()
@@ -191,6 +197,223 @@ class BuildResourceIT {
                 .when()
                 .post("/api/v1/teams/{teamId}/applications/{appId}/builds",
                         testTeam.id, 999999L)
+                .then()
+                .statusCode(404);
+    }
+
+    // --- GET list builds ---
+
+    @Test
+    @TestSecurity(user = "dev@example.com", roles = "member")
+    @OidcSecurity(claims = {
+            @Claim(key = "team", value = "buildres-team"),
+            @Claim(key = "role", value = "member")
+    })
+    void listBuildsReturns200() {
+        stubCredentials();
+        when(tektonAdapter.listBuilds(
+                eq("buildres-payments"),
+                eq("buildres-team-payments-build"),
+                eq("https://api.buildres-dev.example.com:6443"),
+                eq("test-token")))
+                .thenReturn(List.of(
+                        new BuildSummaryDto("run-1", "Building", Instant.now(), null, "0s", null,
+                                "buildres-payments", "https://tekton.example.com/#/pipelineruns/run-1"),
+                        new BuildSummaryDto("run-2", "Passed",
+                                Instant.now().minusSeconds(600), Instant.now().minusSeconds(300), "5m 0s", null,
+                                "buildres-payments", null)));
+
+        given()
+                .when()
+                .get("/api/v1/teams/{teamId}/applications/{appId}/builds",
+                        testTeam.id, testApp.id)
+                .then()
+                .statusCode(200)
+                .body("$.size()", equalTo(2))
+                .body("[0].buildId", equalTo("run-1"))
+                .body("[0].status", equalTo("Building"))
+                .body("[1].buildId", equalTo("run-2"))
+                .body("[1].status", equalTo("Passed"))
+                .body("[1].completedAt", notNullValue())
+                .body("[1].duration", equalTo("5m 0s"));
+    }
+
+    @Test
+    @TestSecurity(user = "dev@example.com", roles = "member")
+    @OidcSecurity(claims = {
+            @Claim(key = "team", value = "buildres-team"),
+            @Claim(key = "role", value = "member")
+    })
+    void listBuildsReturns404ForNonExistentApp() {
+        given()
+                .when()
+                .get("/api/v1/teams/{teamId}/applications/{appId}/builds",
+                        testTeam.id, 999999L)
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    @TestSecurity(user = "dev@example.com", roles = "member")
+    @OidcSecurity(claims = {
+            @Claim(key = "team", value = "buildres-team"),
+            @Claim(key = "role", value = "member")
+    })
+    void listBuildsReturns404ForCrossTeamApp() {
+        given()
+                .when()
+                .get("/api/v1/teams/{teamId}/applications/{appId}/builds",
+                        testTeam.id, crossTeamApp.id)
+                .then()
+                .statusCode(404);
+    }
+
+    // --- GET build detail ---
+
+    @Test
+    @TestSecurity(user = "dev@example.com", roles = "member")
+    @OidcSecurity(claims = {
+            @Claim(key = "team", value = "buildres-team"),
+            @Claim(key = "role", value = "member")
+    })
+    void getBuildDetailReturns200() {
+        stubCredentials();
+        when(tektonAdapter.getBuildDetail(
+                eq("buildres-payments-xk7f2"),
+                eq("buildres-team-payments-build"),
+                eq("https://api.buildres-dev.example.com:6443"),
+                eq("test-token")))
+                .thenReturn(new BuildDetailDto(
+                        "buildres-payments-xk7f2", "Passed",
+                        Instant.now().minusSeconds(600), Instant.now().minusSeconds(300), "5m 0s",
+                        "buildres-payments",
+                        "registry.example.com/team/app:sha123",
+                        null, null, null,
+                        "https://tekton.example.com/#/pipelineruns/buildres-payments-xk7f2"));
+
+        given()
+                .when()
+                .get("/api/v1/teams/{teamId}/applications/{appId}/builds/{buildId}",
+                        testTeam.id, testApp.id, "buildres-payments-xk7f2")
+                .then()
+                .statusCode(200)
+                .body("buildId", equalTo("buildres-payments-xk7f2"))
+                .body("status", equalTo("Passed"))
+                .body("imageReference", equalTo("registry.example.com/team/app:sha123"))
+                .body("startedAt", notNullValue())
+                .body("completedAt", notNullValue())
+                .body("duration", equalTo("5m 0s"))
+                .body("tektonDeepLink", notNullValue());
+    }
+
+    @Test
+    @TestSecurity(user = "dev@example.com", roles = "member")
+    @OidcSecurity(claims = {
+            @Claim(key = "team", value = "buildres-team"),
+            @Claim(key = "role", value = "member")
+    })
+    void getBuildDetailShowsFailureInfo() {
+        stubCredentials();
+        when(tektonAdapter.getBuildDetail(
+                eq("buildres-payments-fail1"),
+                eq("buildres-team-payments-build"),
+                eq("https://api.buildres-dev.example.com:6443"),
+                eq("test-token")))
+                .thenReturn(new BuildDetailDto(
+                        "buildres-payments-fail1", "Failed",
+                        Instant.now().minusSeconds(600), Instant.now().minusSeconds(300), "5m 0s",
+                        "buildres-payments", null,
+                        "Run Tests", "Test failure in SomeTest.testMethod", null,
+                        "https://tekton.example.com/#/pipelineruns/buildres-payments-fail1"));
+
+        given()
+                .when()
+                .get("/api/v1/teams/{teamId}/applications/{appId}/builds/{buildId}",
+                        testTeam.id, testApp.id, "buildres-payments-fail1")
+                .then()
+                .statusCode(200)
+                .body("status", equalTo("Failed"))
+                .body("failedStageName", equalTo("Run Tests"))
+                .body("errorSummary", equalTo("Test failure in SomeTest.testMethod"))
+                .body("imageReference", nullValue());
+    }
+
+    @Test
+    @TestSecurity(user = "dev@example.com", roles = "member")
+    @OidcSecurity(claims = {
+            @Claim(key = "team", value = "buildres-team"),
+            @Claim(key = "role", value = "member")
+    })
+    void getBuildDetailReturns404ForOtherTeamApp() {
+        given()
+                .when()
+                .get("/api/v1/teams/{teamId}/applications/{appId}/builds/{buildId}",
+                        testTeam.id, crossTeamApp.id, "buildres-other-xyz12")
+                .then()
+                .statusCode(404);
+    }
+
+    // --- GET build logs ---
+
+    @Test
+    @TestSecurity(user = "dev@example.com", roles = "member")
+    @OidcSecurity(claims = {
+            @Claim(key = "team", value = "buildres-team"),
+            @Claim(key = "role", value = "member")
+    })
+    void getBuildLogsReturns200WithTextPlain() {
+        stubCredentials();
+        when(tektonAdapter.getBuildDetail(
+                eq("buildres-payments-logs1"),
+                eq("buildres-team-payments-build"),
+                eq("https://api.buildres-dev.example.com:6443"),
+                eq("test-token")))
+                .thenReturn(new BuildDetailDto("buildres-payments-logs1", "Passed",
+                        Instant.now(), null, null, "buildres-payments",
+                        null, null, null, null, null));
+        when(tektonAdapter.getBuildLogs(
+                eq("buildres-payments-logs1"),
+                eq("buildres-team-payments-build"),
+                eq("https://api.buildres-dev.example.com:6443"),
+                eq("test-token")))
+                .thenReturn("=== Run Tests / run ===\nAll 42 tests passed.\n");
+
+        given()
+                .when()
+                .get("/api/v1/teams/{teamId}/applications/{appId}/builds/{buildId}/logs",
+                        testTeam.id, testApp.id, "buildres-payments-logs1")
+                .then()
+                .statusCode(200)
+                .contentType("text/plain")
+                .body(containsString("All 42 tests passed"));
+    }
+
+    @Test
+    @TestSecurity(user = "dev@example.com", roles = "member")
+    @OidcSecurity(claims = {
+            @Claim(key = "team", value = "buildres-team"),
+            @Claim(key = "role", value = "member")
+    })
+    void getBuildLogsReturns404ForOtherTeamApp() {
+        given()
+                .when()
+                .get("/api/v1/teams/{teamId}/applications/{appId}/builds/{buildId}/logs",
+                        testTeam.id, crossTeamApp.id, "buildres-other-xyz12")
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    @TestSecurity(user = "dev@example.com", roles = "member")
+    @OidcSecurity(claims = {
+            @Claim(key = "team", value = "buildres-team"),
+            @Claim(key = "role", value = "member")
+    })
+    void getBuildLogsReturns404ForNonExistentApp() {
+        given()
+                .when()
+                .get("/api/v1/teams/{teamId}/applications/{appId}/builds/{buildId}/logs",
+                        testTeam.id, 999999L, "buildres-payments-logs1")
                 .then()
                 .statusCode(404);
     }
