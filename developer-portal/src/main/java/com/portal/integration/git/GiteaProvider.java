@@ -170,6 +170,26 @@ public class GiteaProvider implements GitProvider {
     }
 
     @Override
+    public void createTag(String repoUrl, String commitSha, String tagName) {
+        RepoInfo info = parseRepoUrl(repoUrl);
+        String url = info.apiBase() + "/repos/" + info.owner() + "/" + info.repo() + "/tags";
+
+        ObjectNode payload = objectMapper.createObjectNode();
+        payload.put("tag_name", tagName);
+        payload.put("target", commitSha);
+
+        try {
+            sendPost(url, payload.toString(), "createTag", "create tag " + tagName);
+        } catch (PortalIntegrationException e) {
+            if (e.getMessage().contains("422") || e.getMessage().contains("409")) {
+                throw new PortalIntegrationException("git", "createTag",
+                        "Release tag already exists \u2014 choose a different version");
+            }
+            throw e;
+        }
+    }
+
+    @Override
     public PullRequest createPullRequest(String repoUrl, String branch, String targetBranch,
                                          String title, String description) {
         RepoInfo info = parseRepoUrl(repoUrl);

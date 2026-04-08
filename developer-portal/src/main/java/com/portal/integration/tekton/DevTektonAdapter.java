@@ -60,27 +60,27 @@ public class DevTektonAdapter implements TektonAdapter {
         if (buildId.contains("fail")) {
             return new BuildDetailDto(buildId, "Failed",
                     now.minusSeconds(1800), now.minusSeconds(1500), "5m 0s",
-                    "mock-app", null, "Run Tests",
-                    "Test failure in ProcessorTest.testNullRefHandling",
+                    "mock-app", null, "abc1234def567",
+                    "Run Tests", "Test failure in ProcessorTest.testNullRefHandling",
                     null, deepLinkService.generateTektonLink(buildId).orElse(null));
         }
         if (buildId.contains("cancel")) {
             return new BuildDetailDto(buildId, "Cancelled",
                     now.minusSeconds(3600), now.minusSeconds(3500), "1m 40s",
-                    "mock-app", null, null, null, null,
+                    "mock-app", null, null, null, null, null,
                     deepLinkService.generateTektonLink(buildId).orElse(null));
         }
         if (buildId.contains("build")) {
             return new BuildDetailDto(buildId, "Building",
                     now.minusSeconds(120), null, "2m 0s",
-                    "mock-app", null, null, null,
+                    "mock-app", null, "abc1234def567", null, null,
                     "Running Unit Tests",
                     deepLinkService.generateTektonLink(buildId).orElse(null));
         }
         return new BuildDetailDto(buildId, "Passed",
                 now.minusSeconds(600), now.minusSeconds(300), "5m 0s",
                 "mock-app", "registry.example.com/team/mock-app:abc1234",
-                null, null, null,
+                "abc1234def567", null, null, null,
                 deepLinkService.generateTektonLink(buildId).orElse(null));
     }
 

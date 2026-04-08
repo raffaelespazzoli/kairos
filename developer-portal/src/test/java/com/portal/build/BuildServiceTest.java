@@ -209,7 +209,7 @@ class BuildServiceTest {
         BuildDetailDto expected = new BuildDetailDto(
                 "run-detail-1", "Passed", Instant.now().minusSeconds(600),
                 Instant.now().minusSeconds(300), "5m 0s", "build-svc-payments",
-                "registry.example.com/team/app:sha123", null, null, null,
+                "registry.example.com/team/app:sha123", "abc1234", null, null, null,
                 "https://tekton.example.com/#/pipelineruns/run-detail-1");
         when(tektonAdapter.getBuildDetail(
                 eq("run-detail-1"),
@@ -244,7 +244,7 @@ class BuildServiceTest {
                 eq("test-vault-token")))
                 .thenReturn(new BuildDetailDto("run-logs-1", "Passed",
                         Instant.now(), null, null, "build-svc-payments",
-                        null, null, null, null, null));
+                        null, null, null, null, null, null));
         when(tektonAdapter.getBuildLogs(
                 eq("run-logs-1"),
                 eq("build-svc-team-payments-build"),
@@ -268,7 +268,7 @@ class BuildServiceTest {
                 eq("test-vault-token")))
                 .thenReturn(new BuildDetailDto("run-detail-1", "Passed",
                         Instant.now(), null, null, "some-other-app",
-                        null, null, null, null, null));
+                        null, null, null, null, null, null));
 
         assertThrows(NotFoundException.class,
                 () -> buildService.getBuildDetail(testTeam.id, appWithBuildConfig.id, "run-detail-1"));

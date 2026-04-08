@@ -156,6 +156,27 @@ public class BitbucketProvider implements GitProvider {
     }
 
     @Override
+    public void createTag(String repoUrl, String commitSha, String tagName) {
+        RepoCoordinates coords = parseRepoUrl(repoUrl);
+        String url = apiBase + "/2.0/repositories/" + coords.workspace() + "/"
+                + coords.repoSlug() + "/refs/tags";
+
+        ObjectNode payload = objectMapper.createObjectNode();
+        payload.put("name", tagName);
+        payload.putObject("target").put("hash", commitSha);
+
+        try {
+            sendPost(url, payload.toString(), "createTag", "create tag " + tagName);
+        } catch (PortalIntegrationException e) {
+            if (e.getMessage().contains("400")) {
+                throw new PortalIntegrationException("git", "createTag",
+                        "Release tag already exists \u2014 choose a different version");
+            }
+            throw e;
+        }
+    }
+
+    @Override
     public PullRequest createPullRequest(String repoUrl, String branch, String targetBranch,
                                          String title, String description) {
         RepoCoordinates coords = parseRepoUrl(repoUrl);

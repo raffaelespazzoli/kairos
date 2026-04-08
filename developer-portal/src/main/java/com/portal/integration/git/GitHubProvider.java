@@ -187,6 +187,26 @@ public class GitHubProvider implements GitProvider {
     }
 
     @Override
+    public void createTag(String repoUrl, String commitSha, String tagName) {
+        RepoCoordinates coords = parseRepoUrl(repoUrl);
+        String url = apiBase + "/repos/" + coords.owner() + "/" + coords.repo() + "/git/refs";
+
+        ObjectNode payload = objectMapper.createObjectNode();
+        payload.put("ref", "refs/tags/" + tagName);
+        payload.put("sha", commitSha);
+
+        try {
+            sendPost(url, payload.toString(), "createTag", "create tag " + tagName);
+        } catch (PortalIntegrationException e) {
+            if (e.getMessage().contains("422")) {
+                throw new PortalIntegrationException("git", "createTag",
+                        "Release tag already exists \u2014 choose a different version");
+            }
+            throw e;
+        }
+    }
+
+    @Override
     public PullRequest createPullRequest(String repoUrl, String branch, String targetBranch,
                                          String title, String description) {
         RepoCoordinates coords = parseRepoUrl(repoUrl);

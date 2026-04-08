@@ -19,6 +19,7 @@ export interface BuildDetail {
   duration: string | null;
   applicationName: string;
   imageReference: string | null;
+  commitSha: string | null;
   failedStageName: string | null;
   errorSummary: string | null;
   currentStage: string | null;

@@ -65,6 +65,17 @@ public interface GitProvider {
     void commitFiles(String repoUrl, String branch, Map<String, String> files, String message);
 
     /**
+     * Creates a lightweight tag on the specified commit.
+     *
+     * @param repoUrl   the HTTPS URL of the repository
+     * @param commitSha the full SHA of the commit to tag
+     * @param tagName   the tag name (e.g., "v1.4.2")
+     * @throws com.portal.integration.PortalIntegrationException if the tag cannot be created
+     *         (e.g., tag already exists, or repository is inaccessible)
+     */
+    void createTag(String repoUrl, String commitSha, String tagName);
+
+    /**
      * Creates a pull request (or merge request) and returns its metadata.
      *
      * @param repoUrl the HTTPS URL of the repository

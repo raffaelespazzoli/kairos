@@ -7,6 +7,7 @@ import { ApplicationLayout } from '../components/layout/ApplicationLayout';
 import { ApplicationsProvider } from '../contexts/ApplicationsContext';
 import type { ApplicationSummary } from '../types/application';
 import type { BuildSummary, BuildDetail } from '../types/build';
+import type { ReleaseSummary } from '../types/release';
 import type { PortalError } from '../types/error';
 
 const sampleApps: ApplicationSummary[] = [
@@ -81,6 +82,16 @@ const sampleBuilds: BuildSummary[] = [
     applicationName: 'payments-api',
     tektonDeepLink: null,
   },
+  {
+    buildId: 'build-006',
+    status: 'Passed',
+    startedAt: '2026-04-08T07:00:00Z',
+    completedAt: '2026-04-08T07:04:00Z',
+    duration: '4m 0s',
+    imageReference: null,
+    applicationName: 'payments-api',
+    tektonDeepLink: null,
+  },
 ];
 
 const sampleDetail: BuildDetail = {
@@ -91,10 +102,26 @@ const sampleDetail: BuildDetail = {
   duration: '3m 0s',
   applicationName: 'payments-api',
   imageReference: null,
+  commitSha: null,
   failedStageName: 'unit-test',
   errorSummary: 'Tests failed with 3 errors',
   currentStage: null,
   tektonDeepLink: 'https://tekton.example.com/runs/build-002',
+};
+
+const passedBuildDetail: BuildDetail = {
+  buildId: 'build-001',
+  status: 'Passed',
+  startedAt: '2026-04-08T09:00:00Z',
+  completedAt: '2026-04-08T09:05:00Z',
+  duration: '5m 0s',
+  applicationName: 'payments-api',
+  imageReference: 'registry.example.com/payments-api:abc123',
+  commitSha: 'abc1234def567890',
+  failedStageName: null,
+  errorSummary: null,
+  currentStage: null,
+  tektonDeepLink: 'https://tekton.example.com/runs/build-001',
 };
 
 let mockBuildsResult: {
@@ -132,6 +159,19 @@ vi.mock('../hooks/useBuilds', () => ({
   useBuildLogs: () => mockLogsResult,
 }));
 
+const mockCreateRelease = vi.fn();
+vi.mock('../api/releases', () => ({
+  createRelease: (...args: unknown[]) => mockCreateRelease(...args),
+}));
+
+const mockFetchBuildDetail = vi.fn();
+vi.mock('../api/builds', () => ({
+  fetchBuilds: vi.fn(),
+  triggerBuild: vi.fn(),
+  fetchBuildDetail: (...args: unknown[]) => mockFetchBuildDetail(...args),
+  fetchBuildLogs: vi.fn(),
+}));
+
 function renderPage(
   route = '/teams/1/apps/42',
   applications: ApplicationSummary[] = sampleApps,
@@ -150,6 +190,8 @@ function renderPage(
 }
 
 beforeEach(() => {
+  mockCreateRelease.mockReset();
+  mockFetchBuildDetail.mockReset();
   mockBuildsResult = {
     data: sampleBuilds,
     error: null,
@@ -264,7 +306,7 @@ describe('ApplicationBuildsPage', () => {
 
     it('shows portal status vocabulary badges', () => {
       renderPage('/teams/1/apps/42/builds');
-      expect(screen.getByText('Passed')).toBeInTheDocument();
+      expect(screen.getAllByText('Passed').length).toBeGreaterThanOrEqual(1);
       expect(screen.getByText('Failed')).toBeInTheDocument();
       expect(screen.getByText('Building...')).toBeInTheDocument();
       expect(screen.getByText('Cancelled')).toBeInTheDocument();
@@ -352,16 +394,77 @@ describe('ApplicationBuildsPage', () => {
   });
 
   describe('passed build actions', () => {
-    it('renders disabled Create Release button for passed builds', () => {
+    it('renders enabled Create Release button for passed builds with image', () => {
       renderPage('/teams/1/apps/42/builds');
-      const createReleaseBtn = screen.getByRole('button', { name: /Create Release/i });
-      expect(createReleaseBtn).toHaveAttribute('aria-disabled', 'true');
+      const createReleaseBtns = screen.getAllByRole('button', { name: /Create Release/i });
+      expect(createReleaseBtns).toHaveLength(1);
+      expect(createReleaseBtns[0]).not.toBeDisabled();
+    });
+
+    it('does not render Create Release button for passed builds without image', () => {
+      renderPage('/teams/1/apps/42/builds');
+      const row = screen.getByText('build-006').closest('tr')!;
+      expect(within(row).queryByRole('button', { name: /Create Release/i })).not.toBeInTheDocument();
     });
 
     it('renders Tekton deep link for builds with tektonDeepLink', () => {
       renderPage('/teams/1/apps/42/builds');
       const tektonLinks = screen.getAllByText('Open in Tekton ↗');
       expect(tektonLinks.length).toBeGreaterThan(0);
+    });
+
+    it('opens release dialog when Create Release is clicked', async () => {
+      const user = userEvent.setup();
+      mockFetchBuildDetail.mockResolvedValue(passedBuildDetail);
+      renderPage('/teams/1/apps/42/builds');
+
+      await user.click(screen.getByRole('button', { name: /Create Release/i }));
+
+      expect(await screen.findByRole('textbox', { name: /Version tag/i })).toBeInTheDocument();
+    });
+
+    it('shows released badge after successful release creation', async () => {
+      const user = userEvent.setup();
+      mockFetchBuildDetail.mockResolvedValue(passedBuildDetail);
+      mockCreateRelease.mockResolvedValue({
+        version: 'v1.4.2',
+        createdAt: '2026-04-08T12:00:00Z',
+        buildId: 'build-001',
+        commitSha: 'abc1234def567890',
+        imageReference: 'registry.example.com/payments-api:abc123',
+      } as ReleaseSummary);
+
+      renderPage('/teams/1/apps/42/builds');
+
+      await user.click(screen.getByRole('button', { name: /Create Release/i }));
+      const versionInput = await screen.findByRole('textbox', { name: /Version tag/i });
+      await user.type(versionInput, 'v1.4.2');
+      await user.click(screen.getByRole('button', { name: 'Create' }));
+
+      expect(await screen.findByText('Released v1.4.2')).toBeInTheDocument();
+    });
+
+    it('shows inline error alert on release creation failure', async () => {
+      const user = userEvent.setup();
+      mockFetchBuildDetail.mockResolvedValue(passedBuildDetail);
+      const { ApiError } = await import('../api/client');
+      mockCreateRelease.mockRejectedValue(
+        new ApiError(502, {
+          error: 'integration-error',
+          message: 'Release tag already exists',
+          timestamp: '2026-04-08T12:00:00Z',
+        }),
+      );
+
+      renderPage('/teams/1/apps/42/builds');
+
+      await user.click(screen.getByRole('button', { name: /Create Release/i }));
+      const versionInput = await screen.findByRole('textbox', { name: /Version tag/i });
+      await user.type(versionInput, 'v1.0.0');
+      await user.click(screen.getByRole('button', { name: 'Create' }));
+
+      expect(await screen.findByText('Release tag already exists')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Create Release/i })).toBeInTheDocument();
     });
   });
 
@@ -601,7 +704,7 @@ describe('ApplicationBuildsPage', () => {
   describe('status uses text + icon (not color alone)', () => {
     it('status badge shows text label for every status', () => {
       renderPage('/teams/1/apps/42/builds');
-      expect(screen.getByText('Passed')).toBeInTheDocument();
+      expect(screen.getAllByText('Passed').length).toBeGreaterThanOrEqual(1);
       expect(screen.getByText('Failed')).toBeInTheDocument();
       expect(screen.getByText('Building...')).toBeInTheDocument();
       expect(screen.getByText('Cancelled')).toBeInTheDocument();

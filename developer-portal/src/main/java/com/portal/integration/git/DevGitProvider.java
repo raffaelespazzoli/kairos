@@ -33,6 +33,11 @@ public class DevGitProvider implements GitProvider {
     }
 
     @Override
+    public void createTag(String repoUrl, String commitSha, String tagName) {
+        // no-op
+    }
+
+    @Override
     public void commitFiles(String repoUrl, String branch, Map<String, String> files, String message) {
         // no-op
     }

@@ -10,6 +10,7 @@ public record BuildDetailDto(
     String duration,
     String applicationName,
     String imageReference,
+    String commitSha,
     String failedStageName,
     String errorSummary,
     String currentStage,

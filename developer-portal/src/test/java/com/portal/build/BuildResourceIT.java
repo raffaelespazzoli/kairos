@@ -288,7 +288,7 @@ class BuildResourceIT {
                         Instant.now().minusSeconds(600), Instant.now().minusSeconds(300), "5m 0s",
                         "buildres-payments",
                         "registry.example.com/team/app:sha123",
-                        null, null, null,
+                        "abc1234def567", null, null, null,
                         "https://tekton.example.com/#/pipelineruns/buildres-payments-xk7f2"));
 
         given()
@@ -322,7 +322,7 @@ class BuildResourceIT {
                 .thenReturn(new BuildDetailDto(
                         "buildres-payments-fail1", "Failed",
                         Instant.now().minusSeconds(600), Instant.now().minusSeconds(300), "5m 0s",
-                        "buildres-payments", null,
+                        "buildres-payments", null, null,
                         "Run Tests", "Test failure in SomeTest.testMethod", null,
                         "https://tekton.example.com/#/pipelineruns/buildres-payments-fail1"));
 
@@ -370,7 +370,7 @@ class BuildResourceIT {
                 eq("test-token")))
                 .thenReturn(new BuildDetailDto("buildres-payments-logs1", "Passed",
                         Instant.now(), null, null, "buildres-payments",
-                        null, null, null, null, null));
+                        null, null, null, null, null, null));
         when(tektonAdapter.getBuildLogs(
                 eq("buildres-payments-logs1"),
                 eq("buildres-team-payments-build"),

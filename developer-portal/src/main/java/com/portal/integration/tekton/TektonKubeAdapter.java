@@ -144,6 +144,7 @@ public class TektonKubeAdapter implements TektonAdapter {
                     ? run.getSpec().getPipelineRef().getName() : null;
 
             String imageReference = null;
+            String commitSha = null;
             String failedStageName = null;
             String errorSummary = null;
             String currentStage = null;
@@ -151,6 +152,7 @@ public class TektonKubeAdapter implements TektonAdapter {
             if ("Passed".equals(status)) {
                 imageReference = extractImageReference(run);
             }
+            commitSha = extractCommitSha(run);
 
             List<ChildStatusReference> childRefs = run.getStatus() != null
                     ? run.getStatus().getChildReferences() : null;
@@ -192,6 +194,7 @@ public class TektonKubeAdapter implements TektonAdapter {
                     computeDuration(startedAt, completedAt),
                     appName,
                     imageReference,
+                    commitSha,
                     failedStageName,
                     errorSummary,
                     currentStage,
@@ -284,6 +287,32 @@ public class TektonKubeAdapter implements TektonAdapter {
                 .filter(c -> "Succeeded".equals(c.getType()))
                 .findFirst()
                 .orElse(null);
+    }
+
+    private String extractCommitSha(PipelineRun run) {
+        if (run.getStatus() != null && run.getStatus().getResults() != null) {
+            var fromResults = run.getStatus().getResults().stream()
+                    .filter(r -> "COMMIT_SHA".equalsIgnoreCase(r.getName())
+                            || "commit-sha".equalsIgnoreCase(r.getName())
+                            || "git-commit".equalsIgnoreCase(r.getName()))
+                    .map(r -> r.getValue().getStringVal())
+                    .findFirst()
+                    .orElse(null);
+            if (fromResults != null) return fromResults;
+        }
+        if (run.getSpec() != null && run.getSpec().getParams() != null) {
+            var fromParams = run.getSpec().getParams().stream()
+                    .filter(p -> "git-revision".equalsIgnoreCase(p.getName())
+                            || "COMMIT_SHA".equalsIgnoreCase(p.getName()))
+                    .map(p -> p.getValue().getStringVal())
+                    .findFirst()
+                    .orElse(null);
+            if (fromParams != null) return fromParams;
+        }
+        if (run.getMetadata() != null && run.getMetadata().getAnnotations() != null) {
+            return run.getMetadata().getAnnotations().get("tekton.dev/git-commit");
+        }
+        return null;
     }
 
     private String extractImageReference(PipelineRun run) {
