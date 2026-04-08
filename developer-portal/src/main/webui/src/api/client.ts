@@ -78,3 +78,41 @@ export async function apiFetch<T>(
     });
   }
 }
+
+/**
+ * Fetch wrapper for endpoints that return plain text (e.g. build logs).
+ * Uses the same auth and error conventions as apiFetch.
+ */
+export async function apiFetchText(
+  path: string,
+  options: RequestInit = {},
+): Promise<string> {
+  const token = getOidcToken();
+
+  const headers = new Headers(options.headers);
+  headers.set('Accept', 'text/plain');
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  const devRole = sessionStorage.getItem('portal.dev.role');
+  if (devRole) {
+    headers.set('X-Dev-Role', devRole);
+  }
+
+  const response = await fetch(path, {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    const errorBody: PortalError = await response.json().catch(() => ({
+      error: 'unknown',
+      message: `Request failed with status ${response.status}`,
+      timestamp: new Date().toISOString(),
+    }));
+    throw new ApiError(response.status, errorBody);
+  }
+
+  return response.text();
+}

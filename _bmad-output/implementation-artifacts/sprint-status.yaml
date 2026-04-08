@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-03
-last_updated: 2026-04-07T20:00:00
+last_updated: 2026-04-08T10:00:00
 project: bmad
 project_key: NOKEY
 tracking_system: file-system
@@ -76,7 +76,7 @@ development_status:
   epic-4: in-progress
   4-1-tekton-adapter-pipeline-triggering: done
   4-2-build-monitoring-log-retrieval: done
-  4-3-builds-page-build-table: ready-for-dev
+  4-3-builds-page-build-table: done
   4-4-release-creation-from-successful-builds: ready-for-dev
   4-5-releases-page-release-list: ready-for-dev
   epic-4-retrospective: optional

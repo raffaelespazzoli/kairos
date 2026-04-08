@@ -22,6 +22,11 @@ vi.mock('./hooks/useApiFetch', () => ({
   }),
 }));
 
+vi.mock('./hooks/useBuilds', () => ({
+  useBuilds: () => ({ data: [], error: null, isLoading: false, refresh: vi.fn(), prepend: vi.fn() }),
+  useTriggerBuild: () => ({ trigger: vi.fn().mockResolvedValue(null), error: null, isTriggering: false }),
+}));
+
 function renderApp(initialRoute: string) {
   return render(
     <MemoryRouter initialEntries={[initialRoute]}>
@@ -63,9 +68,7 @@ describe('App routing', () => {
 
   it('renders builds page at /teams/:teamId/apps/:appId/builds', () => {
     renderApp('/teams/1/apps/my-app/builds');
-    expect(
-      screen.getByText('Coming soon — build history and pipeline status.'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('No builds yet')).toBeInTheDocument();
     const buildsTab = screen.getByRole('tab', { name: 'Builds' });
     expect(buildsTab).toHaveAttribute('aria-selected', 'true');
   });
