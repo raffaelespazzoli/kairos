@@ -38,11 +38,15 @@ public class DevSeedDataLoader {
         Application appA = createApplication("application-a", team1.id,
                 "https://github.com/team-1/application-a", "quarkus",
                 "https://github.com/infra/repo/pull/42", onboardedAt);
+        appA.buildClusterId = clusterDev.id;
+        appA.buildNamespace = "team-1-application-a-build";
 
         Application appB = createApplication("application-b", team2.id,
                 "https://github.com/team-2/application-b", "node",
                 "https://github.com/infra/repo/pull/43",
                 onboardedAt.plus(2, ChronoUnit.DAYS));
+        appB.buildClusterId = clusterDev.id;
+        appB.buildNamespace = "team-2-application-b-build";
 
         createEnvironment("dev", appA.id, clusterDev.id,
                 "team-1-application-a-dev", 1);
