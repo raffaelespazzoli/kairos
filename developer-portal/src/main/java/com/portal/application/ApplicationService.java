@@ -20,7 +20,16 @@ public class ApplicationService {
         return Application.findByTeam(teamContext.getTeamId());
     }
 
+    /**
+     * Returns applications for the given team after verifying the caller has access.
+     * Defense-in-depth: the resource layer validates OIDC group membership;
+     * this check ensures the service cannot be misused by internal callers
+     * passing an unvalidated teamId.
+     */
     public List<Application> getApplicationsForTeam(Long teamId) {
+        if (!teamContext.getTeamId().equals(teamId)) {
+            throw new NotFoundException();
+        }
         return Application.findByTeam(teamId);
     }
 

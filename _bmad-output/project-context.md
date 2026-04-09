@@ -269,6 +269,41 @@ quarkus.quinoa.ui-dir=src/main/webui
 - All portal-to-platform-tool communication over TLS
 - Portal authenticates to Vault via Kubernetes auth (pod service account), not AppRole or token
 
+**Resource Ownership Validation — Mandatory Scoping Pattern:**
+
+The portal enforces authorization at two layers. Layer 1 (Casbin via `PermissionFilter`) is automatic and handles role-based access. Layer 2 (resource ownership scoping) is manual and historically error-prone — Epic 4 retrospective identified this as a recurring gap caught only during code reviews.
+
+_Rule: Every service method that receives entity IDs from URL path parameters MUST validate the full ownership chain before executing any business logic or adapter calls. Omission of ownership validation is a review rejection._
+
+**Ownership relationships that must be validated:**
+
+| URL Pattern | Ownership Chain | Validation Required |
+|---|---|---|
+| `/teams/{teamId}/applications/{appId}/...` | App belongs to team | `app.teamId == teamId`, else 404 |
+| `/teams/{teamId}/applications/{appId}/builds/{buildId}` | Build belongs to app | `build.applicationName == app.name`, else 404 |
+| `/teams/{teamId}/applications/{appId}/releases/...` | Release belongs to app | App resolved via team scoping; release fetched from app's Git repo |
+| `/teams/{teamId}/applications/{appId}/deployments/...` | Deployment belongs to app+env | App resolved via team; environment belongs to app |
+| `/teams/{teamId}/applications/{appId}/environments/{envId}` | Environment belongs to app | `env.applicationId == appId`, else 404 |
+
+**Implementation pattern — `require*` methods:**
+
+Services should use declaratively-named `require*` helper methods that throw `NotFoundException` on ownership violation. The naming convention makes omission visible during review:
+
+```java
+Application requireTeamApplication(Long teamId, Long appId)    // 404 if app missing or wrong team
+Cluster requireBuildCluster(Application app)                     // IllegalStateException if no build config
+void requireBuildBelongsToApp(BuildDetailDto build, String appName)  // 404 if build is for different app
+```
+
+When a code reviewer sees a service method that calls an adapter without a preceding `require*` call for every entity ID in the URL path, the omission is a defect.
+
+**Story acceptance criteria template — include in every endpoint story:**
+
+Every story that introduces or modifies a REST endpoint MUST include these negative-path acceptance criteria:
+- Given a request targets a resource outside the caller's team scope, Then 404 is returned (never 403)
+- Given a request targets a child resource that does not belong to the parent resource in the URL path, Then 404 is returned
+- Given a request targets a non-existent resource, Then 404 is returned
+
 **Domain Language Translation — The Abstraction Layer:**
 
 The portal is a developer abstraction layer. All user-facing content (API responses, UI labels, error messages, logs shown to users) must speak in the developer domain model:
@@ -316,4 +351,4 @@ The portal is a developer abstraction layer. All user-facing content (API respon
 - Review quarterly for outdated rules
 - Remove rules that become obvious over time
 
-Last Updated: 2026-04-06
+Last Updated: 2026-04-09

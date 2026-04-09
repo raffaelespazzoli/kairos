@@ -25,6 +25,14 @@ import java.util.regex.Pattern;
 /**
  * Assembles the onboarding provisioning plan: namespaces, ArgoCD applications,
  * promotion chain ordering, and generated manifests.
+ *
+ * <p><b>Ownership validation note:</b> This service does not receive {@code teamId}
+ * as a parameter because the Application entity does not exist yet during onboarding.
+ * Team scoping is enforced via {@link TeamContext} (populated from JWT) and
+ * {@code OnboardingResource.verifyTeamAccess()} at the resource layer. The new
+ * Application's {@code teamId} is set from {@code teamContext.getTeamId()} during
+ * {@link #confirmOnboarding}. This is an accepted variation of the require* ownership
+ * pattern documented in project-context.md.</p>
  */
 @ApplicationScoped
 public class OnboardingService {

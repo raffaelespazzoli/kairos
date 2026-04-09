@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-03
-last_updated: 2026-04-09T01:00:00
+last_updated: 2026-04-09T16:10:00
 project: bmad
 project_key: NOKEY
 tracking_system: file-system
@@ -79,7 +79,7 @@ development_status:
   4-3-builds-page-build-table: done
   4-4-release-creation-from-successful-builds: done
   4-5-releases-page-release-list: done
-  epic-4-retrospective: optional
+  epic-4-retrospective: done
 
   # Epic 5: Deployment & Environment Promotion
   epic-5: backlog

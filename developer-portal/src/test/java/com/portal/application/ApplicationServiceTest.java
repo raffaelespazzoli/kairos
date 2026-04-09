@@ -105,4 +105,17 @@ class ApplicationServiceTest {
         assertThrows(NotFoundException.class,
                 () -> applicationService.getApplicationById(999999L));
     }
+
+    @Test
+    void getApplicationsForTeamReturnsAppsWhenTeamMatchesContext() {
+        List<Application> apps = applicationService.getApplicationsForTeam(testTeam.id);
+        assertTrue(apps.stream().anyMatch(a -> a.name.equals("svc-alpha")));
+        assertTrue(apps.stream().noneMatch(a -> a.name.equals("svc-other-app")));
+    }
+
+    @Test
+    void getApplicationsForTeamThrowsNotFoundForMismatchedTeam() {
+        assertThrows(NotFoundException.class,
+                () -> applicationService.getApplicationsForTeam(otherTeam.id));
+    }
 }

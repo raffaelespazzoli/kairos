@@ -5,6 +5,13 @@ import jakarta.transaction.Transactional;
 import jakarta.ws.rs.NotFoundException;
 import java.util.List;
 
+/**
+ * Admin-only cluster management. Clusters are global infrastructure resources,
+ * not team-scoped entities. Casbin restricts all cluster operations to the
+ * {@code admin} role. No team ownership validation is needed or applicable.
+ * This is an accepted exception to the require* ownership pattern documented
+ * in project-context.md.
+ */
 @ApplicationScoped
 public class ClusterService {
 
