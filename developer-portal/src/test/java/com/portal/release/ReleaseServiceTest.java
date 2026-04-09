@@ -6,6 +6,7 @@ import com.portal.build.BuildService;
 import com.portal.cluster.Cluster;
 import com.portal.integration.PortalIntegrationException;
 import com.portal.integration.git.GitProvider;
+import com.portal.integration.git.model.GitTag;
 import com.portal.integration.registry.RegistryAdapter;
 import com.portal.integration.secrets.ClusterCredential;
 import com.portal.integration.secrets.SecretManagerCredentialProvider;
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 import java.time.Instant;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -228,5 +230,73 @@ class ReleaseServiceTest {
                 () -> releaseService.createRelease(
                         testTeam.id, 999999L,
                         new CreateReleaseRequest("run-1", "v1.0.0")));
+    }
+
+    // --- listReleases ---
+
+    @Test
+    void listReleasesReturnsSortedByCreatedAtDescending() {
+        Instant oldest = Instant.parse("2026-04-01T09:00:00Z");
+        Instant middle = Instant.parse("2026-04-05T14:30:00Z");
+        Instant newest = Instant.parse("2026-04-07T10:00:00Z");
+
+        when(gitProvider.listTags(eq(testApp.gitRepoUrl), anyInt())).thenReturn(List.of(
+                new GitTag("v1.0.0", "sha-old", oldest),
+                new GitTag("v1.2.0", "sha-new", newest),
+                new GitTag("v1.1.0", "sha-mid", middle)));
+
+        List<ReleaseSummaryDto> result = releaseService.listReleases(testTeam.id, testApp.id);
+
+        assertEquals(3, result.size());
+        assertEquals("v1.2.0", result.get(0).version());
+        assertEquals("v1.1.0", result.get(1).version());
+        assertEquals("v1.0.0", result.get(2).version());
+
+        assertEquals(newest, result.get(0).createdAt());
+        assertEquals(middle, result.get(1).createdAt());
+        assertEquals(oldest, result.get(2).createdAt());
+    }
+
+    @Test
+    void listReleasesSetsCommitShaAndNullBuildId() {
+        when(gitProvider.listTags(eq(testApp.gitRepoUrl), anyInt())).thenReturn(List.of(
+                new GitTag("v1.0.0", "abc123def456", Instant.now())));
+
+        List<ReleaseSummaryDto> result = releaseService.listReleases(testTeam.id, testApp.id);
+
+        assertEquals(1, result.size());
+        assertEquals("abc123def456", result.get(0).commitSha());
+        assertNull(result.get(0).buildId());
+    }
+
+    @Test
+    void listReleasesReturnsEmptyListWhenNoTags() {
+        when(gitProvider.listTags(eq(testApp.gitRepoUrl), anyInt())).thenReturn(List.of());
+
+        List<ReleaseSummaryDto> result = releaseService.listReleases(testTeam.id, testApp.id);
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void listReleasesThrows404ForCrossTeamApp() {
+        assertThrows(NotFoundException.class,
+                () -> releaseService.listReleases(testTeam.id, crossTeamApp.id));
+    }
+
+    @Test
+    void listReleasesThrows404ForNonExistentApp() {
+        assertThrows(NotFoundException.class,
+                () -> releaseService.listReleases(testTeam.id, 999999L));
+    }
+
+    @Test
+    void listReleasesPropagatesGitProviderException() {
+        when(gitProvider.listTags(eq(testApp.gitRepoUrl), anyInt()))
+                .thenThrow(new PortalIntegrationException("git", "list-tags",
+                        "Git server returned HTTP 500"));
+
+        assertThrows(PortalIntegrationException.class,
+                () -> releaseService.listReleases(testTeam.id, testApp.id));
     }
 }

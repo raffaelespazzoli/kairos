@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.portal.integration.PortalIntegrationException;
+import com.portal.integration.git.model.GitTag;
 import com.portal.integration.git.model.PullRequest;
 
 import java.io.IOException;
@@ -14,6 +15,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -153,6 +155,42 @@ public class BitbucketProvider implements GitProvider {
             throw new PortalIntegrationException("git", "commitFiles",
                     "Failed to commit files to " + branch + ": " + e.getMessage(), null, e);
         }
+    }
+
+    @Override
+    public List<GitTag> listTags(String repoUrl, int maxResults) {
+        RepoCoordinates coords = parseRepoUrl(repoUrl);
+        String baseUrl = apiBase + "/2.0/repositories/" + coords.workspace() + "/"
+                + coords.repoSlug() + "/refs/tags";
+        int pagelen = Math.min(maxResults, 100);
+        List<GitTag> allTags = new ArrayList<>();
+        String url = baseUrl + "?pagelen=" + pagelen;
+
+        while (url != null && allTags.size() < maxResults) {
+            String body = sendGet(url, "list-tags", "list tags for " + repoUrl);
+            try {
+                JsonNode json = objectMapper.readTree(body);
+                JsonNode values = json.get("values");
+                if (values == null || !values.isArray() || values.isEmpty()) break;
+
+                for (JsonNode item : values) {
+                    if (allTags.size() >= maxResults) break;
+                    String name = item.get("name").asText();
+                    String hash = item.get("target").get("hash").asText();
+                    String dateStr = item.get("target").get("date").asText();
+                    allTags.add(new GitTag(name, hash, Instant.parse(dateStr)));
+                }
+
+                JsonNode nextNode = json.get("next");
+                url = (nextNode != null && !nextNode.isNull()) ? nextNode.asText() : null;
+            } catch (PortalIntegrationException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new PortalIntegrationException("git", "list-tags",
+                        "Failed to parse tags response: " + e.getMessage(), null, e);
+            }
+        }
+        return allTags;
     }
 
     @Override

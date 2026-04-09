@@ -1,7 +1,9 @@
 package com.portal.integration.git;
 
+import com.portal.integration.git.model.GitTag;
 import com.portal.integration.git.model.PullRequest;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -30,6 +32,16 @@ public class DevGitProvider implements GitProvider {
     @Override
     public void createBranch(String repoUrl, String branchName, String fromBranch) {
         // no-op
+    }
+
+    @Override
+    public List<GitTag> listTags(String repoUrl, int maxResults) {
+        List<GitTag> all = List.of(
+            new GitTag("v1.2.0", "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2", Instant.parse("2026-04-07T10:00:00Z")),
+            new GitTag("v1.1.0", "b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3", Instant.parse("2026-04-05T14:30:00Z")),
+            new GitTag("v1.0.0", "c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4", Instant.parse("2026-04-01T09:00:00Z"))
+        );
+        return all.subList(0, Math.min(all.size(), maxResults));
     }
 
     @Override

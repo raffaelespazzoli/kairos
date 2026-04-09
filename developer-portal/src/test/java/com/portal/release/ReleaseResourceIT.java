@@ -3,7 +3,9 @@ package com.portal.release;
 import com.portal.application.Application;
 import com.portal.build.BuildDetailDto;
 import com.portal.cluster.Cluster;
+import com.portal.integration.PortalIntegrationException;
 import com.portal.integration.git.GitProvider;
+import com.portal.integration.git.model.GitTag;
 import com.portal.integration.registry.RegistryAdapter;
 import com.portal.integration.secrets.ClusterCredential;
 import com.portal.integration.secrets.SecretManagerCredentialProvider;
@@ -20,11 +22,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 import java.time.Instant;
+import java.util.List;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
 @QuarkusTest
@@ -264,5 +266,84 @@ class ReleaseResourceIT {
                         otherTeam.id, crossTeamApp.id)
                 .then()
                 .statusCode(404);
+    }
+
+    // --- GET /releases (listReleases) ---
+
+    @Test
+    @TestSecurity(user = "dev@example.com", roles = "member")
+    @OidcSecurity(claims = {
+            @Claim(key = "team", value = "relres-team"),
+            @Claim(key = "role", value = "member")
+    })
+    void listReleasesReturns200WithArray() {
+        when(gitProvider.listTags(eq(testApp.gitRepoUrl), anyInt())).thenReturn(List.of(
+                new GitTag("v1.2.0", "abc123", Instant.parse("2026-04-07T10:00:00Z")),
+                new GitTag("v1.0.0", "def456", Instant.parse("2026-04-01T09:00:00Z"))));
+
+        given()
+                .when()
+                .get("/api/v1/teams/{teamId}/applications/{appId}/releases",
+                        testTeam.id, testApp.id)
+                .then()
+                .statusCode(200)
+                .body("size()", equalTo(2))
+                .body("[0].version", equalTo("v1.2.0"))
+                .body("[0].commitSha", equalTo("abc123"))
+                .body("[0].buildId", nullValue())
+                .body("[1].version", equalTo("v1.0.0"));
+    }
+
+    @Test
+    @TestSecurity(user = "dev@example.com", roles = "member")
+    @OidcSecurity(claims = {
+            @Claim(key = "team", value = "relres-team"),
+            @Claim(key = "role", value = "member")
+    })
+    void listReleasesReturns200WithEmptyArray() {
+        when(gitProvider.listTags(eq(testApp.gitRepoUrl), anyInt())).thenReturn(List.of());
+
+        given()
+                .when()
+                .get("/api/v1/teams/{teamId}/applications/{appId}/releases",
+                        testTeam.id, testApp.id)
+                .then()
+                .statusCode(200)
+                .body("size()", equalTo(0));
+    }
+
+    @Test
+    @TestSecurity(user = "dev@example.com", roles = "member")
+    @OidcSecurity(claims = {
+            @Claim(key = "team", value = "relres-team"),
+            @Claim(key = "role", value = "member")
+    })
+    void listReleasesReturns404ForCrossTeamApp() {
+        given()
+                .when()
+                .get("/api/v1/teams/{teamId}/applications/{appId}/releases",
+                        testTeam.id, crossTeamApp.id)
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    @TestSecurity(user = "dev@example.com", roles = "member")
+    @OidcSecurity(claims = {
+            @Claim(key = "team", value = "relres-team"),
+            @Claim(key = "role", value = "member")
+    })
+    void listReleasesReturns502WhenGitProviderFails() {
+        when(gitProvider.listTags(eq(testApp.gitRepoUrl), anyInt()))
+                .thenThrow(new PortalIntegrationException("git", "list-tags",
+                        "Git server returned HTTP 500"));
+
+        given()
+                .when()
+                .get("/api/v1/teams/{teamId}/applications/{appId}/releases",
+                        testTeam.id, testApp.id)
+                .then()
+                .statusCode(502)
+                .body("system", equalTo("git"));
     }
 }

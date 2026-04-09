@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.portal.integration.PortalIntegrationException;
+import com.portal.integration.git.model.GitTag;
 import com.portal.integration.git.model.PullRequest;
 
 import java.io.IOException;
@@ -15,6 +16,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -183,6 +185,59 @@ public class GitHubProvider implements GitProvider {
         } catch (Exception e) {
             throw new PortalIntegrationException("git", "commitFiles",
                     "Failed to commit files to " + branch + ": " + e.getMessage(), null, e);
+        }
+    }
+
+    @Override
+    public List<GitTag> listTags(String repoUrl, int maxResults) {
+        RepoCoordinates coords = parseRepoUrl(repoUrl);
+        String baseUrl = apiBase + "/repos/" + coords.owner() + "/" + coords.repo() + "/tags";
+        int perPage = Math.min(maxResults, 100);
+        List<GitTag> allTags = new ArrayList<>();
+        int page = 1;
+
+        while (allTags.size() < maxResults) {
+            String url = baseUrl + "?per_page=" + perPage + "&page=" + page;
+            String body = sendGet(url, "list-tags", "list tags for " + repoUrl);
+            try {
+                JsonNode json = objectMapper.readTree(body);
+                if (!json.isArray() || json.isEmpty()) break;
+
+                int pageCount = 0;
+                for (JsonNode item : json) {
+                    if (allTags.size() >= maxResults) break;
+                    String name = item.get("name").asText();
+                    String sha = item.get("commit").get("sha").asText();
+                    Instant date = fetchCommitDate(coords, sha);
+                    allTags.add(new GitTag(name, sha, date));
+                    pageCount++;
+                }
+
+                if (pageCount < perPage) break;
+                page++;
+            } catch (PortalIntegrationException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new PortalIntegrationException("git", "list-tags",
+                        "Failed to parse tags response: " + e.getMessage(), null, e);
+            }
+        }
+        return allTags;
+    }
+
+    private Instant fetchCommitDate(RepoCoordinates coords, String sha) {
+        String url = apiBase + "/repos/" + coords.owner() + "/" + coords.repo()
+                + "/git/commits/" + sha;
+        String body = sendGet(url, "list-tags", "get commit date for " + sha);
+        try {
+            JsonNode json = objectMapper.readTree(body);
+            String dateStr = json.get("committer").get("date").asText();
+            return Instant.parse(dateStr);
+        } catch (PortalIntegrationException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new PortalIntegrationException("git", "list-tags",
+                    "Failed to parse commit date for " + sha + ": " + e.getMessage(), null, e);
         }
     }
 

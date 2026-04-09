@@ -1,5 +1,6 @@
 package com.portal.integration.git;
 
+import com.portal.integration.git.model.GitTag;
 import com.portal.integration.git.model.PullRequest;
 
 import java.util.List;
@@ -63,6 +64,17 @@ public interface GitProvider {
      * @throws com.portal.integration.PortalIntegrationException if the commit fails
      */
     void commitFiles(String repoUrl, String branch, Map<String, String> files, String message);
+
+    /**
+     * Lists the most recent tags in the repository, following pagination until
+     * {@code maxResults} tags are collected or all tags are exhausted.
+     *
+     * @param repoUrl    the HTTPS URL of the repository
+     * @param maxResults maximum number of tags to return (providers stop paginating once reached)
+     * @return a list of tags, at most {@code maxResults} entries (may be empty)
+     * @throws com.portal.integration.PortalIntegrationException if the repository is inaccessible
+     */
+    List<GitTag> listTags(String repoUrl, int maxResults);
 
     /**
      * Creates a lightweight tag on the specified commit.

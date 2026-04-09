@@ -1,8 +1,8 @@
 export interface ReleaseSummary {
   version: string;
   createdAt: string;
-  buildId: string;
-  commitSha: string | null;
+  buildId: string | null;
+  commitSha: string;
   imageReference: string | null;
 }
 

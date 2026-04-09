@@ -1,6 +1,7 @@
 package com.portal.integration.git;
 
 import com.portal.integration.PortalIntegrationException;
+import com.portal.integration.git.model.GitTag;
 import com.portal.integration.git.model.PullRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,6 +10,7 @@ import java.io.IOException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -358,6 +360,145 @@ class GitHubProviderTest {
         var captor = org.mockito.ArgumentCaptor.forClass(HttpRequest.class);
         verify(mockHttpClient).send(captor.capture(), any(HttpResponse.BodyHandler.class));
         assertTrue(captor.getValue().uri().toString().startsWith("https://github.corp.com/api/v3/"));
+    }
+
+    // --- listTags ---
+
+    @Test
+    void listTagsCallsTagsEndpointAndParsesResponse() throws Exception {
+        String tagsResponse = "[{\"name\":\"v1.2.0\",\"commit\":{\"sha\":\"abc123\"}},"
+                + "{\"name\":\"v1.1.0\",\"commit\":{\"sha\":\"def456\"}}]";
+        String commitResponse1 = "{\"committer\":{\"date\":\"2026-04-07T10:00:00Z\"}}";
+        String commitResponse2 = "{\"committer\":{\"date\":\"2026-04-05T14:30:00Z\"}}";
+
+        HttpResponse<String> tagsResp = mockJsonResponse(200, tagsResponse);
+        HttpResponse<String> commit1Resp = mockJsonResponse(200, commitResponse1);
+        HttpResponse<String> commit2Resp = mockJsonResponse(200, commitResponse2);
+
+        when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(tagsResp)
+                .thenReturn(commit1Resp)
+                .thenReturn(commit2Resp);
+
+        List<GitTag> tags = provider.listTags("https://github.com/team/app", 50);
+
+        assertEquals(2, tags.size());
+        assertEquals("v1.2.0", tags.get(0).name());
+        assertEquals("abc123", tags.get(0).commitSha());
+        assertEquals(Instant.parse("2026-04-07T10:00:00Z"), tags.get(0).createdAt());
+        assertEquals("v1.1.0", tags.get(1).name());
+        assertEquals("def456", tags.get(1).commitSha());
+        assertEquals(Instant.parse("2026-04-05T14:30:00Z"), tags.get(1).createdAt());
+
+        verify(mockHttpClient, times(3)).send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class));
+    }
+
+    @Test
+    void listTagsSendsCorrectUrlWithPaginationParams() throws Exception {
+        HttpResponse<String> emptyResp = mockJsonResponse(200, "[]");
+        when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(emptyResp);
+
+        provider.listTags("https://github.com/my-org/my-repo", 50);
+
+        var captor = org.mockito.ArgumentCaptor.forClass(HttpRequest.class);
+        verify(mockHttpClient).send(captor.capture(), any(HttpResponse.BodyHandler.class));
+        String uri = captor.getValue().uri().toString();
+        assertTrue(uri.startsWith("https://api.github.com/repos/my-org/my-repo/tags?"), "URL: " + uri);
+        assertTrue(uri.contains("per_page=50"), "URL should include per_page: " + uri);
+        assertTrue(uri.contains("page=1"), "URL should include page=1: " + uri);
+    }
+
+    @Test
+    void listTagsReturnsEmptyListWhenNoTags() throws Exception {
+        HttpResponse<String> emptyResp = mockJsonResponse(200, "[]");
+        when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(emptyResp);
+
+        List<GitTag> tags = provider.listTags("https://github.com/team/app", 50);
+
+        assertTrue(tags.isEmpty());
+    }
+
+    @Test
+    void listTagsThrowsOn404() throws Exception {
+        HttpResponse<String> notFoundResp = mockJsonResponse(404, "{\"message\":\"Not Found\"}");
+        when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(notFoundResp);
+
+        PortalIntegrationException ex = assertThrows(PortalIntegrationException.class,
+                () -> provider.listTags("https://github.com/team/app", 50));
+        assertEquals("git", ex.getSystem());
+        assertEquals("list-tags", ex.getOperation());
+    }
+
+    @Test
+    void listTagsThrowsOnNetworkError() throws Exception {
+        when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenThrow(new IOException("Connection refused"));
+
+        PortalIntegrationException ex = assertThrows(PortalIntegrationException.class,
+                () -> provider.listTags("https://github.com/team/app", 50));
+        assertEquals("git", ex.getSystem());
+        assertTrue(ex.getMessage().contains("Connection refused"));
+    }
+
+    @Test
+    void listTagsRespectsMaxResultsLimit() throws Exception {
+        String tagsResponse = "[{\"name\":\"v1.2.0\",\"commit\":{\"sha\":\"abc123\"}},"
+                + "{\"name\":\"v1.1.0\",\"commit\":{\"sha\":\"def456\"}},"
+                + "{\"name\":\"v1.0.0\",\"commit\":{\"sha\":\"ghi789\"}}]";
+        String commitResponse1 = "{\"committer\":{\"date\":\"2026-04-07T10:00:00Z\"}}";
+        String commitResponse2 = "{\"committer\":{\"date\":\"2026-04-05T14:30:00Z\"}}";
+
+        HttpResponse<String> tagsResp = mockJsonResponse(200, tagsResponse);
+        HttpResponse<String> commit1Resp = mockJsonResponse(200, commitResponse1);
+        HttpResponse<String> commit2Resp = mockJsonResponse(200, commitResponse2);
+
+        when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(tagsResp)
+                .thenReturn(commit1Resp)
+                .thenReturn(commit2Resp);
+
+        List<GitTag> tags = provider.listTags("https://github.com/team/app", 2);
+
+        assertEquals(2, tags.size());
+        assertEquals("v1.2.0", tags.get(0).name());
+        assertEquals("v1.1.0", tags.get(1).name());
+    }
+
+    @Test
+    void listTagsStopsWhenPageReturnsFewItemsThanRequested() throws Exception {
+        String page1 = "[{\"name\":\"v1.2.0\",\"commit\":{\"sha\":\"abc123\"}}]";
+        String commitResponse1 = "{\"committer\":{\"date\":\"2026-04-07T10:00:00Z\"}}";
+
+        HttpResponse<String> page1Resp = mockJsonResponse(200, page1);
+        HttpResponse<String> commit1Resp = mockJsonResponse(200, commitResponse1);
+
+        when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(page1Resp)
+                .thenReturn(commit1Resp);
+
+        List<GitTag> tags = provider.listTags("https://github.com/team/app", 50);
+
+        assertEquals(1, tags.size());
+        assertEquals("v1.2.0", tags.get(0).name());
+        // Only 2 calls: 1 tags page + 1 commit date (no second page fetched)
+        verify(mockHttpClient, times(2)).send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class));
+    }
+
+    @Test
+    void listTagsCapsPerPageAt100ForLargeMaxResults() throws Exception {
+        HttpResponse<String> emptyResp = mockJsonResponse(200, "[]");
+        when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(emptyResp);
+
+        provider.listTags("https://github.com/my-org/my-repo", 200);
+
+        var captor = org.mockito.ArgumentCaptor.forClass(HttpRequest.class);
+        verify(mockHttpClient).send(captor.capture(), any(HttpResponse.BodyHandler.class));
+        String uri = captor.getValue().uri().toString();
+        assertTrue(uri.contains("per_page=100"), "per_page should be capped at 100: " + uri);
     }
 
     private HttpResponse<String> mockJsonResponse(int statusCode, String body) {

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.portal.integration.PortalIntegrationException;
+import com.portal.integration.git.model.GitTag;
 import com.portal.integration.git.model.PullRequest;
 
 import java.io.IOException;
@@ -15,6 +16,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -167,6 +169,43 @@ public class GiteaProvider implements GitProvider {
             throw new PortalIntegrationException("git", "commitFiles",
                     "Failed to commit files to " + branch + ": " + e.getMessage(), null, e);
         }
+    }
+
+    @Override
+    public List<GitTag> listTags(String repoUrl, int maxResults) {
+        RepoInfo info = parseRepoUrl(repoUrl);
+        String baseUrl = info.apiBase() + "/repos/" + info.owner() + "/" + info.repo() + "/tags";
+        int limit = Math.min(maxResults, 50);
+        List<GitTag> allTags = new ArrayList<>();
+        int page = 1;
+
+        while (allTags.size() < maxResults) {
+            String url = baseUrl + "?limit=" + limit + "&page=" + page;
+            String body = sendGet(url, "list-tags", "list tags for " + repoUrl);
+            try {
+                JsonNode json = objectMapper.readTree(body);
+                if (!json.isArray() || json.isEmpty()) break;
+
+                int pageCount = 0;
+                for (JsonNode item : json) {
+                    if (allTags.size() >= maxResults) break;
+                    String name = item.get("name").asText();
+                    String sha = item.get("commit").get("sha").asText();
+                    String dateStr = item.get("commit").get("created").asText();
+                    allTags.add(new GitTag(name, sha, Instant.parse(dateStr)));
+                    pageCount++;
+                }
+
+                if (pageCount < limit) break;
+                page++;
+            } catch (PortalIntegrationException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new PortalIntegrationException("git", "list-tags",
+                        "Failed to parse tags response: " + e.getMessage(), null, e);
+            }
+        }
+        return allTags;
     }
 
     @Override

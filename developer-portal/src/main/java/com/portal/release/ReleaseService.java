@@ -5,13 +5,18 @@ import com.portal.build.BuildDetailDto;
 import com.portal.build.BuildService;
 import com.portal.integration.PortalIntegrationException;
 import com.portal.integration.git.GitProvider;
+import com.portal.integration.git.model.GitTag;
 import com.portal.integration.registry.RegistryAdapter;
+import com.portal.integration.registry.RegistryConfig;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 import java.time.Instant;
+import java.util.Comparator;
+import java.util.List;
 
 @ApplicationScoped
 public class ReleaseService {
@@ -26,6 +31,34 @@ public class ReleaseService {
 
     @Inject
     RegistryAdapter registryAdapter;
+
+    @Inject
+    RegistryConfig registryConfig;
+
+    @ConfigProperty(name = "portal.releases.max-tags", defaultValue = "50")
+    int maxTags;
+
+    public List<ReleaseSummaryDto> listReleases(Long teamId, Long appId) {
+        Application app = resolveTeamApplication(teamId, appId);
+
+        List<GitTag> tags = gitProvider.listTags(app.gitRepoUrl, maxTags);
+
+        return tags.stream()
+                .sorted(Comparator.comparing(GitTag::createdAt).reversed())
+                .map(tag -> new ReleaseSummaryDto(
+                        tag.name(),
+                        tag.createdAt(),
+                        null,
+                        tag.commitSha(),
+                        buildImageReference(tag.name())))
+                .toList();
+    }
+
+    private String buildImageReference(String version) {
+        return registryConfig.url()
+                .map(url -> url + ":" + version)
+                .orElse(null);
+    }
 
     public ReleaseSummaryDto createRelease(Long teamId, Long appId,
                                            CreateReleaseRequest request) {

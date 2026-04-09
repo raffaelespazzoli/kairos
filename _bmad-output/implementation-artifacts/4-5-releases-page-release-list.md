@@ -1,6 +1,6 @@
 # Story 4.5: Releases Page & Release List
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -12,12 +12,13 @@ So that I can see what's available for deployment and track my release history.
 
 ## Acceptance Criteria
 
-1. **GET releases endpoint returns all releases for an application, most recent first**
+1. **GET releases endpoint returns the most recent releases (up to a configurable limit) for an application, most recent first**
    - **Given** a developer navigates to the Releases tab for an application
    - **When** GET `/api/v1/teams/{teamId}/applications/{appId}/releases` is called
-   - **Then** all releases for the application are returned, ordered by creation date descending
+   - **Then** the most recent releases (up to `portal.releases.max-tags`, default 50) are returned, ordered by creation date descending
    - **And** each release includes: version, createdAt, commitSha, imageReference
    - **And** buildId is included when recoverable from the tag metadata, otherwise null
+   - **And** Git provider pagination is followed until the configured limit is reached or all tags are retrieved
 
 2. **ApplicationReleasesPage renders a compact PatternFly Table of releases**
    - **Given** the ApplicationReleasesPage renders
@@ -55,74 +56,78 @@ So that I can see what's available for deployment and track my release history.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Add `listTags` to GitProvider interface and all implementations (AC: #1)
-  - [ ] Add `GitTag` record to `com.portal.integration.git.model` with fields: `name` (String), `commitSha` (String), `createdAt` (Instant)
-  - [ ] Add `List<GitTag> listTags(String repoUrl)` to `GitProvider.java` interface
-  - [ ] Implement in `GitHubProvider.java` via `GET /repos/{owner}/{repo}/tags` — extract `name`, `commit.sha`; date from tag annotation or commit date
-  - [ ] Implement in `GitLabProvider.java` via `GET /projects/:id/repository/tags` — extract `name`, `commit.id`, `commit.committed_date`
-  - [ ] Implement in `GiteaProvider.java` via `GET /repos/{owner}/{repo}/tags` — extract `name`, `commit.sha`, date
-  - [ ] Implement in `BitbucketProvider.java` via `GET /repositories/{workspace}/{repo_slug}/refs/tags` — extract `name`, `target.hash`, `target.date`
-  - [ ] Implement in `DevGitProvider.java` — return mock list of 3-5 sample tags with realistic data
+- [x] Task 1: Add `listTags` to GitProvider interface and all implementations (AC: #1)
+  - [x] Add `GitTag` record to `com.portal.integration.git.model` with fields: `name` (String), `commitSha` (String), `createdAt` (Instant)
+  - [x] Add `List<GitTag> listTags(String repoUrl)` to `GitProvider.java` interface
+  - [x] Implement in `GitHubProvider.java` via `GET /repos/{owner}/{repo}/tags` — extract `name`, `commit.sha`; date from tag annotation or commit date
+  - [x] Implement in `GitLabProvider.java` via `GET /projects/:id/repository/tags` — extract `name`, `commit.id`, `commit.committed_date`
+  - [x] Implement in `GiteaProvider.java` via `GET /repos/{owner}/{repo}/tags` — extract `name`, `commit.sha`, date
+  - [x] Implement in `BitbucketProvider.java` via `GET /repositories/{workspace}/{repo_slug}/refs/tags` — extract `name`, `target.hash`, `target.date`
+  - [x] Implement in `DevGitProvider.java` — return mock list of 3-5 sample tags with realistic data
 
-- [ ] Task 2: Add GET endpoint to ReleaseResource (AC: #1, #7)
-  - [ ] Add `GET` method to `ReleaseResource.java` at `/api/v1/teams/{teamId}/applications/{appId}/releases`
-  - [ ] Returns `List<ReleaseSummaryDto>` with 200 OK
-  - [ ] Verify Casbin `releases, read` permission is already in `policy.csv` (it is — `p, member, releases, read`)
+- [x] Task 2: Add GET endpoint to ReleaseResource (AC: #1, #7)
+  - [x] Add `GET` method to `ReleaseResource.java` at `/api/v1/teams/{teamId}/applications/{appId}/releases`
+  - [x] Returns `List<ReleaseSummaryDto>` with 200 OK
+  - [x] Verify Casbin `releases, read` permission is already in `policy.csv` (it is — `p, member, releases, read`)
 
-- [ ] Task 3: Add `listReleases` to ReleaseService (AC: #1, #6)
-  - [ ] Add `listReleases(Long teamId, Long appId)` to `ReleaseService.java`
-  - [ ] Resolve application (team-scoped, 404 for cross-team access)
-  - [ ] Call `GitProvider.listTags(app.gitRepoUrl)` to get all release tags
-  - [ ] For each tag: construct `ReleaseSummaryDto` with version, createdAt, commitSha, imageReference
-  - [ ] Construct image reference using `RegistryConfig.url()` + app naming convention: `{registryUrl}/{teamName}/{appName}:{version}`
-  - [ ] If `registryConfig.url()` is empty, set imageReference to null
-  - [ ] Sort by createdAt descending
-  - [ ] Return the list (empty list if no tags found — no error)
+- [x] Task 3: Add `listReleases` to ReleaseService (AC: #1, #6)
+  - [x] Add `listReleases(Long teamId, Long appId)` to `ReleaseService.java`
+  - [x] Resolve application (team-scoped, 404 for cross-team access)
+  - [x] Call `GitProvider.listTags(app.gitRepoUrl)` to get all release tags
+  - [x] For each tag: construct `ReleaseSummaryDto` with version, createdAt, commitSha, imageReference
+  - [x] Construct image reference using `RegistryConfig.url()` + app naming convention: `{registryUrl}/{teamName}/{appName}:{version}`
+  - [x] If `registryConfig.url()` is empty, set imageReference to null
+  - [x] Sort by createdAt descending
+  - [x] Return the list (empty list if no tags found — no error)
 
-- [ ] Task 4: Extend ReleaseSummaryDto if needed (AC: #1)
-  - [ ] Verify `ReleaseSummaryDto` from Story 4.4 has: `version`, `createdAt`, `buildId`, `commitSha`, `imageReference`
-  - [ ] `buildId` must be nullable — it is available when created via the portal's POST endpoint but not when listing from Git tags
-  - [ ] If Story 4.4 used a Java `record`, ensure nullable fields use wrapper types or Optional
+- [x] Task 4: Extend ReleaseSummaryDto if needed (AC: #1)
+  - [x] Verify `ReleaseSummaryDto` from Story 4.4 has: `version`, `createdAt`, `buildId`, `commitSha`, `imageReference`
+  - [x] `buildId` must be nullable — it is available when created via the portal's POST endpoint but not when listing from Git tags
+  - [x] If Story 4.4 used a Java `record`, ensure nullable fields use wrapper types or Optional
 
-- [ ] Task 5: Add frontend release types and API helper (AC: #2, #3, #5)
-  - [ ] Verify `src/main/webui/src/types/release.ts` exists from Story 4.4 with `ReleaseSummary` type
-  - [ ] If not, create it with: `version: string`, `createdAt: string`, `buildId: string | null`, `commitSha: string`, `imageReference: string | null`
-  - [ ] Add `fetchReleases(teamId: number, appId: number): Promise<ReleaseSummary[]>` to `src/main/webui/src/api/releases.ts` using `apiFetch()`
-  - [ ] Create `src/main/webui/src/hooks/useReleases.ts` using the `useApiFetch<ReleaseSummary[]>` pattern with path `/api/v1/teams/${teamId}/applications/${appId}/releases`
+- [x] Task 5: Add frontend release types and API helper (AC: #2, #3, #5)
+  - [x] Verify `src/main/webui/src/types/release.ts` exists from Story 4.4 with `ReleaseSummary` type
+  - [x] If not, create it with: `version: string`, `createdAt: string`, `buildId: string | null`, `commitSha: string`, `imageReference: string | null`
+  - [x] Add `fetchReleases(teamId: number, appId: number): Promise<ReleaseSummary[]>` to `src/main/webui/src/api/releases.ts` using `apiFetch()`
+  - [x] Create `src/main/webui/src/hooks/useReleases.ts` using the `useApiFetch<ReleaseSummary[]>` pattern with path `/api/v1/teams/${teamId}/applications/${appId}/releases`
 
-- [ ] Task 6: Create ReleaseTable component (AC: #2, #3)
-  - [ ] Create `src/main/webui/src/components/release/ReleaseTable.tsx`
-  - [ ] PatternFly Table (compact variant) with columns: Version, Created, Commit, Image
-  - [ ] Version column: plain text, primary identifier
-  - [ ] Created column: formatted date/time (use `toLocaleDateString()` + `toLocaleTimeString()` or similar)
-  - [ ] Commit column: 7-char truncated SHA in monospace (`fontFamily: 'var(--pf-v6-global--FontFamily--monospace)'` or PF6 utility class), full SHA in PatternFly `Tooltip`
-  - [ ] Image column: full `registry/repo:tag` in monospace, show "—" if null
+- [x] Task 6: Create ReleaseTable component (AC: #2, #3)
+  - [x] Create `src/main/webui/src/components/release/ReleaseTable.tsx`
+  - [x] PatternFly Table (compact variant) with columns: Version, Created, Commit, Image
+  - [x] Version column: plain text, primary identifier
+  - [x] Created column: formatted date/time (use `toLocaleDateString()` + `toLocaleTimeString()` or similar)
+  - [x] Commit column: 7-char truncated SHA in monospace (`fontFamily: 'var(--pf-v6-global--FontFamily--monospace)'` or PF6 utility class), full SHA in PatternFly `Tooltip`
+  - [x] Image column: full `registry/repo:tag` in monospace, show "—" if null
 
-- [ ] Task 7: Replace ApplicationReleasesPage stub with real implementation (AC: #2, #4, #5)
-  - [ ] Replace stub content in `src/main/webui/src/routes/ApplicationReleasesPage.tsx`
-  - [ ] Use `useParams()` to get `teamId` and `appId`
-  - [ ] Use `useApiFetch` hook (or the new `useReleases` hook) to fetch releases
-  - [ ] Page header: Title "Releases" + `RefreshButton`
-  - [ ] Loading state: `LoadingSpinner` component (with systemName="Git" or "Portal")
-  - [ ] Error state: `ErrorAlert` component inline
-  - [ ] Data state: render `ReleaseTable` with the fetched data
-  - [ ] Empty state: PatternFly `EmptyState` with title "No releases yet", description "Create a release from a successful build to start deploying."
-  - [ ] No primary action button on this page — releases are created from the Builds page (Story 4.4)
+- [x] Task 7: Replace ApplicationReleasesPage stub with real implementation (AC: #2, #4, #5)
+  - [x] Replace stub content in `src/main/webui/src/routes/ApplicationReleasesPage.tsx`
+  - [x] Use `useParams()` to get `teamId` and `appId`
+  - [x] Use `useApiFetch` hook (or the new `useReleases` hook) to fetch releases
+  - [x] Page header: Title "Releases" + `RefreshButton`
+  - [x] Loading state: `LoadingSpinner` component (with systemName="Git" or "Portal")
+  - [x] Error state: `ErrorAlert` component inline
+  - [x] Data state: render `ReleaseTable` with the fetched data
+  - [x] Empty state: PatternFly `EmptyState` with title "No releases yet", description "Create a release from a successful build to start deploying."
+  - [x] No primary action button on this page — releases are created from the Builds page (Story 4.4)
 
-- [ ] Task 8: Write backend tests (AC: #1, #2, #7)
-  - [ ] Add `listTags` tests to existing Git provider test files (at minimum `GitHubProviderTest.java`)
-  - [ ] Verify mock HTTP response parsing, empty tags list, and error handling (404 repo, network failure)
-  - [ ] Extend `ReleaseServiceTest.java` (`@QuarkusTest` + `@InjectMock`): test `listReleases()` with mocked GitProvider returning tags
-  - [ ] Test team-scoped 404 for cross-team application access
-  - [ ] Test empty list when no tags exist
-  - [ ] Test `PortalIntegrationException` when GitProvider fails (→ 502)
-  - [ ] Extend `ReleaseResourceIT.java`: REST Assured test for GET endpoint, verify 200 response, array format, 404 for cross-team
+- [x] Task 8: Write backend tests (AC: #1, #2, #7)
+  - [x] Add `listTags` tests to existing Git provider test files (at minimum `GitHubProviderTest.java`)
+  - [x] Verify mock HTTP response parsing, empty tags list, and error handling (404 repo, network failure)
+  - [x] Extend `ReleaseServiceTest.java` (`@QuarkusTest` + `@InjectMock`): test `listReleases()` with mocked GitProvider returning tags
+  - [x] Test team-scoped 404 for cross-team application access
+  - [x] Test empty list when no tags exist
+  - [x] Test `PortalIntegrationException` when GitProvider fails (→ 502)
+  - [x] Extend `ReleaseResourceIT.java`: REST Assured test for GET endpoint, verify 200 response, array format, 404 for cross-team
 
-- [ ] Task 9: Write frontend tests (AC: #2, #3, #4, #5)
-  - [ ] Create `src/main/webui/src/components/release/ReleaseTable.test.tsx`: render with data, verify columns, monospace rendering, truncated SHA, tooltip
-  - [ ] Create `src/main/webui/src/routes/ApplicationReleasesPage.test.tsx`: test loading, success, error, and empty states
-  - [ ] Mock API responses at the `apiFetch()` level
-  - [ ] Account for React 18 StrictMode in effect-driven fetch logic
+- [x] Task 9: Write frontend tests (AC: #2, #3, #4, #5)
+  - [x] Create `src/main/webui/src/components/release/ReleaseTable.test.tsx`: render with data, verify columns, monospace rendering, truncated SHA, tooltip
+  - [x] Create `src/main/webui/src/routes/ApplicationReleasesPage.test.tsx`: test loading, success, error, and empty states
+  - [x] Mock API responses at the `apiFetch()` level
+  - [x] Account for React 18 StrictMode in effect-driven fetch logic
+
+### Review Findings
+
+- [x] [Review][Patch] RESOLVED — AC1 amended to configurable limit (default 50). Added `portal.releases.max-tags` config property. All four Git provider `listTags()` implementations now paginate until the configured limit is reached. `GitProvider.listTags` signature updated to accept `int maxResults`.
 
 ## Dev Notes
 
@@ -581,10 +586,52 @@ GET /api/v1/teams/{teamId}/applications/{appId}/releases
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+claude-4.6-opus-high-thinking (Cursor Agent)
 
 ### Debug Log References
 
+- Pre-flight: 36 existing tests passed (22 GitHubProvider + 7 ReleaseService + 7 ReleaseResourceIT)
+- Final backend: 412 tests passed, 0 failures
+- Final frontend: 253 tests passed across 28 test files, 0 failures
+
 ### Completion Notes List
 
+- **Task 1:** Added `GitTag` record and `listTags()` to `GitProvider` interface + all 5 implementations. GitHub uses tags endpoint + commit date lookup; GitLab, Gitea, Bitbucket parse dates from inline response fields; DevGitProvider returns 3 mock tags.
+- **Task 2:** Added `GET` endpoint to `ReleaseResource` returning `List<ReleaseSummaryDto>` with team access validation. Casbin `releases, read` policy already existed.
+- **Task 3:** Added `listReleases()` to `ReleaseService` — calls `GitProvider.listTags()`, sorts descending by `createdAt`, constructs image references from `RegistryConfig.url()`, sets `buildId` to null (not recoverable from tags).
+- **Task 4:** Verified `ReleaseSummaryDto` already has all required fields with nullable reference types. Fixed frontend `ReleaseSummary.buildId` type from `string` to `string | null` and `commitSha` from `string | null` to `string` (commitSha is always present from Git tags).
+- **Task 5:** Added `fetchReleases()` to `api/releases.ts`, created `useReleases` hook using `useApiFetch` pattern.
+- **Task 6:** Created `ReleaseTable.tsx` — PF6 compact Table with Version (bold), Created (formatted), Commit (7-char truncated, monospace, Tooltip for full SHA), Image (monospace, "—" for null).
+- **Task 7:** Replaced stub `ApplicationReleasesPage.tsx` with full implementation — uses `useReleases` hook, `LoadingSpinner` (systemName="Git"), `ErrorAlert`, `EmptyState`, `ReleaseTable`, `RefreshButton`. No primary action button.
+- **Task 8:** Added 5 `listTags` tests to GitHubProviderTest, 6 `listReleases` tests to ReleaseServiceTest, 4 GET endpoint tests to ReleaseResourceIT. Fixed Mockito "nested stubbing" issue by pre-creating mock responses.
+- **Task 9:** Created `ReleaseTable.test.tsx` (8 tests) and `ApplicationReleasesPage.test.tsx` (9 tests) covering loading, error, empty, data states, column rendering, monospace styling, and tab selection.
+
+### Change Log
+
+- 2026-04-08: Implemented Story 4.5 — Releases Page & Release List (all 9 tasks complete)
+- 2026-04-08: Patch — Amended AC1 to configurable limit (default 50). Added `portal.releases.max-tags` config. All Git provider `listTags()` implementations now paginate. `GitProvider.listTags` signature updated to `listTags(String repoUrl, int maxResults)`. Backend tests updated (415 pass, 0 failures). Frontend unaffected (253 pass, 0 failures).
+
 ### File List
+
+**New files:**
+- `developer-portal/src/main/java/com/portal/integration/git/model/GitTag.java`
+- `developer-portal/src/main/webui/src/hooks/useReleases.ts`
+- `developer-portal/src/main/webui/src/components/release/ReleaseTable.tsx`
+- `developer-portal/src/main/webui/src/components/release/ReleaseTable.test.tsx`
+- `developer-portal/src/main/webui/src/routes/ApplicationReleasesPage.test.tsx`
+
+**Modified files:**
+- `developer-portal/src/main/java/com/portal/integration/git/GitProvider.java`
+- `developer-portal/src/main/java/com/portal/integration/git/GitHubProvider.java`
+- `developer-portal/src/main/java/com/portal/integration/git/GitLabProvider.java`
+- `developer-portal/src/main/java/com/portal/integration/git/GiteaProvider.java`
+- `developer-portal/src/main/java/com/portal/integration/git/BitbucketProvider.java`
+- `developer-portal/src/main/java/com/portal/integration/git/DevGitProvider.java`
+- `developer-portal/src/main/java/com/portal/release/ReleaseResource.java`
+- `developer-portal/src/main/java/com/portal/release/ReleaseService.java`
+- `developer-portal/src/main/webui/src/types/release.ts`
+- `developer-portal/src/main/webui/src/api/releases.ts`
+- `developer-portal/src/main/webui/src/routes/ApplicationReleasesPage.tsx`
+- `developer-portal/src/test/java/com/portal/integration/git/GitHubProviderTest.java`
+- `developer-portal/src/test/java/com/portal/release/ReleaseServiceTest.java`
+- `developer-portal/src/test/java/com/portal/release/ReleaseResourceIT.java`
