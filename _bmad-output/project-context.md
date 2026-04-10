@@ -323,15 +323,29 @@ The portal is a developer abstraction layer. All user-facing content (API respon
 - The portal persists only: `Cluster`, `Team`, `Application`, `Environment` (4 entities)
 - Everything else is fetched live from platform systems on every request
 - Build status → Tekton API; deployment status → ArgoCD API; health → Prometheus API; releases → Git tags + Registry
+- Deployment history → Git commit history on `values-run-<env>.yaml` files (not a database table)
 - No background sync jobs for MVP — all data is request-scoped
 
-**GitOps Contract — Critical for Onboarding:**
+**Deployment Mechanism — Git-Based (Design Decision 2026-04-09):**
+
+- Deployment = Git commit to app repo's `.helm/run/values-run-<env>.yaml` updating `image.tag`
+- The portal NEVER calls ArgoCD write APIs (no PATCH, no sync) — ArgoCD auto-sync detects Git drift and reconciles
+- All portal write operations flow through Git: onboarding (PR to infra repo), releases (Git tags), deployments (commit to values file)
+- Deployment history = `GitProvider.listCommits()` on the values file — Git is the deployment ledger
+- "Who deployed" = commit author / `Deployed-By:` trailer in commit message
+- Commit message convention: `deploy: <version> to <env>\n\nDeployed-By: <user>`
+- Live deployment status still read from ArgoCD via `getEnvironmentStatuses` (read-only)
+- Production gating enforced by Casbin server-side (Story 5.4) — the Git commit mechanism is the same for all environments
+
+**GitOps Contract — Critical for Onboarding and Deployment:**
 
 - App repo must have `.helm/build/` (Helm chart) + `.helm/run/` (Helm chart) + `values-build.yaml` + at least one `values-run-<env>.yaml`
+- `values-run-<env>.yaml` must contain `image.tag` field under the `image` section — this is the field the portal updates during deployment
 - Infra repo structure: `/<cluster>/<namespace>/namespace.yaml` + `argocd-application.yaml`
 - Onboarding creates a PR to the infra repo — NOT a direct commit; onboarding ends at PR creation
 - Multiple environments can share a cluster (e.g., dev and build on `ocp-dev-01`)
 - Per onboarded app: 1 ArgoCD Application for build + N ArgoCD Applications for environments
+- ArgoCD auto-sync must be enabled on run Applications for deployment to work without manual sync triggers
 
 ---
 
