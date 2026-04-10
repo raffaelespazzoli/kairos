@@ -21,4 +21,7 @@ public interface GitProviderConfig {
     String infraRepoUrl();
 
     Optional<String> apiUrl();
+
+    @WithDefault("main")
+    String defaultBranch();
 }

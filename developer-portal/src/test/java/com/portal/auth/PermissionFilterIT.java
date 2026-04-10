@@ -13,8 +13,10 @@ import static org.hamcrest.Matchers.*;
 
 /**
  * Integration tests for the PermissionFilter running in the full Quarkus stack.
- * Uses {@link AuthTestStubResource} to provide route targets for admin/clusters
- * and deployment endpoints that do not exist in production code yet.
+ * Uses {@link AuthTestStubResource} to provide route targets for admin/clusters.
+ * Deployment endpoint tests exercise the real {@link com.portal.deployment.DeploymentResource}
+ * and assert that the filter allows or denies the request (downstream 404s are expected
+ * when test entities do not exist).
  */
 @QuarkusTest
 class PermissionFilterIT {
@@ -123,7 +125,7 @@ class PermissionFilterIT {
                 .body("{}")
                 .when().post("/api/v1/teams/1/applications/1/deployments?env=prod")
                 .then()
-                .statusCode(201);
+                .statusCode(not(equalTo(403)));
     }
 
     // --- AC #7: Members cannot deploy to production → 403 ---
@@ -156,7 +158,7 @@ class PermissionFilterIT {
                 .body("{}")
                 .when().post("/api/v1/teams/1/applications/1/deployments")
                 .then()
-                .statusCode(201);
+                .statusCode(not(equalTo(403)));
     }
 
     // --- Non-API path is not filtered ---
