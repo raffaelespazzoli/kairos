@@ -1,8 +1,18 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { EnvironmentChain } from './EnvironmentChain';
 import type { EnvironmentChainEntry } from '../../types/environment';
+import type { ReleaseSummary } from '../../types/release';
+
+vi.mock('../../hooks/useDeployments', () => ({
+  useDeployments: () => ({ data: null, error: null, isLoading: false, refresh: vi.fn() }),
+}));
+
+const mockTriggerDeployment = vi.fn();
+vi.mock('../../api/deployments', () => ({
+  triggerDeployment: (...args: unknown[]) => mockTriggerDeployment(...args),
+}));
 
 const threeEnvs: EnvironmentChainEntry[] = [
   {
@@ -149,6 +159,93 @@ describe('EnvironmentChain', () => {
     const listItems = container.querySelectorAll('[role="listitem"]');
     listItems.forEach((item) => {
       expect(item).toHaveStyle({ minWidth: '180px' });
+    });
+  });
+
+  it('passes releases through to EnvironmentCard (Deploy dropdown renders when releases provided)', () => {
+    const releases: ReleaseSummary[] = [
+      {
+        version: 'v2.1.1',
+        createdAt: new Date(Date.now() - 3600000).toISOString(),
+        buildId: 'b1',
+        commitSha: 'abc',
+        imageReference: null,
+      },
+    ];
+
+    const envsWithNotDeployed: EnvironmentChainEntry[] = [
+      { ...threeEnvs[0], status: 'NOT_DEPLOYED', deployedVersion: null },
+    ];
+
+    render(
+      <EnvironmentChain
+        environments={envsWithNotDeployed}
+        teamId="1"
+        appId="42"
+        releases={releases}
+      />,
+    );
+
+    expect(screen.getByTestId('deploy-toggle')).toBeInTheDocument();
+  });
+
+  it('shows Deploy only on the first NOT_DEPLOYED environment in the chain', () => {
+    const releases: ReleaseSummary[] = [
+      {
+        version: 'v2.1.1',
+        createdAt: new Date(Date.now() - 3600000).toISOString(),
+        buildId: 'b1',
+        commitSha: 'abc',
+        imageReference: null,
+      },
+    ];
+    const environments: EnvironmentChainEntry[] = [
+      { ...threeEnvs[0], status: 'NOT_DEPLOYED', deployedVersion: null },
+      { ...threeEnvs[1], status: 'NOT_DEPLOYED', deployedVersion: null },
+      { ...threeEnvs[2], status: 'NOT_DEPLOYED', deployedVersion: null },
+    ];
+
+    render(
+      <EnvironmentChain
+        environments={environments}
+        teamId="1"
+        appId="42"
+        releases={releases}
+      />,
+    );
+
+    expect(screen.getAllByTestId('deploy-toggle')).toHaveLength(1);
+  });
+
+  it('computes nextEnvironmentId correctly from environments array', () => {
+    mockTriggerDeployment.mockReset();
+    mockTriggerDeployment.mockResolvedValue({});
+    const releases: ReleaseSummary[] = [
+      {
+        version: 'v2.1.1',
+        createdAt: new Date(Date.now() - 3600000).toISOString(),
+        buildId: 'b1',
+        commitSha: 'abc',
+        imageReference: null,
+      },
+    ];
+
+    render(
+      <EnvironmentChain
+        environments={threeEnvs}
+        teamId="1"
+        appId="42"
+        releases={releases}
+      />,
+    );
+
+    return userEvent.click(
+      screen.getByRole('button', { name: /Promote to staging/i }),
+    ).then(() => {
+      expect(mockTriggerDeployment).toHaveBeenCalledWith('1', '42', {
+        releaseVersion: 'v1.4.2',
+        environmentId: 2,
+      });
     });
   });
 });

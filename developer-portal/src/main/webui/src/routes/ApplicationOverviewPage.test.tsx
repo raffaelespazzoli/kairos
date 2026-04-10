@@ -68,8 +68,18 @@ let mockEnvResult = {
   refresh: vi.fn(),
 };
 
+let mockReleasesResult = {
+  data: null as unknown[] | null,
+  error: null as PortalError | null,
+  isLoading: false,
+};
+
 vi.mock('../hooks/useEnvironments', () => ({
   useEnvironments: () => mockEnvResult,
+}));
+
+vi.mock('../hooks/useReleases', () => ({
+  useReleases: () => mockReleasesResult,
 }));
 
 function renderPage(
@@ -95,12 +105,14 @@ function renderPage(
 describe('ApplicationOverviewPage', () => {
   it('shows loading spinner while applications are loading', () => {
     mockEnvResult = { data: null, error: null, isLoading: false, refresh: vi.fn() };
+    mockReleasesResult = { data: null, error: null, isLoading: false };
     renderPage('/teams/1/apps/42', [], true);
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
   });
 
   it('shows error alert when applications fetch fails', () => {
     mockEnvResult = { data: null, error: null, isLoading: false, refresh: vi.fn() };
+    mockReleasesResult = { data: null, error: null, isLoading: false };
     renderPage('/teams/1/apps/42', [], false, {
       error: 'unknown',
       message: 'Failed to load applications',
@@ -111,12 +123,14 @@ describe('ApplicationOverviewPage', () => {
 
   it('shows error when application is not found', () => {
     mockEnvResult = { data: null, error: null, isLoading: false, refresh: vi.fn() };
+    mockReleasesResult = { data: null, error: null, isLoading: false };
     renderPage('/teams/1/apps/9999');
     expect(screen.getByText('Application not found')).toBeInTheDocument();
   });
 
   it('renders application name as heading', () => {
     mockEnvResult = { data: sampleEnvData, error: null, isLoading: false, refresh: vi.fn() };
+    mockReleasesResult = { data: [], error: null, isLoading: false };
     renderPage('/teams/1/apps/42');
     expect(
       screen.getByRole('heading', { name: 'payments-api' }),
@@ -125,6 +139,7 @@ describe('ApplicationOverviewPage', () => {
 
   it('displays runtime type', () => {
     mockEnvResult = { data: sampleEnvData, error: null, isLoading: false, refresh: vi.fn() };
+    mockReleasesResult = { data: [], error: null, isLoading: false };
     renderPage('/teams/1/apps/42');
     expect(screen.getByText('Runtime')).toBeInTheDocument();
     expect(screen.getByText('quarkus')).toBeInTheDocument();
@@ -132,12 +147,14 @@ describe('ApplicationOverviewPage', () => {
 
   it('displays onboarded date when present', () => {
     mockEnvResult = { data: sampleEnvData, error: null, isLoading: false, refresh: vi.fn() };
+    mockReleasesResult = { data: [], error: null, isLoading: false };
     renderPage('/teams/1/apps/42');
     expect(screen.getByText('Onboarded')).toBeInTheDocument();
   });
 
   it('displays onboarding PR link when present', () => {
     mockEnvResult = { data: sampleEnvData, error: null, isLoading: false, refresh: vi.fn() };
+    mockReleasesResult = { data: [], error: null, isLoading: false };
     renderPage('/teams/1/apps/42');
     const prLink = screen.getByText('View onboarding PR');
     expect(prLink.closest('a')).toHaveAttribute(
@@ -149,12 +166,14 @@ describe('ApplicationOverviewPage', () => {
 
   it('hides onboarding PR section when URL is empty', () => {
     mockEnvResult = { data: sampleEnvData, error: null, isLoading: false, refresh: vi.fn() };
+    mockReleasesResult = { data: [], error: null, isLoading: false };
     renderPage('/teams/1/apps/99');
     expect(screen.queryByText('View onboarding PR')).not.toBeInTheDocument();
   });
 
   it('renders environment chain when data loads', () => {
     mockEnvResult = { data: sampleEnvData, error: null, isLoading: false, refresh: vi.fn() };
+    mockReleasesResult = { data: [], error: null, isLoading: false };
     renderPage('/teams/1/apps/42');
     expect(screen.getByText('dev')).toBeInTheDocument();
     expect(screen.getByText('staging')).toBeInTheDocument();
@@ -165,6 +184,7 @@ describe('ApplicationOverviewPage', () => {
 
   it('shows environment loading spinner', () => {
     mockEnvResult = { data: null, error: null, isLoading: true, refresh: vi.fn() };
+    mockReleasesResult = { data: null, error: null, isLoading: false };
     renderPage('/teams/1/apps/42');
     expect(screen.getAllByRole('progressbar').length).toBeGreaterThanOrEqual(1);
   });
@@ -180,12 +200,31 @@ describe('ApplicationOverviewPage', () => {
       isLoading: false,
       refresh: vi.fn(),
     };
+    mockReleasesResult = { data: null, error: null, isLoading: false };
     renderPage('/teams/1/apps/42');
     expect(screen.getByText('Failed to load environments')).toBeInTheDocument();
   });
 
+  it('shows error when releases fetch fails', () => {
+    mockEnvResult = { data: sampleEnvData, error: null, isLoading: false, refresh: vi.fn() };
+    mockReleasesResult = {
+      data: null,
+      error: {
+        error: 'unknown',
+        message: 'Failed to load releases',
+        timestamp: '2026-04-10T00:00:00Z',
+      },
+      isLoading: false,
+    };
+
+    renderPage('/teams/1/apps/42');
+
+    expect(screen.getByText('Failed to load releases')).toBeInTheDocument();
+  });
+
   it('renders placeholder cards for builds and activity', () => {
     mockEnvResult = { data: sampleEnvData, error: null, isLoading: false, refresh: vi.fn() };
+    mockReleasesResult = { data: [], error: null, isLoading: false };
     renderPage('/teams/1/apps/42');
     expect(screen.getByText('Recent Builds')).toBeInTheDocument();
     expect(screen.getByText('Activity')).toBeInTheDocument();
@@ -195,12 +234,14 @@ describe('ApplicationOverviewPage', () => {
 
   it('renders refresh button', () => {
     mockEnvResult = { data: sampleEnvData, error: null, isLoading: false, refresh: vi.fn() };
+    mockReleasesResult = { data: [], error: null, isLoading: false };
     renderPage('/teams/1/apps/42');
     expect(screen.getByRole('button', { name: /Refresh/i })).toBeInTheDocument();
   });
 
   it('shows DevSpaces button when devSpacesDeepLink is present', () => {
     mockEnvResult = { data: sampleEnvData, error: null, isLoading: false, refresh: vi.fn() };
+    mockReleasesResult = { data: [], error: null, isLoading: false };
     renderPage('/teams/1/apps/42');
     const link = screen.getByText('Open in DevSpaces ↗');
     expect(link.closest('a')).toHaveAttribute(
@@ -212,6 +253,7 @@ describe('ApplicationOverviewPage', () => {
 
   it('hides DevSpaces button when devSpacesDeepLink is null', () => {
     mockEnvResult = { data: sampleEnvData, error: null, isLoading: false, refresh: vi.fn() };
+    mockReleasesResult = { data: [], error: null, isLoading: false };
     renderPage('/teams/1/apps/99');
     expect(screen.queryByText('Open in DevSpaces ↗')).not.toBeInTheDocument();
   });

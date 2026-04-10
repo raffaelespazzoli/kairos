@@ -8,10 +8,13 @@ import {
   Label,
   Button,
   Content,
+  Dropdown,
+  DropdownItem,
+  DropdownList,
   Flex,
   FlexItem,
+  MenuToggle,
   Spinner,
-  Tooltip,
 } from '@patternfly/react-core';
 import {
   CheckCircleIcon,
@@ -22,14 +25,20 @@ import {
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { DeepLinkButton } from '../shared/DeepLinkButton';
 import { useDeployments } from '../../hooks/useDeployments';
+import { triggerDeployment } from '../../api/deployments';
 import type { EnvironmentChainEntry, EnvironmentStatus } from '../../types/environment';
 import type { DeploymentStatus } from '../../types/deployment';
+import type { ReleaseSummary } from '../../types/release';
 
 interface EnvironmentCardProps {
   entry: EnvironmentChainEntry;
   nextEnvName?: string;
+  nextEnvironmentId?: number;
+  isFirstNotDeployed?: boolean;
   teamId?: string;
   appId?: string;
+  releases?: ReleaseSummary[] | null;
+  onDeploymentInitiated?: () => void;
 }
 
 interface StatusConfig {
@@ -106,13 +115,80 @@ function getDeploymentStatusLabel(status: DeploymentStatus) {
 }
 
 export const EnvironmentCard = forwardRef<HTMLDivElement, EnvironmentCardProps>(
-  function EnvironmentCard({ entry, nextEnvName, teamId, appId }, ref) {
+  function EnvironmentCard({
+    entry,
+    nextEnvName,
+    nextEnvironmentId,
+    isFirstNotDeployed = false,
+    teamId,
+    appId,
+    releases,
+    onDeploymentInitiated,
+  }, ref) {
     const [isExpanded, setIsExpanded] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
+    const [pendingAction, setPendingAction] = useState<'deploy' | 'promote' | null>(null);
+    const [deployError, setDeployError] = useState<string | null>(null);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const environmentId = isExpanded ? entry.environmentId : null;
     const { data: deployments, error: deploymentsError, isLoading: deploymentsLoading } =
       useDeployments(teamId, appId, environmentId);
+
+    const hasReleases = releases != null && releases.length > 0;
+    const hasDeploymentContext = teamId != null && appId != null;
+    const canDeployToCurrentEnvironment =
+      hasDeploymentContext && entry.environmentId != null;
+    const canPromoteToNextEnvironment =
+      hasDeploymentContext &&
+      nextEnvironmentId != null &&
+      entry.deployedVersion != null;
+    const showDeploy =
+      hasReleases &&
+      canDeployToCurrentEnvironment &&
+      (
+        entry.status === 'HEALTHY' ||
+        (entry.status === 'NOT_DEPLOYED' && isFirstNotDeployed)
+      );
+    const showPromote =
+      entry.status === 'HEALTHY' &&
+      nextEnvName != null &&
+      canPromoteToNextEnvironment;
+
+    async function handleDeploy(releaseVersion: string) {
+      if (!teamId || !appId || entry.environmentId == null || pendingAction != null) return;
+      setPendingAction('deploy');
+      setDeployError(null);
+      setIsDropdownOpen(false);
+      try {
+        await triggerDeployment(teamId, appId, {
+          releaseVersion,
+          environmentId: entry.environmentId,
+        });
+        onDeploymentInitiated?.();
+      } catch (e) {
+        setDeployError(e instanceof Error ? e.message : 'Deployment failed');
+      } finally {
+        setPendingAction(null);
+      }
+    }
+
+    async function handlePromote() {
+      if (!teamId || !appId || !entry.deployedVersion || nextEnvironmentId == null || pendingAction != null) return;
+      setPendingAction('promote');
+      setDeployError(null);
+      try {
+        await triggerDeployment(teamId, appId, {
+          releaseVersion: entry.deployedVersion,
+          environmentId: nextEnvironmentId,
+        });
+        onDeploymentInitiated?.();
+      } catch (e) {
+        setDeployError(e instanceof Error ? e.message : 'Promotion failed');
+      } finally {
+        setPendingAction(null);
+      }
+    }
 
     const config = getStatusConfig(entry.status, entry.deployedVersion);
     const statusLabel =
@@ -281,29 +357,89 @@ export const EnvironmentCard = forwardRef<HTMLDivElement, EnvironmentCardProps>(
           )}
 
           <CardFooter onClick={(e) => e.stopPropagation()}>
-            {entry.status === 'HEALTHY' && nextEnvName && (
-              <Tooltip content="Promotion available in a future release">
-                <Button variant="secondary" isDisabled size="sm">
-                  Promote to {nextEnvName}
-                </Button>
-              </Tooltip>
-            )}
-            {entry.status === 'UNHEALTHY' && (
-              <>
-                <Tooltip content="Promotion available in a future release">
-                  <Button variant="secondary" isDisabled size="sm">
-                    Promote
+            <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsSm' }}>
+              {showDeploy && (
+                <FlexItem>
+                  <Dropdown
+                    isOpen={isDropdownOpen}
+                    onSelect={() => setIsDropdownOpen(false)}
+                    onOpenChange={setIsDropdownOpen}
+                    toggle={(toggleRef) => (
+                      <MenuToggle
+                        ref={toggleRef}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsDropdownOpen((prev) => !prev);
+                        }}
+                        isExpanded={isDropdownOpen}
+                        isDisabled={pendingAction != null}
+                        variant="secondary"
+                        data-testid="deploy-toggle"
+                      >
+                        {pendingAction === 'deploy' ? (
+                          <>
+                            <Spinner size="sm" aria-label="Deploying" />{' '}
+                            Deploying...
+                          </>
+                        ) : (
+                          'Deploy'
+                        )}
+                      </MenuToggle>
+                    )}
+                  >
+                    <DropdownList>
+                      {releases!.map((release) => (
+                        <DropdownItem
+                          key={release.version}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeploy(release.version);
+                          }}
+                        >
+                          {release.version} — {relativeTime(release.createdAt)}
+                        </DropdownItem>
+                      ))}
+                    </DropdownList>
+                  </Dropdown>
+                </FlexItem>
+              )}
+              {showPromote && (
+                <FlexItem>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePromote();
+                    }}
+                    isDisabled={pendingAction != null}
+                  >
+                    {pendingAction === 'promote' ? (
+                      <>
+                        <Spinner size="sm" aria-label="Promoting" />{' '}
+                        Promoting...
+                      </>
+                    ) : (
+                      `Promote to ${nextEnvName}`
+                    )}
                   </Button>
-                </Tooltip>
-                {entry.argocdDeepLink && (
+                </FlexItem>
+              )}
+              {entry.status === 'UNHEALTHY' && entry.argocdDeepLink && (
+                <FlexItem>
                   <DeepLinkButton
                     href={entry.argocdDeepLink}
                     toolName="ArgoCD"
                     ariaLabel={`Open ${entry.environmentName} in ArgoCD`}
                   />
-                )}
-              </>
-            )}
+                </FlexItem>
+              )}
+              {deployError && (
+                <FlexItem>
+                  <Alert variant="danger" title={deployError} isInline isPlain />
+                </FlexItem>
+              )}
+            </Flex>
           </CardFooter>
         </Card>
       </div>

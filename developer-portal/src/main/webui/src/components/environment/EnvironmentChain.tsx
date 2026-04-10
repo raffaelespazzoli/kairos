@@ -3,12 +3,15 @@ import { Alert } from '@patternfly/react-core';
 import { ArrowRightIcon } from '@patternfly/react-icons';
 import { EnvironmentCard } from './EnvironmentCard';
 import type { EnvironmentChainEntry } from '../../types/environment';
+import type { ReleaseSummary } from '../../types/release';
 
 interface EnvironmentChainProps {
   environments: EnvironmentChainEntry[];
   argocdError?: string | null;
   teamId?: string;
   appId?: string;
+  releases?: ReleaseSummary[] | null;
+  onDeploymentInitiated?: () => void;
 }
 
 export function EnvironmentChain({
@@ -16,8 +19,13 @@ export function EnvironmentChain({
   argocdError,
   teamId,
   appId,
+  releases,
+  onDeploymentInitiated,
 }: EnvironmentChainProps) {
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const firstNotDeployedIndex = environments.findIndex(
+    (environment) => environment.status === 'NOT_DEPLOYED',
+  );
 
   const setCardRef = useCallback(
     (index: number) => (el: HTMLDivElement | null) => {
@@ -67,8 +75,12 @@ export function EnvironmentChain({
               <EnvironmentCard
                 entry={env}
                 nextEnvName={environments[index + 1]?.environmentName}
+                nextEnvironmentId={environments[index + 1]?.environmentId ?? undefined}
+                isFirstNotDeployed={index === firstNotDeployedIndex}
                 teamId={teamId}
                 appId={appId}
+                releases={releases}
+                onDeploymentInitiated={onDeploymentInitiated}
                 ref={setCardRef(index)}
               />
             </div>

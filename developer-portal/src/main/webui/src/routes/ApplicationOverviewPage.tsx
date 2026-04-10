@@ -18,6 +18,7 @@ import {
 import { useParams } from 'react-router-dom';
 import { useApplications } from '../contexts/ApplicationsContext';
 import { useEnvironments } from '../hooks/useEnvironments';
+import { useReleases } from '../hooks/useReleases';
 import { EnvironmentChain } from '../components/environment/EnvironmentChain';
 import { DeepLinkButton } from '../components/shared/DeepLinkButton';
 import { LoadingSpinner } from '../components/shared/LoadingSpinner';
@@ -31,8 +32,9 @@ export function ApplicationOverviewPage() {
     data: envData,
     error: envError,
     isLoading: envLoading,
-    refresh,
+    refresh: refreshEnv,
   } = useEnvironments(teamId, appId);
+  const { data: releases, error: releasesError } = useReleases(teamId, appId);
 
   if (appsLoading) return <LoadingSpinner systemName="Portal" />;
   if (appsError) return <ErrorAlert error={appsError} />;
@@ -64,7 +66,7 @@ export function ApplicationOverviewPage() {
             </FlexItem>
           )}
           <FlexItem>
-            <RefreshButton onRefresh={refresh} isRefreshing={envLoading} />
+            <RefreshButton onRefresh={refreshEnv} isRefreshing={envLoading} />
           </FlexItem>
         </Flex>
 
@@ -103,12 +105,15 @@ export function ApplicationOverviewPage() {
       <PageSection>
         {envLoading && <LoadingSpinner systemName="ArgoCD" />}
         {envError && <ErrorAlert error={envError} />}
+        {releasesError && <ErrorAlert error={releasesError} />}
         {envData && (
           <EnvironmentChain
             environments={envData.environments}
             argocdError={envData.argocdError}
             teamId={teamId}
             appId={appId}
+            releases={releases}
+            onDeploymentInitiated={refreshEnv}
           />
         )}
       </PageSection>

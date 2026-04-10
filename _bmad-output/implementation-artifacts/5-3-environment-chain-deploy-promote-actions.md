@@ -1,6 +1,6 @@
 # Story 5.3: Environment Chain Deploy & Promote Actions
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -68,83 +68,90 @@ so that I can move releases through environments with minimal clicks.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Add `environmentId` to backend DTO and frontend type (AC: #6)
-  - [ ] Add `Long environmentId` field to `EnvironmentChainEntryDto` Java record (at end of constructor)
-  - [ ] Update `EnvironmentMapper.merge()` to include `environment.id` in the DTO
-  - [ ] Add `environmentId: number` to `EnvironmentChainEntry` TypeScript interface in `types/environment.ts`
+- [x] Task 1: Add `environmentId` to backend DTO and frontend type (AC: #6)
+  - [x] Add `Long environmentId` field to `EnvironmentChainEntryDto` Java record (at end of constructor)
+  - [x] Update `EnvironmentMapper.merge()` to include `environment.id` in the DTO
+  - [x] Add `environmentId: number` to `EnvironmentChainEntry` TypeScript interface in `types/environment.ts`
 
-- [ ] Task 2: Create frontend deployment API and types (AC: #1, #2)
-  - [ ] Create `src/main/webui/src/types/deployment.ts`:
-    - [ ] `DeployRequest` interface: `{ releaseVersion: string; environmentId: number }`
-    - [ ] `DeploymentResponse` interface: `{ deploymentId: string; releaseVersion: string; environmentName: string; status: string; startedAt: string }`
-  - [ ] Create `src/main/webui/src/api/deployments.ts`:
-    - [ ] `triggerDeployment(teamId: string, appId: string, request: DeployRequest): Promise<DeploymentResponse>` using `apiFetch` with `POST` method
+- [x] Task 2: Create frontend deployment API and types (AC: #1, #2)
+  - [x] Create `src/main/webui/src/types/deployment.ts`:
+    - [x] `DeployRequest` interface: `{ releaseVersion: string; environmentId: number }`
+    - [x] `DeploymentResponse` interface: `{ deploymentId: string; releaseVersion: string; environmentName: string; status: string; startedAt: string }`
+  - [x] Create `src/main/webui/src/api/deployments.ts`:
+    - [x] `triggerDeployment(teamId: string, appId: string, request: DeployRequest): Promise<DeploymentResponse>` using `apiFetch` with `POST` method
 
-- [ ] Task 3: Update EnvironmentChain props to pass teamId, appId, releases, and callbacks (AC: #6)
-  - [ ] Add `teamId: string`, `appId: string` to `EnvironmentChainProps` interface
-  - [ ] Add `releases: ReleaseSummary[] | null` to `EnvironmentChainProps`
-  - [ ] Add `onDeploymentInitiated?: () => void` callback prop (triggers chain re-fetch after deploy/promote)
-  - [ ] Pass `teamId`, `appId`, `releases`, and `onDeploymentInitiated` through to each `EnvironmentCard`
+- [x] Task 3: Update EnvironmentChain props to pass teamId, appId, releases, and callbacks (AC: #6)
+  - [x] Add `teamId: string`, `appId: string` to `EnvironmentChainProps` interface
+  - [x] Add `releases: ReleaseSummary[] | null` to `EnvironmentChainProps`
+  - [x] Add `onDeploymentInitiated?: () => void` callback prop (triggers chain re-fetch after deploy/promote)
+  - [x] Pass `teamId`, `appId`, `releases`, and `onDeploymentInitiated` through to each `EnvironmentCard`
 
-- [ ] Task 4: Update EnvironmentCard props and state (AC: #1, #2, #3, #4)
-  - [ ] Add `teamId: string`, `appId: string` to `EnvironmentCardProps`
-  - [ ] Add `releases: ReleaseSummary[] | null` to `EnvironmentCardProps`
-  - [ ] Add `nextEnvironmentId?: number` to `EnvironmentCardProps` (the environmentId of the next env for promote)
-  - [ ] Add `onDeploymentInitiated?: () => void` to `EnvironmentCardProps`
-  - [ ] Add component state: `isDeploying` (boolean), `deployError` (string | null), `isSelectOpen` (boolean)
+- [x] Task 4: Update EnvironmentCard props and state (AC: #1, #2, #3, #4)
+  - [x] Add `teamId: string`, `appId: string` to `EnvironmentCardProps`
+  - [x] Add `releases: ReleaseSummary[] | null` to `EnvironmentCardProps`
+  - [x] Add `nextEnvironmentId?: number` to `EnvironmentCardProps` (the environmentId of the next env for promote)
+  - [x] Add `onDeploymentInitiated?: () => void` to `EnvironmentCardProps`
+  - [x] Add component state: `isDeploying` (boolean), `deployError` (string | null), `isSelectOpen` (boolean)
 
-- [ ] Task 5: Implement Deploy button with release selection dropdown (AC: #1, #5)
-  - [ ] In `EnvironmentCard` CardFooter, render a "Deploy" PF6 `Dropdown` when:
-    - [ ] Status is `NOT_DEPLOYED` AND `releases` is non-null and non-empty, OR
-    - [ ] Status is `HEALTHY` AND `releases` is non-null and non-empty (re-deploy different version)
-  - [ ] Dropdown toggle shows "Deploy" label with a caret
-  - [ ] Dropdown items list available releases: each item shows `version` + relative time of `createdAt`
-  - [ ] Selecting a release calls `triggerDeployment(teamId, appId, { releaseVersion: selected.version, environmentId: entry.environmentId })`
-  - [ ] During API call: toggle shows `Spinner` + "Deploying..."
-  - [ ] On success: call `onDeploymentInitiated()` to trigger chain re-fetch
-  - [ ] On failure: set `deployError` state → render PF6 inline `Alert` (danger variant) below the button
-  - [ ] Stop event propagation on the dropdown to prevent card expand/collapse
+- [x] Task 5: Implement Deploy button with release selection dropdown (AC: #1, #5)
+  - [x] In `EnvironmentCard` CardFooter, render a "Deploy" PF6 `Dropdown` when:
+    - [x] Status is `NOT_DEPLOYED` AND `releases` is non-null and non-empty, OR
+    - [x] Status is `HEALTHY` AND `releases` is non-null and non-empty (re-deploy different version)
+  - [x] Dropdown toggle shows "Deploy" label with a caret
+  - [x] Dropdown items list available releases: each item shows `version` + relative time of `createdAt`
+  - [x] Selecting a release calls `triggerDeployment(teamId, appId, { releaseVersion: selected.version, environmentId: entry.environmentId })`
+  - [x] During API call: toggle shows `Spinner` + "Deploying..."
+  - [x] On success: call `onDeploymentInitiated()` to trigger chain re-fetch
+  - [x] On failure: set `deployError` state → render PF6 inline `Alert` (danger variant) below the button
+  - [x] Stop event propagation on the dropdown to prevent card expand/collapse
 
-- [ ] Task 6: Implement Promote button (AC: #2, #3, #4)
-  - [ ] Replace the existing disabled placeholder promote button in `EnvironmentCard` CardFooter
-  - [ ] Render an enabled "Promote to [nextEnvName]" `Button` (variant="secondary", size="sm") when:
-    - [ ] Status is `HEALTHY`
-    - [ ] `nextEnvName` is defined (not last in chain)
-    - [ ] `nextEnvironmentId` is defined
-    - [ ] NOT currently deploying (`isDeploying === false`)
-  - [ ] Clicking promote calls `triggerDeployment(teamId, appId, { releaseVersion: entry.deployedVersion!, environmentId: nextEnvironmentId })`
-  - [ ] During API call: button shows `Spinner` + "Promoting..."
-  - [ ] On success: call `onDeploymentInitiated()` to trigger chain re-fetch
-  - [ ] On failure: set `deployError` state → render PF6 inline `Alert` below the button
-  - [ ] Stop event propagation on the button to prevent card expand/collapse
-  - [ ] Do NOT render promote button when status is `DEPLOYING`, `UNHEALTHY`, or `NOT_DEPLOYED`
+- [x] Task 6: Implement Promote button (AC: #2, #3, #4)
+  - [x] Replace the existing disabled placeholder promote button in `EnvironmentCard` CardFooter
+  - [x] Render an enabled "Promote to [nextEnvName]" `Button` (variant="secondary", size="sm") when:
+    - [x] Status is `HEALTHY`
+    - [x] `nextEnvName` is defined (not last in chain)
+    - [x] `nextEnvironmentId` is defined
+    - [x] NOT currently deploying (`isDeploying === false`)
+  - [x] Clicking promote calls `triggerDeployment(teamId, appId, { releaseVersion: entry.deployedVersion!, environmentId: nextEnvironmentId })`
+  - [x] During API call: button shows `Spinner` + "Promoting..."
+  - [x] On success: call `onDeploymentInitiated()` to trigger chain re-fetch
+  - [x] On failure: set `deployError` state → render PF6 inline `Alert` below the button
+  - [x] Stop event propagation on the button to prevent card expand/collapse
+  - [x] Do NOT render promote button when status is `DEPLOYING`, `UNHEALTHY`, or `NOT_DEPLOYED`
 
-- [ ] Task 7: Update page-level component to pass required data (AC: #6)
-  - [ ] Update `ApplicationEnvironmentsPage.tsx` (or wherever EnvironmentChain is rendered) to:
-    - [ ] Fetch releases via `useReleases(teamId, appId)` (already exists)
-    - [ ] Pass `teamId`, `appId`, `releases`, and a `refresh` callback to `EnvironmentChain`
-  - [ ] The `onDeploymentInitiated` callback should trigger a re-fetch of the environment chain data
+- [x] Task 7: Update page-level component to pass required data (AC: #6)
+  - [x] Update `ApplicationEnvironmentsPage.tsx` (or wherever EnvironmentChain is rendered) to:
+    - [x] Fetch releases via `useReleases(teamId, appId)` (already exists)
+    - [x] Pass `teamId`, `appId`, `releases`, and a `refresh` callback to `EnvironmentChain`
+  - [x] The `onDeploymentInitiated` callback should trigger a re-fetch of the environment chain data
 
-- [ ] Task 8: Write frontend tests (AC: #1, #2, #3, #4, #5)
-  - [ ] `EnvironmentCard.test.tsx` (extend existing):
-    - [ ] NOT_DEPLOYED + releases available → Deploy dropdown renders
-    - [ ] NOT_DEPLOYED + no releases → no Deploy button
-    - [ ] HEALTHY + nextEnvName → Promote button renders and is enabled
-    - [ ] HEALTHY + no nextEnvName (last env) → no Promote button
-    - [ ] DEPLOYING → no Deploy or Promote buttons
-    - [ ] UNHEALTHY → no Promote button, ArgoCD deep link still shown
-    - [ ] Deploy dropdown shows release versions with relative timestamps
-    - [ ] Selecting a release triggers deployment API call
-    - [ ] Promote button click triggers deployment API call with current version
-    - [ ] Loading state shows Spinner during API call
-    - [ ] Error state shows inline Alert on failure
-    - [ ] HEALTHY + releases available → both Deploy dropdown and Promote button visible
-  - [ ] `EnvironmentChain.test.tsx` (extend existing):
-    - [ ] Verify teamId, appId, releases passed through to EnvironmentCard
-    - [ ] Verify nextEnvironmentId is computed from environments array
-  - [ ] `deployments.ts` (new — api test):
-    - [ ] `triggerDeployment` sends POST with correct body
-    - [ ] Error handling
+- [x] Task 8: Write frontend tests (AC: #1, #2, #3, #4, #5)
+  - [x] `EnvironmentCard.test.tsx` (extend existing):
+    - [x] NOT_DEPLOYED + releases available → Deploy dropdown renders
+    - [x] NOT_DEPLOYED + no releases → no Deploy button
+    - [x] HEALTHY + nextEnvName → Promote button renders and is enabled
+    - [x] HEALTHY + no nextEnvName (last env) → no Promote button
+    - [x] DEPLOYING → no Deploy or Promote buttons
+    - [x] UNHEALTHY → no Promote button, ArgoCD deep link still shown
+    - [x] Deploy dropdown shows release versions with relative timestamps
+    - [x] Selecting a release triggers deployment API call
+    - [x] Promote button click triggers deployment API call with current version
+    - [x] Loading state shows Spinner during API call
+    - [x] Error state shows inline Alert on failure
+    - [x] HEALTHY + releases available → both Deploy dropdown and Promote button visible
+  - [x] `EnvironmentChain.test.tsx` (extend existing):
+    - [x] Verify teamId, appId, releases passed through to EnvironmentCard
+    - [x] Verify nextEnvironmentId is computed from environments array
+  - [x] `deployments.ts` (new — api test):
+    - [x] `triggerDeployment` sends POST with correct body
+    - [x] Error handling
+
+### Review Findings
+
+- [x] [Review][Patch] Restrict `Deploy` to the first `NOT_DEPLOYED` environment in the chain to match AC #5 [`EnvironmentCard.tsx:128-131`]
+- [x] [Review][Patch] Promote loading state unmounts the `Promote` button and shows the wrong control as busy [`EnvironmentCard.tsx:132-136`]
+- [x] [Review][Patch] Action buttons can render with missing required deployment inputs and then fail as silent no-ops [`EnvironmentCard.tsx:128-157`]
+- [x] [Review][Patch] Release-fetch failures are swallowed, so deploy actions disappear without any inline explanation [`ApplicationOverviewPage.tsx:35-36`]
 
 ## Dev Notes
 
@@ -542,12 +549,41 @@ User clicks "Promote to qa" on healthy dev card
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Opus 4.6
 
 ### Debug Log References
 
+None — clean implementation with all tests passing on first run.
+
 ### Completion Notes List
+
+- Task 1 was already completed by Story 5.2 — environmentId present in DTO, mapper, and TS type
+- Added `DeployRequest` and `DeploymentResponse` types to `types/deployment.ts`
+- Added `triggerDeployment()` API function to `api/deployments.ts` using `apiFetch` POST
+- Updated `EnvironmentChainProps` with `releases` and `onDeploymentInitiated` callback
+- Updated `EnvironmentCardProps` with `nextEnvironmentId`, `releases`, and `onDeploymentInitiated`
+- Replaced placeholder disabled promote buttons with functional Deploy dropdown (PF6 `Dropdown` + `MenuToggle`) and Promote button
+- Deploy uses PF6 Dropdown with release version + relative time items; Promote uses Button with "Promote to {nextEnvName}"
+- Both actions call `triggerDeployment()` and invoke `onDeploymentInitiated` callback on success
+- Error states shown via inline PF6 Alert (danger variant); loading states use PF6 Spinner
+- UNHEALTHY cards show only ArgoCD deep link (no promote button)
+- DEPLOYING cards show no action buttons
+- `ApplicationOverviewPage` now fetches releases via `useReleases` and passes to `EnvironmentChain`
+- All event propagation stopped on interactive elements to prevent card expand/collapse
+- 46 tests across 3 files pass; 280 total tests pass with zero regressions
 
 ### Change Log
 
+- 2026-04-10: Implemented Story 5.3 — functional deploy/promote buttons on environment chain cards
+- 2026-04-10: Addressed code review findings for deploy visibility, loading state behavior, missing-input guards, and releases error handling
+
 ### File List
+
+- `developer-portal/src/main/webui/src/types/deployment.ts` (modified — added DeployRequest, DeploymentResponse)
+- `developer-portal/src/main/webui/src/api/deployments.ts` (modified — added triggerDeployment)
+- `developer-portal/src/main/webui/src/api/deployments.test.ts` (new — API tests)
+- `developer-portal/src/main/webui/src/components/environment/EnvironmentCard.tsx` (modified — functional deploy/promote)
+- `developer-portal/src/main/webui/src/components/environment/EnvironmentCard.test.tsx` (modified — 14 new tests)
+- `developer-portal/src/main/webui/src/components/environment/EnvironmentChain.tsx` (modified — releases/callback passthrough)
+- `developer-portal/src/main/webui/src/components/environment/EnvironmentChain.test.tsx` (modified — 2 new tests)
+- `developer-portal/src/main/webui/src/routes/ApplicationOverviewPage.tsx` (modified — useReleases, props passthrough)
