@@ -1,5 +1,6 @@
 package com.portal.integration.git;
 
+import com.portal.integration.git.model.GitCommit;
 import com.portal.integration.git.model.GitTag;
 import com.portal.integration.git.model.PullRequest;
 
@@ -86,6 +87,17 @@ public interface GitProvider {
      *         (e.g., tag already exists, or repository is inaccessible)
      */
     void createTag(String repoUrl, String commitSha, String tagName);
+
+    /**
+     * Lists commits that modified the given file, ordered by timestamp descending.
+     *
+     * @param repoUrl    the HTTPS URL of the repository
+     * @param filePath   path to the file within the repository
+     * @param maxResults maximum number of commits to return
+     * @return commits ordered by timestamp descending
+     * @throws com.portal.integration.PortalIntegrationException if the repository is inaccessible
+     */
+    List<GitCommit> listCommits(String repoUrl, String filePath, int maxResults);
 
     /**
      * Creates a pull request (or merge request) and returns its metadata.

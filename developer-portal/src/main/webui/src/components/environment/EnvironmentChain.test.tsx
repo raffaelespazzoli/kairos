@@ -16,6 +16,7 @@ const threeEnvs: EnvironmentChainEntry[] = [
     argocdDeepLink: 'https://argocd/applications/payments-run-dev',
     vaultDeepLink: 'https://vault.example.com/ui/vault/secrets/applications/team/team-payments-dev/static-secrets',
     grafanaDeepLink: null,
+    environmentId: 1,
   },
   {
     environmentName: 'staging',
@@ -28,6 +29,7 @@ const threeEnvs: EnvironmentChainEntry[] = [
     argocdDeepLink: 'https://argocd/applications/payments-run-staging',
     vaultDeepLink: 'https://vault.example.com/ui/vault/secrets/applications/team/team-payments-staging/static-secrets',
     grafanaDeepLink: null,
+    environmentId: 2,
   },
   {
     environmentName: 'prod',
@@ -40,6 +42,7 @@ const threeEnvs: EnvironmentChainEntry[] = [
     argocdDeepLink: null,
     vaultDeepLink: null,
     grafanaDeepLink: null,
+    environmentId: 3,
   },
 ];
 

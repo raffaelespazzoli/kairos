@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.portal.integration.PortalIntegrationException;
+import com.portal.integration.git.model.GitCommit;
 import com.portal.integration.git.model.GitTag;
 import com.portal.integration.git.model.PullRequest;
 
@@ -206,6 +207,35 @@ public class GiteaProvider implements GitProvider {
             }
         }
         return allTags;
+    }
+
+    @Override
+    public List<GitCommit> listCommits(String repoUrl, String filePath, int maxResults) {
+        RepoInfo info = parseRepoUrl(repoUrl);
+        String url = info.apiBase() + "/repos/" + info.owner() + "/" + info.repo()
+                + "/git/commits?path=" + encodeQuery(filePath) + "&limit=" + Math.min(maxResults, 50);
+        String body = sendGet(url, "listCommits", "list commits for " + filePath);
+        try {
+            JsonNode json = objectMapper.readTree(body);
+            List<GitCommit> commits = new ArrayList<>();
+            if (json.isArray()) {
+                for (JsonNode item : json) {
+                    if (commits.size() >= maxResults) break;
+                    String sha = item.get("sha").asText();
+                    JsonNode commitNode = item.get("commit");
+                    String author = commitNode.get("author").get("name").asText();
+                    Instant timestamp = Instant.parse(commitNode.get("author").get("date").asText());
+                    String message = commitNode.get("message").asText();
+                    commits.add(new GitCommit(sha, author, timestamp, message));
+                }
+            }
+            return commits;
+        } catch (PortalIntegrationException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new PortalIntegrationException("git", "listCommits",
+                    "Failed to parse commits response: " + e.getMessage(), null, e);
+        }
     }
 
     @Override

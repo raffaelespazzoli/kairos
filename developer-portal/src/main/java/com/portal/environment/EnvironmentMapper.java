@@ -32,7 +32,8 @@ public class EnvironmentMapper {
                             status != null ? status.lastDeployedAt() : null,
                             status != null ? status.argocdDeepLink() : null,
                             vaultLink != null && !vaultLink.isEmpty() ? vaultLink : null,
-                            status != null ? status.grafanaDeepLink() : null);
+                            status != null ? status.grafanaDeepLink() : null,
+                            env.id);
                 })
                 .toList();
     }

@@ -1,6 +1,6 @@
 # Story 5.2: Deployment Status & History
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -69,115 +69,121 @@ so that I can track what's deployed where and when.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Add `listCommits` method to GitProvider interface (AC: #1, #4)
-  - [ ] Add `List<GitCommit> listCommits(String repoUrl, String filePath, int maxResults)` to `GitProvider.java`
-  - [ ] Javadoc: returns commits that touched the given file path, ordered by timestamp descending
-  - [ ] Create `com.portal.integration.git.model.GitCommit` record with: `String sha`, `String author`, `Instant timestamp`, `String message`
+- [x] Task 1: Add `listCommits` method to GitProvider interface (AC: #1, #4)
+  - [x] Add `List<GitCommit> listCommits(String repoUrl, String filePath, int maxResults)` to `GitProvider.java`
+  - [x] Javadoc: returns commits that touched the given file path, ordered by timestamp descending
+  - [x] Create `com.portal.integration.git.model.GitCommit` record with: `String sha`, `String author`, `Instant timestamp`, `String message`
 
-- [ ] Task 2: Implement `listCommits` in all GitProvider implementations (AC: #1)
-  - [ ] `GitHubProvider` — `GET /repos/{owner}/{repo}/commits?path={filePath}&per_page={limit}` (GitHub REST API v3)
-  - [ ] `GitLabProvider` — `GET /projects/{id}/repository/commits?path={filePath}&per_page={limit}` (GitLab API v4)
-  - [ ] `GiteaProvider` — `GET /repos/{owner}/{repo}/git/commits?path={filePath}&limit={limit}` (Gitea API)
-  - [ ] `BitbucketProvider` — `GET /repositories/{workspace}/{slug}/commits?path={filePath}&pagelen={limit}` (Bitbucket API v2)
-  - [ ] `DevGitProvider` — return canned deployment commits matching the `deploy: <version> to <env>` convention
+- [x] Task 2: Implement `listCommits` in all GitProvider implementations (AC: #1)
+  - [x] `GitHubProvider` — `GET /repos/{owner}/{repo}/commits?path={filePath}&per_page={limit}` (GitHub REST API v3)
+  - [x] `GitLabProvider` — `GET /projects/{id}/repository/commits?path={filePath}&per_page={limit}` (GitLab API v4)
+  - [x] `GiteaProvider` — `GET /repos/{owner}/{repo}/git/commits?path={filePath}&limit={limit}` (Gitea API)
+  - [x] `BitbucketProvider` — `GET /repositories/{workspace}/{slug}/commits?path={filePath}&pagelen={limit}` (Bitbucket API v2)
+  - [x] `DevGitProvider` — return canned deployment commits matching the `deploy: <version> to <env>` convention
 
-- [ ] Task 3: Create DeploymentHistoryDto record (AC: #1)
-  - [ ] Create `com.portal.deployment.DeploymentHistoryDto` record with: `String deploymentId`, `String releaseVersion`, `String status`, `Instant startedAt`, `Instant completedAt`, `String deployedBy`, `String environmentName`, `String argocdDeepLink`
+- [x] Task 3: Create DeploymentHistoryDto record (AC: #1)
+  - [x] Create `com.portal.deployment.DeploymentHistoryDto` record with: `String deploymentId`, `String releaseVersion`, `String status`, `Instant startedAt`, `Instant completedAt`, `String deployedBy`, `String environmentName`, `String argocdDeepLink`
 
-- [ ] Task 4: Add deployment history retrieval to DeploymentService (AC: #1, #2, #3, #4, #7)
-  - [ ] Add `listDeployments(Long teamId, Long appId, Long environmentId)` method
-  - [ ] `requireTeamApplication(teamId, appId)` — ownership check → 404
-  - [ ] If `environmentId` is not null: `requireApplicationEnvironment(appId, environmentId)` → 404, query `gitProvider.listCommits(app.gitRepoUrl, ".helm/run/values-run-<env>.yaml", 25)`
-  - [ ] If `environmentId` is null: query commits for each environment's values file, merge, sort by timestamp, limit to 50
-  - [ ] Parse each `GitCommit` into `DeploymentHistoryDto`:
-    - [ ] `deploymentId` = commit SHA
-    - [ ] `releaseVersion` = parse from commit message `deploy: <version> to <env>` — extract version between `deploy: ` and ` to `
-    - [ ] `deployedBy` = parse `Deployed-By:` trailer from commit message body, fall back to commit author
-    - [ ] `startedAt` = commit timestamp
-    - [ ] `status` / `completedAt` = "Deployed" for older commits, enriched for most recent (see Task 5)
-    - [ ] `environmentName` = resolve from environmentId, or parse from file path / commit message
-    - [ ] `argocdDeepLink` = build from `deepLinkService.generateArgoCdLink(app.name + "-run-" + env.name.toLowerCase())`
-  - [ ] Handle non-deployment commits gracefully — if a commit message doesn't match the `deploy:` pattern, skip it (the file may have been edited manually)
+- [x] Task 4: Add deployment history retrieval to DeploymentService (AC: #1, #2, #3, #4, #7)
+  - [x] Add `listDeployments(Long teamId, Long appId, Long environmentId)` method
+  - [x] `requireTeamApplication(teamId, appId)` — ownership check → 404
+  - [x] If `environmentId` is not null: `requireApplicationEnvironment(appId, environmentId)` → 404, query `gitProvider.listCommits(app.gitRepoUrl, ".helm/run/values-run-<env>.yaml", 25)`
+  - [x] If `environmentId` is null: query commits for each environment's values file, merge, sort by timestamp, limit to 50
+  - [x] Parse each `GitCommit` into `DeploymentHistoryDto`:
+    - [x] `deploymentId` = commit SHA
+    - [x] `releaseVersion` = parse from commit message `deploy: <version> to <env>` — extract version between `deploy: ` and ` to `
+    - [x] `deployedBy` = parse `Deployed-By:` trailer from commit message body, fall back to commit author
+    - [x] `startedAt` = commit timestamp
+    - [x] `status` / `completedAt` = "Deployed" for older commits, enriched for most recent (see Task 5)
+    - [x] `environmentName` = resolve from environmentId, or parse from file path / commit message
+    - [x] `argocdDeepLink` = build from `deepLinkService.generateArgoCdLink(app.name + "-run-" + env.name.toLowerCase())`
+  - [x] Handle non-deployment commits gracefully — if a commit message doesn't match the `deploy:` pattern, skip it (the file may have been edited manually)
 
-- [ ] Task 5: Enrich most recent deployment with live ArgoCD status (AC: #3)
-  - [ ] Add private method `enrichLatestDeployment(DeploymentHistoryDto dto, Application app, Environment env)` to `DeploymentService`
-  - [ ] Call `argoCdAdapter.getEnvironmentStatuses(app.name, List.of(env))` to get live status
-  - [ ] Map `PortalEnvironmentStatus` → deployment status:
-    - [ ] `HEALTHY` → "Deployed", `completedAt` from `EnvironmentStatusDto.lastDeployedAt()`
-    - [ ] `UNHEALTHY` → "Failed", `completedAt` from `EnvironmentStatusDto.lastDeployedAt()`
-    - [ ] `DEPLOYING` → "Deploying", `completedAt` = null
-    - [ ] `NOT_DEPLOYED` → "Deploying", `completedAt` = null (ArgoCD hasn't detected the Git change yet)
-  - [ ] Catch `PortalIntegrationException` → default to "Deploying" (graceful degradation)
-  - [ ] Only enrich the most recent deployment per environment — older deployments default to "Deployed"
+- [x] Task 5: Enrich most recent deployment with live ArgoCD status (AC: #3)
+  - [x] Add private method `enrichLatestDeployment(DeploymentHistoryDto dto, Application app, Environment env)` to `DeploymentService`
+  - [x] Call `argoCdAdapter.getEnvironmentStatuses(app.name, List.of(env))` to get live status
+  - [x] Map `PortalEnvironmentStatus` → deployment status:
+    - [x] `HEALTHY` → "Deployed", `completedAt` from `EnvironmentStatusDto.lastDeployedAt()`
+    - [x] `UNHEALTHY` → "Failed", `completedAt` from `EnvironmentStatusDto.lastDeployedAt()`
+    - [x] `DEPLOYING` → "Deploying", `completedAt` = null
+    - [x] `NOT_DEPLOYED` → "Deploying", `completedAt` = null (ArgoCD hasn't detected the Git change yet)
+  - [x] Catch `PortalIntegrationException` → default to "Deploying" (graceful degradation)
+  - [x] Only enrich the most recent deployment per environment — older deployments default to "Deployed"
 
-- [ ] Task 6: Add GET endpoint to DeploymentResource (AC: #1, #2, #7)
-  - [ ] Add `@GET` method to existing `DeploymentResource` (created in Story 5.1)
-  - [ ] Accept `@PathParam teamId`, `@PathParam appId`, `@QueryParam("environmentId") Long environmentId` (optional)
-  - [ ] Returns `List<DeploymentHistoryDto>` with 200 OK
-  - [ ] PermissionFilter maps GET on `deployments` resource to `read` action — Casbin `p, member, deployments, read` already exists
+- [x] Task 6: Add GET endpoint to DeploymentResource (AC: #1, #2, #7)
+  - [x] Add `@GET` method to existing `DeploymentResource` (created in Story 5.1)
+  - [x] Accept `@PathParam teamId`, `@PathParam appId`, `@QueryParam("environmentId") Long environmentId` (optional)
+  - [x] Returns `List<DeploymentHistoryDto>` with 200 OK
+  - [x] PermissionFilter maps GET on `deployments` resource to `read` action — Casbin `p, member, deployments, read` already exists
 
-- [ ] Task 7: Add environmentId to EnvironmentChainEntry type and backend DTO (AC: #5)
-  - [ ] Add `Long environmentId` field to `EnvironmentChainEntryDto` Java record (add at end to avoid breaking existing constructor calls)
-  - [ ] Update `EnvironmentMapper.merge()` to include `environment.id` in the DTO
-  - [ ] Add `environmentId: number` to `EnvironmentChainEntry` TypeScript type
-  - [ ] Update `EnvironmentChain.tsx` to pass `teamId` and `appId` to `EnvironmentCard` via props
+- [x] Task 7: Add environmentId to EnvironmentChainEntry type and backend DTO (AC: #5)
+  - [x] Add `Long environmentId` field to `EnvironmentChainEntryDto` Java record (add at end to avoid breaking existing constructor calls)
+  - [x] Update `EnvironmentMapper.merge()` to include `environment.id` in the DTO
+  - [x] Add `environmentId: number` to `EnvironmentChainEntry` TypeScript type
+  - [x] Update `EnvironmentChain.tsx` to pass `teamId` and `appId` to `EnvironmentCard` via props
 
-- [ ] Task 8: Create frontend types for deployment (AC: #5)
-  - [ ] Create `src/main/webui/src/types/deployment.ts`
-  - [ ] Types: `DeploymentStatus = 'Deploying' | 'Deployed' | 'Failed'`, `DeploymentHistoryEntry` with: `deploymentId` (string), `releaseVersion`, `status` (DeploymentStatus), `startedAt`, `completedAt`, `deployedBy`, `environmentName`, `argocdDeepLink`
+- [x] Task 8: Create frontend types for deployment (AC: #5)
+  - [x] Create `src/main/webui/src/types/deployment.ts`
+  - [x] Types: `DeploymentStatus = 'Deploying' | 'Deployed' | 'Failed'`, `DeploymentHistoryEntry` with: `deploymentId` (string), `releaseVersion`, `status` (DeploymentStatus), `startedAt`, `completedAt`, `deployedBy`, `environmentName`, `argocdDeepLink`
 
-- [ ] Task 9: Create frontend API function and hook (AC: #5)
-  - [ ] Create `src/main/webui/src/api/deployments.ts` — `fetchDeploymentHistory(teamId, appId, environmentId)` using `apiFetch<DeploymentHistoryEntry[]>`
-  - [ ] Create `src/main/webui/src/hooks/useDeployments.ts` — `useDeployments(teamId, appId, environmentId)` wrapping `useApiFetch` with conditional path (skip when environmentId is undefined)
+- [x] Task 9: Create frontend API function and hook (AC: #5)
+  - [x] Create `src/main/webui/src/api/deployments.ts` — `fetchDeploymentHistory(teamId, appId, environmentId)` using `apiFetch<DeploymentHistoryEntry[]>`
+  - [x] Create `src/main/webui/src/hooks/useDeployments.ts` — `useDeployments(teamId, appId, environmentId)` wrapping `useApiFetch` with conditional path (skip when environmentId is undefined)
 
-- [ ] Task 10: Update EnvironmentCard with deployment history section (AC: #5, #6)
-  - [ ] Add `teamId` and `appId` props to `EnvironmentCardProps` interface
-  - [ ] Replace the "Deployment history coming in Epic 5" placeholder in `EnvironmentCard.tsx`
-  - [ ] When card is expanded and `entry.environmentId` is available: call `useDeployments` (pass null path when collapsed to skip fetch)
-  - [ ] Loading: PF6 `Spinner` (small) with "Loading deployment history..."
-  - [ ] Success: PF6 compact `Table` with columns: Version, Status, When, By
-  - [ ] Status column uses PF6 `Label`: "Deployed" → `status="success"` + `CheckCircleIcon`, "Deploying" → `status="warning"` + `SyncAltIcon`, "Failed" → `status="danger"` + `ExclamationCircleIcon`
-  - [ ] "When" column shows relative time (reuse existing `relativeTime` helper)
-  - [ ] Most recent deployment (first row) highlighted with bold text
-  - [ ] "Failed" rows include ArgoCD deep link button
-  - [ ] Empty state: "No deployments yet"
-  - [ ] Error state: PF6 inline `Alert` variant="danger"
+- [x] Task 10: Update EnvironmentCard with deployment history section (AC: #5, #6)
+  - [x] Add `teamId` and `appId` props to `EnvironmentCardProps` interface
+  - [x] Replace the "Deployment history coming in Epic 5" placeholder in `EnvironmentCard.tsx`
+  - [x] When card is expanded and `entry.environmentId` is available: call `useDeployments` (pass null path when collapsed to skip fetch)
+  - [x] Loading: PF6 `Spinner` (small) with "Loading deployment history..."
+  - [x] Success: PF6 compact `Table` with columns: Version, Status, When, By
+  - [x] Status column uses PF6 `Label`: "Deployed" → `status="success"` + `CheckCircleIcon`, "Deploying" → `status="warning"` + `SyncAltIcon`, "Failed" → `status="danger"` + `ExclamationCircleIcon`
+  - [x] "When" column shows relative time (reuse existing `relativeTime` helper)
+  - [x] Most recent deployment (first row) highlighted with bold text
+  - [x] "Failed" rows include ArgoCD deep link button
+  - [x] Empty state: "No deployments yet"
+  - [x] Error state: PF6 inline `Alert` variant="danger"
 
-- [ ] Task 11: Write backend tests (AC: #1, #2, #3, #4, #7)
-  - [ ] `DeploymentServiceHistoryTest.java` (`@QuarkusTest` + `@InjectMock`):
-    - [ ] List by environment: mock `gitProvider.listCommits` returning 3 deploy commits → verify 3 `DeploymentHistoryDto` entries with correct fields
-    - [ ] List all environments: mock for 2 envs → merged, sorted by timestamp
-    - [ ] Commit message parsing: `"deploy: v1.4.2 to dev\n\nDeployed-By: marco"` → version=v1.4.2, deployedBy=marco
-    - [ ] Commit message without trailer: falls back to commit author
-    - [ ] Non-deploy commit skipped: commit message "fix: typo in values" → not included in results
-    - [ ] Enrichment — HEALTHY: mock ArgoCD returning `HEALTHY` → most recent status = "Deployed", completedAt set
-    - [ ] Enrichment — UNHEALTHY: mock ArgoCD returning `UNHEALTHY` → most recent status = "Failed"
-    - [ ] Enrichment — DEPLOYING: mock ArgoCD returning `DEPLOYING` → status stays "Deploying"
-    - [ ] Enrichment — NOT_DEPLOYED: mock ArgoCD → status stays "Deploying"
-    - [ ] Enrichment — ArgoCD unreachable: mock throws → status stays "Deploying" (no exception propagated)
-    - [ ] Older deployments: default to "Deployed" status (no ArgoCD call)
-    - [ ] Team ownership: list for app in different team → 404
-    - [ ] Environment ownership: environmentId from different app → 404
-  - [ ] `DeploymentResourceIT.java` (extend from 5.1 — REST Assured):
-    - [ ] GET `/deployments?environmentId=X` → 200 with JSON array containing correct fields
-    - [ ] GET `/deployments` → 200 with all deployments
-    - [ ] Cross-team → 404
-    - [ ] Invalid environmentId → 404
-    - [ ] Casbin: member can read, unauthenticated → 401
+- [x] Task 11: Write backend tests (AC: #1, #2, #3, #4, #7)
+  - [x] `DeploymentServiceHistoryTest.java` (`@QuarkusTest` + `@InjectMock`):
+    - [x] List by environment: mock `gitProvider.listCommits` returning 3 deploy commits → verify 3 `DeploymentHistoryDto` entries with correct fields
+    - [x] List all environments: mock for 2 envs → merged, sorted by timestamp
+    - [x] Commit message parsing: `"deploy: v1.4.2 to dev\n\nDeployed-By: marco"` → version=v1.4.2, deployedBy=marco
+    - [x] Commit message without trailer: falls back to commit author
+    - [x] Non-deploy commit skipped: commit message "fix: typo in values" → not included in results
+    - [x] Enrichment — HEALTHY: mock ArgoCD returning `HEALTHY` → most recent status = "Deployed", completedAt set
+    - [x] Enrichment — UNHEALTHY: mock ArgoCD returning `UNHEALTHY` → most recent status = "Failed"
+    - [x] Enrichment — DEPLOYING: mock ArgoCD returning `DEPLOYING` → status stays "Deploying"
+    - [x] Enrichment — NOT_DEPLOYED: mock ArgoCD → status stays "Deploying"
+    - [x] Enrichment — ArgoCD unreachable: mock throws → status stays "Deploying" (no exception propagated)
+    - [x] Older deployments: default to "Deployed" status (no ArgoCD call)
+    - [x] Team ownership: list for app in different team → 404
+    - [x] Environment ownership: environmentId from different app → 404
+  - [x] `DeploymentResourceIT.java` (extend from 5.1 — REST Assured):
+    - [x] GET `/deployments?environmentId=X` → 200 with JSON array containing correct fields
+    - [x] GET `/deployments` → 200 with all deployments
+    - [x] Cross-team → 404
+    - [x] Invalid environmentId → 404
+    - [x] Casbin: member can read, unauthenticated → 401
 
-- [ ] Task 12: Write frontend tests (AC: #5, #6)
-  - [ ] `EnvironmentCard.test.tsx` (extend existing):
-    - [ ] Expanded card fetches deployment history
-    - [ ] Loading state shows Spinner
-    - [ ] Deployment history table renders with correct columns
-    - [ ] Status labels show correct variants (success/warning/danger)
-    - [ ] Failed deployment shows ArgoCD deep link
-    - [ ] Empty state shows "No deployments yet"
-    - [ ] Error state shows inline Alert
-  - [ ] `useDeployments.test.ts`:
-    - [ ] Returns deployment list
-    - [ ] Skips fetch when environmentId is undefined
-    - [ ] Error handling
+- [x] Task 12: Write frontend tests (AC: #5, #6)
+  - [x] `EnvironmentCard.test.tsx` (extend existing):
+    - [x] Expanded card fetches deployment history
+    - [x] Loading state shows Spinner
+    - [x] Deployment history table renders with correct columns
+    - [x] Status labels show correct variants (success/warning/danger)
+    - [x] Failed deployment shows ArgoCD deep link
+    - [x] Empty state shows "No deployments yet"
+    - [x] Error state shows inline Alert
+  - [x] `useDeployments.test.ts`:
+    - [x] Returns deployment list
+    - [x] Skips fetch when environmentId is undefined
+    - [x] Error handling
+
+### Review Findings
+
+- [x] [Review][Patch] Preserve fetch failures instead of returning an empty deployment list [`developer-portal/src/main/java/com/portal/deployment/DeploymentService.java:154`] — fixed: single-env queries now propagate `PortalIntegrationException`; multi-env path still degrades gracefully; 2 tests added
+- [x] [Review][Patch] Dev Git mock truncates hyphenated environment names in `values-run-<env>.yaml` [`developer-portal/src/main/java/com/portal/integration/git/DevGitProvider.java:40`] — fixed: regex changed from `(\w+)` to `([\w-]+)`
+- [x] [Review][Defer] `EnvironmentMapper.merge()` still throws on duplicate environment names from status list [`developer-portal/src/main/java/com/portal/environment/EnvironmentMapper.java:17`] — deferred, pre-existing
 
 ## Dev Notes
 
@@ -536,12 +542,72 @@ GET /api/v1/teams/{teamId}/applications/{appId}/deployments?environmentId=42
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+claude-4.6-opus-high-thinking
 
 ### Debug Log References
 
+- Backend unit tests: 463 passed (0 failures) — Surefire
+- Frontend tests: 265 passed (0 failures) — Vitest
+- TypeScript compilation: clean (`tsc --noEmit` passes)
+- Pre-existing TS errors in `BuildStatusBadge.tsx` and `CreateReleaseModal.test.tsx` block `tsc -b` (Maven Quinoa build) — not related to this story
+
 ### Completion Notes List
+
+- Implemented Git-based deployment history — no database table, Git commit history IS the deployment ledger
+- Added `listCommits` to `GitProvider` interface following the same cross-cutting pattern as `listTags`/`createTag` (Epic 4)
+- All 5 provider implementations (GitHub, GitLab, Gitea, Bitbucket, Dev mock) extended with provider-specific commit list APIs
+- `DeploymentService.listDeployments()` queries Git commit history, parses structured commit messages, and enriches the most recent deployment per environment with live ArgoCD status
+- Non-deployment commits (missing `deploy:` prefix) are gracefully skipped
+- ArgoCD enrichment is fault-tolerant — unreachable ArgoCD defaults to "Deploying" status
+- Frontend EnvironmentCard expanded section now shows deployment history table replacing the placeholder
+- Deployment history is lazy-loaded (fetched only when card is expanded)
+- `environmentId` added to `EnvironmentChainEntryDto` at the end of the record to avoid breaking existing constructor calls
+- 13 new backend tests in `DeploymentServiceHistoryTest.java` covering all AC scenarios
+- 5 new GET endpoint tests in `DeploymentResourceIT.java`
+- 7 new frontend component tests in `EnvironmentCard.test.tsx`
+- 6 new hook tests in `useDeployments.test.ts`
+- Updated existing test files to include `environmentId` in test data (`EnvironmentChain.test.tsx`, `ApplicationOverviewPage.test.tsx`, `ApplicationSettingsPage.test.tsx`)
 
 ### Change Log
 
+- 2026-04-10: Story 5.2 implemented — deployment status & history via Git commit history with ArgoCD enrichment
+
 ### File List
+
+**New backend files:**
+- `developer-portal/src/main/java/com/portal/integration/git/model/GitCommit.java`
+- `developer-portal/src/main/java/com/portal/deployment/DeploymentHistoryDto.java`
+- `developer-portal/src/test/java/com/portal/deployment/DeploymentServiceHistoryTest.java`
+
+**Modified backend files:**
+- `developer-portal/src/main/java/com/portal/integration/git/GitProvider.java` (added listCommits)
+- `developer-portal/src/main/java/com/portal/integration/git/GitHubProvider.java` (implement listCommits)
+- `developer-portal/src/main/java/com/portal/integration/git/GitLabProvider.java` (implement listCommits)
+- `developer-portal/src/main/java/com/portal/integration/git/GiteaProvider.java` (implement listCommits)
+- `developer-portal/src/main/java/com/portal/integration/git/BitbucketProvider.java` (implement listCommits)
+- `developer-portal/src/main/java/com/portal/integration/git/DevGitProvider.java` (implement listCommits mock)
+- `developer-portal/src/main/java/com/portal/deployment/DeploymentService.java` (added listDeployments + enrichment + parsing)
+- `developer-portal/src/main/java/com/portal/deployment/DeploymentResource.java` (added @GET method)
+- `developer-portal/src/main/java/com/portal/environment/EnvironmentChainEntryDto.java` (added environmentId)
+- `developer-portal/src/main/java/com/portal/environment/EnvironmentMapper.java` (pass environment.id)
+- `developer-portal/src/test/java/com/portal/deployment/DeploymentResourceIT.java` (added GET endpoint tests)
+
+**New frontend files:**
+- `developer-portal/src/main/webui/src/types/deployment.ts`
+- `developer-portal/src/main/webui/src/api/deployments.ts`
+- `developer-portal/src/main/webui/src/hooks/useDeployments.ts`
+- `developer-portal/src/main/webui/src/hooks/useDeployments.test.ts`
+
+**Modified frontend files:**
+- `developer-portal/src/main/webui/src/types/environment.ts` (added environmentId)
+- `developer-portal/src/main/webui/src/components/environment/EnvironmentCard.tsx` (deployment history section)
+- `developer-portal/src/main/webui/src/components/environment/EnvironmentChain.tsx` (pass teamId/appId)
+- `developer-portal/src/main/webui/src/routes/ApplicationOverviewPage.tsx` (pass teamId/appId to chain)
+- `developer-portal/src/main/webui/src/components/environment/EnvironmentCard.test.tsx` (deployment history tests)
+- `developer-portal/src/main/webui/src/components/environment/EnvironmentChain.test.tsx` (added environmentId)
+- `developer-portal/src/main/webui/src/routes/ApplicationOverviewPage.test.tsx` (added environmentId)
+- `developer-portal/src/main/webui/src/routes/ApplicationSettingsPage.test.tsx` (added environmentId)
+
+**Planning files:**
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` (status updated)
+- `_bmad-output/implementation-artifacts/5-2-deployment-status-history.md` (tasks checked, Dev Agent Record)

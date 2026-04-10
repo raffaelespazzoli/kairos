@@ -12,5 +12,6 @@ public record EnvironmentChainEntryDto(
     Instant lastDeployedAt,
     String argocdDeepLink,
     String vaultDeepLink,
-    String grafanaDeepLink
+    String grafanaDeepLink,
+    Long environmentId
 ) {}

@@ -2,9 +2,14 @@ package com.portal.deployment;
 
 import com.portal.application.Application;
 import com.portal.cluster.Cluster;
+import com.portal.deeplink.DeepLinkService;
 import com.portal.environment.Environment;
+import com.portal.environment.EnvironmentStatusDto;
+import com.portal.environment.PortalEnvironmentStatus;
 import com.portal.integration.PortalIntegrationException;
+import com.portal.integration.argocd.ArgoCdAdapter;
 import com.portal.integration.git.GitProvider;
+import com.portal.integration.git.model.GitCommit;
 import com.portal.team.Team;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.InjectMock;
@@ -15,6 +20,10 @@ import io.quarkus.test.security.oidc.OidcSecurity;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
@@ -36,6 +45,12 @@ class DeploymentResourceIT {
 
     @InjectMock
     GitProvider gitProvider;
+
+    @InjectMock
+    ArgoCdAdapter argoCdAdapter;
+
+    @InjectMock
+    DeepLinkService deepLinkService;
 
     private Team testTeam;
     private Team otherTeam;
@@ -296,6 +311,106 @@ class DeploymentResourceIT {
                 .body("{\"releaseVersion\":\"v1.0.0\",\"environmentId\":" + devEnv.id + "}")
                 .when()
                 .post("/api/v1/teams/{teamId}/applications/{appId}/deployments",
+                        testTeam.id, testApp.id)
+                .then()
+                .statusCode(401);
+    }
+
+    // --- GET deployment history tests ---
+
+    private void stubDeploymentHistory() {
+        when(deepLinkService.generateArgoCdLink(anyString()))
+                .thenReturn(Optional.of("https://argocd/app"));
+        when(gitProvider.listCommits(anyString(), anyString(), anyInt()))
+                .thenReturn(List.of(
+                        new GitCommit("sha1abc", "dev-user",
+                                Instant.parse("2026-04-09T15:00:00Z"),
+                                "deploy: v1.4.2 to dev\n\nDeployed-By: marco")));
+        when(argoCdAdapter.getEnvironmentStatuses(anyString(), anyList()))
+                .thenReturn(List.of(new EnvironmentStatusDto(
+                        "Dev", PortalEnvironmentStatus.HEALTHY,
+                        "v1.4.2", Instant.parse("2026-04-09T15:05:00Z"),
+                        "app-run-dev", "https://argocd/app", null)));
+    }
+
+    @Test
+    @TestSecurity(user = "dev@example.com", roles = "member")
+    @OidcSecurity(claims = {
+            @Claim(key = "team", value = "depres-team"),
+            @Claim(key = "role", value = "member")
+    })
+    void getDeploymentHistoryReturns200WithJsonArray() {
+        stubDeploymentHistory();
+
+        given()
+                .when()
+                .get("/api/v1/teams/{teamId}/applications/{appId}/deployments?environmentId={envId}",
+                        testTeam.id, testApp.id, devEnv.id)
+                .then()
+                .statusCode(200)
+                .body("$.size()", equalTo(1))
+                .body("[0].deploymentId", equalTo("sha1abc"))
+                .body("[0].releaseVersion", equalTo("v1.4.2"))
+                .body("[0].status", equalTo("Deployed"))
+                .body("[0].deployedBy", equalTo("marco"))
+                .body("[0].environmentName", equalTo("Dev"))
+                .body("[0].argocdDeepLink", notNullValue())
+                .body("[0].startedAt", notNullValue());
+    }
+
+    @Test
+    @TestSecurity(user = "dev@example.com", roles = "member")
+    @OidcSecurity(claims = {
+            @Claim(key = "team", value = "depres-team"),
+            @Claim(key = "role", value = "member")
+    })
+    void getDeploymentHistoryWithoutFilterReturns200() {
+        stubDeploymentHistory();
+
+        given()
+                .when()
+                .get("/api/v1/teams/{teamId}/applications/{appId}/deployments",
+                        testTeam.id, testApp.id)
+                .then()
+                .statusCode(200)
+                .body("$.size()", greaterThanOrEqualTo(1));
+    }
+
+    @Test
+    @TestSecurity(user = "dev@example.com", roles = "member")
+    @OidcSecurity(claims = {
+            @Claim(key = "team", value = "depres-team"),
+            @Claim(key = "role", value = "member")
+    })
+    void getDeploymentHistoryCrossTeamReturns404() {
+        given()
+                .when()
+                .get("/api/v1/teams/{teamId}/applications/{appId}/deployments",
+                        testTeam.id, crossTeamApp.id)
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    @TestSecurity(user = "dev@example.com", roles = "member")
+    @OidcSecurity(claims = {
+            @Claim(key = "team", value = "depres-team"),
+            @Claim(key = "role", value = "member")
+    })
+    void getDeploymentHistoryInvalidEnvReturns404() {
+        given()
+                .when()
+                .get("/api/v1/teams/{teamId}/applications/{appId}/deployments?environmentId=999999",
+                        testTeam.id, testApp.id)
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    void getDeploymentHistoryUnauthenticatedReturns401() {
+        given()
+                .when()
+                .get("/api/v1/teams/{teamId}/applications/{appId}/deployments",
                         testTeam.id, testApp.id)
                 .then()
                 .statusCode(401);

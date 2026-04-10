@@ -1,5 +1,6 @@
 import { forwardRef, useState } from 'react';
 import {
+  Alert,
   Card,
   CardHeader,
   CardBody,
@@ -9,6 +10,7 @@ import {
   Content,
   Flex,
   FlexItem,
+  Spinner,
   Tooltip,
 } from '@patternfly/react-core';
 import {
@@ -17,12 +19,17 @@ import {
   SyncAltIcon,
   MinusCircleIcon,
 } from '@patternfly/react-icons';
+import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { DeepLinkButton } from '../shared/DeepLinkButton';
+import { useDeployments } from '../../hooks/useDeployments';
 import type { EnvironmentChainEntry, EnvironmentStatus } from '../../types/environment';
+import type { DeploymentStatus } from '../../types/deployment';
 
 interface EnvironmentCardProps {
   entry: EnvironmentChainEntry;
   nextEnvName?: string;
+  teamId?: string;
+  appId?: string;
 }
 
 interface StatusConfig {
@@ -87,10 +94,25 @@ function relativeTime(isoString: string | null): string {
   return `${Math.floor(seconds / 86400)}d ago`;
 }
 
+function getDeploymentStatusLabel(status: DeploymentStatus) {
+  switch (status) {
+    case 'Deployed':
+      return { status: 'success' as const, icon: <CheckCircleIcon /> };
+    case 'Deploying':
+      return { status: 'warning' as const, icon: <SyncAltIcon /> };
+    case 'Failed':
+      return { status: 'danger' as const, icon: <ExclamationCircleIcon /> };
+  }
+}
+
 export const EnvironmentCard = forwardRef<HTMLDivElement, EnvironmentCardProps>(
-  function EnvironmentCard({ entry, nextEnvName }, ref) {
+  function EnvironmentCard({ entry, nextEnvName, teamId, appId }, ref) {
     const [isExpanded, setIsExpanded] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
+
+    const environmentId = isExpanded ? entry.environmentId : null;
+    const { data: deployments, error: deploymentsError, isLoading: deploymentsLoading } =
+      useDeployments(teamId, appId, environmentId);
 
     const config = getStatusConfig(entry.status, entry.deployedVersion);
     const statusLabel =
@@ -187,9 +209,72 @@ export const EnvironmentCard = forwardRef<HTMLDivElement, EnvironmentCardProps>(
                   </Button>
                 </FlexItem>
                 <FlexItem>
-                  <Content component="small">
-                    Deployment history coming in Epic 5
-                  </Content>
+                  {deploymentsLoading && (
+                    <Flex spaceItems={{ default: 'spaceItemsSm' }} alignItems={{ default: 'alignItemsCenter' }}>
+                      <FlexItem>
+                        <Spinner size="md" aria-label="Loading deployment history" />
+                      </FlexItem>
+                      <FlexItem>
+                        <Content component="small">Loading deployment history...</Content>
+                      </FlexItem>
+                    </Flex>
+                  )}
+                  {deploymentsError && (
+                    <Alert variant="danger" title="Failed to load deployment history" isInline isPlain />
+                  )}
+                  {deployments && deployments.length === 0 && (
+                    <Content component="small">No deployments yet</Content>
+                  )}
+                  {deployments && deployments.length > 0 && (
+                    <Table aria-label="Deployment history" variant="compact" borders={false}>
+                      <Thead>
+                        <Tr>
+                          <Th>Version</Th>
+                          <Th>Status</Th>
+                          <Th>When</Th>
+                          <Th>By</Th>
+                        </Tr>
+                      </Thead>
+                      <Tbody>
+                        {deployments.map((dep, i) => {
+                          const labelConfig = getDeploymentStatusLabel(dep.status);
+                          const isMostRecent = i === 0;
+                          return (
+                            <Tr key={dep.deploymentId}>
+                              <Td style={isMostRecent ? { fontWeight: 'bold' } : undefined}>
+                                {dep.releaseVersion}
+                              </Td>
+                              <Td>
+                                <Label
+                                  status={labelConfig.status}
+                                  icon={labelConfig.icon}
+                                  isCompact
+                                >
+                                  {dep.status}
+                                </Label>
+                                {dep.status === 'Failed' && dep.argocdDeepLink && (
+                                  <>
+                                    {' '}
+                                    <DeepLinkButton
+                                      href={dep.argocdDeepLink}
+                                      toolName="ArgoCD"
+                                      ariaLabel={`Investigate ${dep.releaseVersion} failure in ArgoCD`}
+                                    />
+                                  </>
+                                )}
+                              </Td>
+                              <Td style={isMostRecent ? { fontWeight: 'bold' } : undefined}>
+                                {relativeTime(dep.startedAt)}
+                              </Td>
+                              <Td style={isMostRecent ? { fontWeight: 'bold' } : undefined}>
+                                {dep.deployedBy}
+                              </Td>
+                            </Tr>
+                          );
+                        })}
+                      </Tbody>
+                    </Table>
+                  )}
                 </FlexItem>
               </Flex>
             </CardBody>

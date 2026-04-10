@@ -7,11 +7,15 @@ import type { EnvironmentChainEntry } from '../../types/environment';
 interface EnvironmentChainProps {
   environments: EnvironmentChainEntry[];
   argocdError?: string | null;
+  teamId?: string;
+  appId?: string;
 }
 
 export function EnvironmentChain({
   environments,
   argocdError,
+  teamId,
+  appId,
 }: EnvironmentChainProps) {
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -63,6 +67,8 @@ export function EnvironmentChain({
               <EnvironmentCard
                 entry={env}
                 nextEnvName={environments[index + 1]?.environmentName}
+                teamId={teamId}
+                appId={appId}
                 ref={setCardRef(index)}
               />
             </div>

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.portal.integration.PortalIntegrationException;
+import com.portal.integration.git.model.GitCommit;
 import com.portal.integration.git.model.GitTag;
 import com.portal.integration.git.model.PullRequest;
 
@@ -143,6 +144,34 @@ public class GitLabProvider implements GitProvider {
             }
         }
         return allTags;
+    }
+
+    @Override
+    public List<GitCommit> listCommits(String repoUrl, String filePath, int maxResults) {
+        String encodedPath = parseProjectPath(repoUrl);
+        String url = apiBase + "/projects/" + encodedPath
+                + "/repository/commits?path=" + urlEncode(filePath) + "&per_page=" + Math.min(maxResults, 100);
+        String body = sendGet(url, "listCommits", "list commits for " + filePath);
+        try {
+            JsonNode json = objectMapper.readTree(body);
+            List<GitCommit> commits = new ArrayList<>();
+            if (json.isArray()) {
+                for (JsonNode item : json) {
+                    if (commits.size() >= maxResults) break;
+                    String sha = item.get("id").asText();
+                    String author = item.get("author_name").asText();
+                    Instant timestamp = Instant.parse(item.get("committed_date").asText());
+                    String message = item.get("message").asText();
+                    commits.add(new GitCommit(sha, author, timestamp, message));
+                }
+            }
+            return commits;
+        } catch (PortalIntegrationException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new PortalIntegrationException("git", "listCommits",
+                    "Failed to parse commits response: " + e.getMessage(), null, e);
+        }
     }
 
     @Override

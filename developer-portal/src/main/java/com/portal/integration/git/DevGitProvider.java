@@ -1,5 +1,6 @@
 package com.portal.integration.git;
 
+import com.portal.integration.git.model.GitCommit;
 import com.portal.integration.git.model.GitTag;
 import com.portal.integration.git.model.PullRequest;
 
@@ -32,6 +33,23 @@ public class DevGitProvider implements GitProvider {
     @Override
     public void createBranch(String repoUrl, String branchName, String fromBranch) {
         // no-op
+    }
+
+    @Override
+    public List<GitCommit> listCommits(String repoUrl, String filePath, int maxResults) {
+        String envName = filePath.replaceAll(".*values-run-([\\w-]+)\\.yaml", "$1");
+        List<GitCommit> all = List.of(
+            new GitCommit("abc123def456abc123def456abc123def456abc1",
+                    "dev-user", Instant.parse("2026-04-09T15:00:00Z"),
+                    "deploy: v1.2.0 to " + envName + "\n\nDeployed-By: marco"),
+            new GitCommit("bcd234efg567bcd234efg567bcd234efg567bcd2",
+                    "dev-user", Instant.parse("2026-04-08T12:00:00Z"),
+                    "deploy: v1.1.0 to " + envName + "\n\nDeployed-By: anna"),
+            new GitCommit("cde345fgh678cde345fgh678cde345fgh678cde3",
+                    "dev-user", Instant.parse("2026-04-07T09:00:00Z"),
+                    "deploy: v1.0.0 to " + envName + "\n\nDeployed-By: marco")
+        );
+        return all.subList(0, Math.min(all.size(), maxResults));
     }
 
     @Override

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.portal.integration.PortalIntegrationException;
+import com.portal.integration.git.model.GitCommit;
 import com.portal.integration.git.model.GitTag;
 import com.portal.integration.git.model.PullRequest;
 
@@ -191,6 +192,36 @@ public class BitbucketProvider implements GitProvider {
             }
         }
         return allTags;
+    }
+
+    @Override
+    public List<GitCommit> listCommits(String repoUrl, String filePath, int maxResults) {
+        RepoCoordinates coords = parseRepoUrl(repoUrl);
+        String url = apiBase + "/2.0/repositories/" + coords.workspace() + "/"
+                + coords.repoSlug() + "/commits?path=" + encodeQuery(filePath)
+                + "&pagelen=" + Math.min(maxResults, 100);
+        String body = sendGet(url, "listCommits", "list commits for " + filePath);
+        try {
+            JsonNode json = objectMapper.readTree(body);
+            JsonNode values = json.get("values");
+            List<GitCommit> commits = new ArrayList<>();
+            if (values != null && values.isArray()) {
+                for (JsonNode item : values) {
+                    if (commits.size() >= maxResults) break;
+                    String hash = item.get("hash").asText();
+                    String author = item.get("author").get("raw").asText();
+                    Instant timestamp = Instant.parse(item.get("date").asText());
+                    String message = item.get("message").asText();
+                    commits.add(new GitCommit(hash, author, timestamp, message));
+                }
+            }
+            return commits;
+        } catch (PortalIntegrationException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new PortalIntegrationException("git", "listCommits",
+                    "Failed to parse commits response: " + e.getMessage(), null, e);
+        }
     }
 
     @Override

@@ -42,6 +42,7 @@ const sampleEnvData: EnvironmentChainResponse = {
       argocdDeepLink: 'https://argocd/applications/payments-run-dev',
       vaultDeepLink: 'https://vault.example.com/ui/vault/secrets/applications/team/team-payments-dev/static-secrets',
       grafanaDeepLink: null,
+      environmentId: 1,
     },
     {
       environmentName: 'staging',
@@ -54,6 +55,7 @@ const sampleEnvData: EnvironmentChainResponse = {
       argocdDeepLink: null,
       vaultDeepLink: 'https://vault.example.com/ui/vault/secrets/applications/team/team-payments-staging/static-secrets',
       grafanaDeepLink: null,
+      environmentId: 2,
     },
   ],
   argocdError: null,

@@ -107,6 +107,8 @@ export function ApplicationOverviewPage() {
           <EnvironmentChain
             environments={envData.environments}
             argocdError={envData.argocdError}
+            teamId={teamId}
+            appId={appId}
           />
         )}
       </PageSection>

@@ -9,3 +9,7 @@
 ## ~~Deferred from: code review of 3-3-deep-links-on-environment-chain (2026-04-06)~~ — RESOLVED
 
 - ~~`DeepLinkService.generateArgoCdLink()` always returns a URL from a required `portal.argocd.url` value, while `application.properties` gives that property a localhost default.~~ **Fixed:** added blank/null guard to `generateArgoCdLink`; now returns `Optional.empty()` when the URL is empty. Note: the `application.properties` default (`http://localhost:8080`) still provides a value when `ARGOCD_URL` is unset, which is correct for dev mode. In production, operators must set `ARGOCD_URL` to a real URL or leave it blank to suppress links.
+
+## Deferred from: code review of 5-2-deployment-status-history (2026-04-10)
+
+- `EnvironmentMapper.merge()` still uses `Collectors.toMap()` without a merge function, so duplicate `EnvironmentStatusDto.environmentName` values would still throw an `IllegalStateException`; deferred because that behavior predates story 5.2 and was not introduced by this change set.
