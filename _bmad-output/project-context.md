@@ -337,6 +337,15 @@ The portal is a developer abstraction layer. All user-facing content (API respon
 - Live deployment status still read from ArgoCD via `getEnvironmentStatuses` (read-only)
 - Production gating enforced by Casbin server-side (Story 5.4) — the Git commit mechanism is the same for all environments
 
+**Observability Integration — PromQL as Configuration (Design Decision 2026-04-11):**
+
+- Prometheus queries are externalized as configuration under `portal.prometheus.queries.*` — the PrometheusAdapter is a generic query executor, not a PromQL author
+- Query templates use `{namespace}` and `{interval}` placeholders that the adapter substitutes at runtime (e.g., `portal.prometheus.queries.latency-p95=histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{namespace="{namespace}"}[{interval}]))`)
+- This allows platform teams to tune queries for their specific metric names and labels without code changes
+- The adapter's responsibility: HTTP call to Prometheus API, parameter substitution, response parsing into portal DTOs
+- The adapter does NOT need to understand PromQL semantics — it executes configured queries and returns numeric results
+- DORA metric queries follow the same pattern — externalized as configuration, parameterized by application and time range
+
 **GitOps Contract — Critical for Onboarding and Deployment:**
 
 - App repo must have `.helm/build/` (Helm chart) + `.helm/run/` (Helm chart) + `values-build.yaml` + at least one `values-run-<env>.yaml`
@@ -346,6 +355,17 @@ The portal is a developer abstraction layer. All user-facing content (API respon
 - Multiple environments can share a cluster (e.g., dev and build on `ocp-dev-01`)
 - Per onboarded app: 1 ArgoCD Application for build + N ArgoCD Applications for environments
 - ArgoCD auto-sync must be enabled on run Applications for deployment to work without manual sync triggers
+
+**Interactive Control Rendering — Conditional Action Buttons and Menus:**
+
+When rendering action controls (buttons, dropdowns, menus) whose visibility or behavior depends on multiple state dimensions (entity status, user role, loading state, data availability), follow these rules to prevent edge-case UX failures:
+
+1. **Guard on all required inputs before rendering** — if an action control needs data to function (e.g., environmentId, releaseVersion, role), verify every required value is defined before rendering the control. Never render an interactive element that will silently no-op on click due to missing data
+2. **Preserve control presence during loading** — when an action is in progress (API call, deploy, promote), disable the control and show a Spinner inline. Never unmount/hide the control during its own loading state — the user loses visual continuity and cannot tell what is happening
+3. **Match control labels to the actual action** — if the same underlying API serves multiple UX actions (e.g., deploy vs promote both call POST /deployments), ensure the button label, confirmation dialog text, and loading message all reflect the user-facing action, not the API operation
+4. **Surface upstream data failures inline** — if a parent data fetch fails (e.g., releases list fails to load), show an inline Alert explaining why dependent actions are unavailable. Never silently hide action controls when the reason is a fetch error — the user should understand *why* they cannot act
+5. **Document the state matrix** — for components with 3+ state dimensions controlling action visibility, include a comment-level truth table (status x role x data availability → visible controls) so reviewers can verify completeness without reverse-engineering the JSX conditionals
+6. **Test every guard rule** — for each guard condition that hides or disables a control, a corresponding frontend test must assert the control is absent/disabled under that condition. Guards without tests are invisible regressions waiting to happen
 
 ---
 
@@ -365,4 +385,4 @@ The portal is a developer abstraction layer. All user-facing content (API respon
 - Review quarterly for outdated rules
 - Remove rules that become obvious over time
 
-Last Updated: 2026-04-09
+Last Updated: 2026-04-11

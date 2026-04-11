@@ -16,12 +16,12 @@ const sampleBuild: BuildSummary = {
 };
 
 describe('CreateReleaseModal', () => {
-  let onClose: ReturnType<typeof vi.fn>;
-  let onSubmit: ReturnType<typeof vi.fn>;
+  let onClose: () => void;
+  let onSubmit: (version: string) => void;
 
   beforeEach(() => {
-    onClose = vi.fn();
-    onSubmit = vi.fn();
+    onClose = vi.fn<() => void>();
+    onSubmit = vi.fn<(version: string) => void>();
   });
 
   function renderModal(overrides: Partial<Parameters<typeof CreateReleaseModal>[0]> = {}) {

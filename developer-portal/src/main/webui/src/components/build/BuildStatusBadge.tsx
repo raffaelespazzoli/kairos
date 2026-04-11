@@ -9,7 +9,7 @@ import {
 import type { BuildStatus } from '../../types/build';
 
 const STATUS_CONFIG: Record<BuildStatus, {
-  color: 'green' | 'red' | 'blue' | 'grey' | 'gold';
+  color: 'green' | 'red' | 'blue' | 'grey' | 'yellow';
   icon: React.ReactElement;
   label: string;
 }> = {
@@ -17,7 +17,7 @@ const STATUS_CONFIG: Record<BuildStatus, {
   Failed: { color: 'red', icon: <ExclamationCircleIcon />, label: 'Failed' },
   Building: { color: 'blue', icon: <InProgressIcon />, label: 'Building...' },
   Cancelled: { color: 'grey', icon: <BanIcon />, label: 'Cancelled' },
-  Pending: { color: 'gold', icon: <PendingIcon />, label: 'Pending' },
+  Pending: { color: 'yellow', icon: <PendingIcon />, label: 'Pending' },
 };
 
 interface BuildStatusBadgeProps {

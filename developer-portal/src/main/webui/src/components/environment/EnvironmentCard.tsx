@@ -145,8 +145,8 @@ export const EnvironmentCard = forwardRef<HTMLDivElement, EnvironmentCardProps>(
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [confirmationVersion, setConfirmationVersion] = useState<string>('');
     const [confirmationType, setConfirmationType] = useState<'deploy' | 'promote'>('deploy');
-    const promoteButtonRef = useRef<HTMLButtonElement | HTMLSpanElement | null>(null);
-    const deployButtonRef = useRef<HTMLButtonElement | null>(null);
+    const promoteButtonRef = useRef<HTMLElement | null>(null);
+    const deployButtonRef = useRef<HTMLElement | null>(null);
 
     const environmentId = isExpanded ? entry.environmentId : null;
     const { data: deployments, error: deploymentsError, isLoading: deploymentsLoading } =
@@ -419,7 +419,7 @@ export const EnvironmentCard = forwardRef<HTMLDivElement, EnvironmentCardProps>(
                     toggle={(toggleRef) => (
                       <MenuToggle
                         ref={(el) => {
-                          (toggleRef as React.MutableRefObject<HTMLButtonElement | null>).current = el;
+                          (toggleRef as React.MutableRefObject<HTMLElement | null>).current = el;
                           deployButtonRef.current = el;
                         }}
                         onClick={(e) => {
@@ -462,7 +462,7 @@ export const EnvironmentCard = forwardRef<HTMLDivElement, EnvironmentCardProps>(
                 <FlexItem>
                   {promoteDisabled ? (
                     <Tooltip content="Production deployments require team lead approval">
-                      <span tabIndex={0} ref={promoteButtonRef as React.Ref<HTMLSpanElement>}>
+                      <span tabIndex={0} ref={promoteButtonRef as React.Ref<HTMLElement>}>
                         <Button
                           variant="secondary"
                           size="sm"
@@ -475,7 +475,7 @@ export const EnvironmentCard = forwardRef<HTMLDivElement, EnvironmentCardProps>(
                     </Tooltip>
                   ) : (
                     <Button
-                      ref={promoteButtonRef as React.Ref<HTMLButtonElement>}
+                      ref={promoteButtonRef as React.Ref<HTMLElement>}
                       variant="secondary"
                       size="sm"
                       onClick={(e) => {

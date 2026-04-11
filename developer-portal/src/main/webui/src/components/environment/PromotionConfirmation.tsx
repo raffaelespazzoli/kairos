@@ -21,7 +21,7 @@ interface PromotionConfirmationProps {
   isOpen: boolean;
   onConfirm: () => void;
   onCancel: () => void;
-  triggerRef: React.RefObject<HTMLButtonElement | HTMLSpanElement | null>;
+  triggerRef: React.RefObject<HTMLElement | null>;
 }
 
 function NonProdPopover({

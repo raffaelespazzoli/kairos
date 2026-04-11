@@ -43,6 +43,7 @@ const sampleEnvData: EnvironmentChainResponse = {
       vaultDeepLink: 'https://vault.example.com/ui/vault/secrets/applications/team/team-payments-dev/static-secrets',
       grafanaDeepLink: null,
       environmentId: 1,
+      isProduction: false,
     },
     {
       environmentName: 'staging',
@@ -55,6 +56,7 @@ const sampleEnvData: EnvironmentChainResponse = {
       argocdDeepLink: null,
       vaultDeepLink: 'https://vault.example.com/ui/vault/secrets/applications/team/team-payments-staging/static-secrets',
       grafanaDeepLink: null,
+      isProduction: false,
       environmentId: 2,
     },
   ],
