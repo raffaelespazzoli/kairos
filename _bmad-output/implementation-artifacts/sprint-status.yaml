@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-03
-last_updated: 2026-04-11T12:00:00
+last_updated: 2026-04-11T20:00:00
 project: bmad
 project_key: NOKEY
 tracking_system: file-system
@@ -90,10 +90,10 @@ development_status:
   epic-5-retrospective: done
 
   # Epic 6: Observability & Health Monitoring
-  epic-6: backlog
-  6-1-prometheus-adapter-health-signals: backlog
-  6-2-application-health-page: backlog
-  6-3-dora-metrics-retrieval-display: backlog
+  epic-6: in-progress
+  6-1-prometheus-adapter-health-signals: ready-for-dev
+  6-2-application-health-page: ready-for-dev
+  6-3-dora-metrics-retrieval-display: ready-for-dev
   epic-6-retrospective: optional
 
   # Epic 7: Team Portfolio Dashboard
