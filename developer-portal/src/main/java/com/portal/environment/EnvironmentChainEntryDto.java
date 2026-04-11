@@ -13,5 +13,6 @@ public record EnvironmentChainEntryDto(
     String argocdDeepLink,
     String vaultDeepLink,
     String grafanaDeepLink,
-    Long environmentId
+    Long environmentId,
+    boolean isProduction
 ) {}

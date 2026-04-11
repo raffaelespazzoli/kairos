@@ -11,6 +11,7 @@ import com.portal.integration.argocd.ArgoCdAdapter;
 import com.portal.integration.git.GitProvider;
 import com.portal.integration.git.GitProviderConfig;
 import com.portal.integration.git.model.GitCommit;
+import com.portal.auth.PortalAuthorizationException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
@@ -51,6 +52,13 @@ public class DeploymentService {
     public DeploymentStatusDto deployRelease(Long teamId, Long appId, DeployRequest request) {
         Application app = requireTeamApplication(teamId, appId);
         Environment env = requireApplicationEnvironment(appId, request.environmentId());
+
+        if (Boolean.TRUE.equals(env.isProduction)) {
+            String role = teamContext.getRole();
+            if (!"lead".equals(role) && !"admin".equals(role)) {
+                throw new PortalAuthorizationException(role, "deployments", "deploy-prod");
+            }
+        }
 
         String envName = env.name.toLowerCase();
         String valuesPath = ".helm/run/values-run-" + envName + ".yaml";

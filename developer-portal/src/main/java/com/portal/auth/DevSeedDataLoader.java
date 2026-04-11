@@ -49,14 +49,14 @@ public class DevSeedDataLoader {
         appB.buildNamespace = "team-2-application-b-build";
 
         createEnvironment("dev", appA.id, clusterDev.id,
-                "team-1-application-a-dev", 1);
+                "team-1-application-a-dev", 1, false);
         createEnvironment("prod", appA.id, clusterProd.id,
-                "team-1-application-a-prod", 2);
+                "team-1-application-a-prod", 2, true);
 
         createEnvironment("dev", appB.id, clusterDev.id,
-                "team-2-application-b-dev", 1);
+                "team-2-application-b-dev", 1, false);
         createEnvironment("prod", appB.id, clusterProd.id,
-                "team-2-application-b-prod", 2);
+                "team-2-application-b-prod", 2, true);
     }
 
     private Team findOrCreateTeam(String name, String oidcGroupId) {
@@ -94,13 +94,15 @@ public class DevSeedDataLoader {
     }
 
     private void createEnvironment(String name, Long appId, Long clusterId,
-                                    String namespace, int promotionOrder) {
+                                    String namespace, int promotionOrder,
+                                    boolean isProduction) {
         Environment e = new Environment();
         e.name = name;
         e.applicationId = appId;
         e.clusterId = clusterId;
         e.namespace = namespace;
         e.promotionOrder = promotionOrder;
+        e.isProduction = isProduction;
         e.persist();
     }
 }

@@ -161,6 +161,14 @@ class PermissionFilterTest {
     // --- Admin permissions ---
 
     @Test
+    void adminCanDeployToProd() {
+        setupRequest("api/v1/teams/1/applications/2/deployments", "POST", "admin",
+                "env", "prod");
+        filter.filter(requestContext);
+        verify(requestContext, never()).abortWith(any());
+    }
+
+    @Test
     void adminCanAccessClusters() {
         setupRequest("api/v1/admin/clusters", "GET", "admin");
         filter.filter(requestContext);

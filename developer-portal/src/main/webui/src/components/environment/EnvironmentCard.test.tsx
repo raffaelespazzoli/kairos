@@ -25,6 +25,18 @@ vi.mock('../../hooks/useDeployments', () => ({
   useDeployments: () => mockDeploymentsResult,
 }));
 
+let mockRole: 'member' | 'lead' | 'admin' = 'member';
+vi.mock('../../hooks/useAuth', () => ({
+  useAuth: () => ({
+    username: 'developer',
+    teamName: 'My Team',
+    teamId: '1',
+    role: mockRole,
+    isAuthenticated: true,
+    token: 'dev-token',
+  }),
+}));
+
 const mockTriggerDeployment = vi.fn();
 vi.mock('../../api/deployments', () => ({
   triggerDeployment: (...args: unknown[]) => mockTriggerDeployment(...args),
@@ -43,6 +55,7 @@ function makeEntry(overrides: Partial<EnvironmentChainEntry> = {}): EnvironmentC
     vaultDeepLink: 'https://vault.example.com/ui/vault/secrets/applications/team/team-payments-dev/static-secrets',
     grafanaDeepLink: null,
     environmentId: 42,
+    isProduction: false,
     ...overrides,
   };
 }
@@ -93,6 +106,7 @@ function makeDeployments(): DeploymentHistoryEntry[] {
 
 describe('EnvironmentCard', () => {
   beforeEach(() => {
+    mockRole = 'member';
     mockDeploymentsResult = {
       data: null,
       error: null,
@@ -490,7 +504,7 @@ describe('EnvironmentCard', () => {
     expect(screen.getByText(/v2\.1\.0/)).toBeInTheDocument();
   });
 
-  it('selecting a release calls triggerDeployment with correct params', async () => {
+  it('selecting a release calls triggerDeployment after confirmation', async () => {
     const user = userEvent.setup();
     const onDeploymentInitiated = vi.fn();
     render(
@@ -508,17 +522,24 @@ describe('EnvironmentCard', () => {
     await user.click(screen.getByText(/v2\.1\.1/));
 
     await waitFor(() => {
+      expect(screen.getByText(/Deploy v2\.1\.1 to dev/)).toBeInTheDocument();
+    });
+    const confirmButtons = screen.getAllByRole('button', { name: 'Deploy' });
+    const confirmBtn = confirmButtons.find((btn) => btn.classList.contains('pf-m-primary'))!;
+    await user.click(confirmBtn);
+
+    await waitFor(() => {
       expect(mockTriggerDeployment).toHaveBeenCalledWith('1', '42', {
         releaseVersion: 'v2.1.1',
         environmentId: 42,
-      });
+      }, undefined);
     });
     await waitFor(() => {
       expect(onDeploymentInitiated).toHaveBeenCalled();
     });
   });
 
-  it('promote button click calls triggerDeployment with entry.deployedVersion and nextEnvironmentId', async () => {
+  it('promote button click calls triggerDeployment after confirmation', async () => {
     const user = userEvent.setup();
     const onDeploymentInitiated = vi.fn();
     render(
@@ -535,10 +556,15 @@ describe('EnvironmentCard', () => {
     await user.click(screen.getByRole('button', { name: /Promote to staging/i }));
 
     await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Promote' })).toBeInTheDocument();
+    });
+    await user.click(screen.getByRole('button', { name: 'Promote' }));
+
+    await waitFor(() => {
       expect(mockTriggerDeployment).toHaveBeenCalledWith('1', '42', {
         releaseVersion: 'v1.4.2',
         environmentId: 99,
-      });
+      }, undefined);
     });
     await waitFor(() => {
       expect(onDeploymentInitiated).toHaveBeenCalled();
@@ -562,6 +588,13 @@ describe('EnvironmentCard', () => {
     await user.click(screen.getByText(/v2\.1\.1/));
 
     await waitFor(() => {
+      expect(screen.getByText(/Deploy v2\.1\.1 to dev/)).toBeInTheDocument();
+    });
+    const confirmButtons = screen.getAllByRole('button', { name: 'Deploy' });
+    const confirmBtn = confirmButtons.find((btn) => btn.classList.contains('pf-m-primary'))!;
+    await user.click(confirmBtn);
+
+    await waitFor(() => {
       expect(screen.getByText('Environment not found')).toBeInTheDocument();
     });
   });
@@ -580,6 +613,11 @@ describe('EnvironmentCard', () => {
     );
 
     await user.click(screen.getByRole('button', { name: /Promote to staging/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Promote' })).toBeInTheDocument();
+    });
+    await user.click(screen.getByRole('button', { name: 'Promote' }));
 
     await waitFor(() => {
       expect(screen.getByText('Deployment rejected')).toBeInTheDocument();
@@ -674,14 +712,244 @@ describe('EnvironmentCard', () => {
 
     await user.click(screen.getByRole('button', { name: /Promote to staging/i }));
 
+    await waitFor(() => {
+      expect(screen.getByText(/Promote v1\.4\.2 to staging/)).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Promote' }));
+
     expect(screen.getByRole('button', { name: /Promoting/i })).toBeInTheDocument();
-    expect(screen.getByTestId('deploy-toggle')).toHaveTextContent('Deploy');
 
     resolveDeployment?.();
     await waitFor(() => {
       expect(
         screen.getByRole('button', { name: /Promote to staging/i }),
       ).toBeInTheDocument();
+    });
+  });
+
+  // --- Production gating tests ---
+
+  it('shows disabled promote button with tooltip for member when next env is production', () => {
+    mockRole = 'member';
+    render(
+      <EnvironmentCard
+        entry={makeEntry()}
+        nextEnvName="prod"
+        nextEnvironmentId={99}
+        nextIsProduction
+        teamId="1"
+        appId="42"
+      />,
+    );
+
+    const promoteButton = screen.getByRole('button', { name: /Promote to prod/i });
+    expect(promoteButton).toBeDisabled();
+  });
+
+  it('shows enabled promote button for lead when next env is production', () => {
+    mockRole = 'lead';
+    render(
+      <EnvironmentCard
+        entry={makeEntry()}
+        nextEnvName="prod"
+        nextEnvironmentId={99}
+        nextIsProduction
+        teamId="1"
+        appId="42"
+      />,
+    );
+
+    const promoteButton = screen.getByRole('button', { name: /Promote to prod/i });
+    expect(promoteButton).toBeEnabled();
+  });
+
+  it('hides Deploy dropdown for member on production environment', () => {
+    mockRole = 'member';
+    render(
+      <EnvironmentCard
+        entry={makeEntry({ status: 'NOT_DEPLOYED', deployedVersion: null })}
+        isProduction
+        isFirstNotDeployed
+        teamId="1"
+        appId="42"
+        releases={makeReleases()}
+      />,
+    );
+
+    expect(screen.queryByTestId('deploy-toggle')).not.toBeInTheDocument();
+  });
+
+  it('shows Deploy dropdown for lead on production environment', () => {
+    mockRole = 'lead';
+    render(
+      <EnvironmentCard
+        entry={makeEntry({ status: 'NOT_DEPLOYED', deployedVersion: null })}
+        isProduction
+        isFirstNotDeployed
+        teamId="1"
+        appId="42"
+        releases={makeReleases()}
+      />,
+    );
+
+    expect(screen.getByTestId('deploy-toggle')).toBeInTheDocument();
+  });
+
+  it('lead clicking promote to production shows Modal confirmation', async () => {
+    mockRole = 'lead';
+    const user = userEvent.setup();
+    render(
+      <EnvironmentCard
+        entry={makeEntry()}
+        nextEnvName="prod"
+        nextEnvironmentId={99}
+        nextIsProduction
+        teamId="1"
+        appId="42"
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /Promote to prod/i }));
+
+    expect(screen.getByText('Deploy to PRODUCTION')).toBeInTheDocument();
+    expect(screen.getByText('This will deploy to production.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Deploy to Prod' })).toBeInTheDocument();
+  });
+
+  it('non-prod promote click shows Popover confirmation', async () => {
+    mockRole = 'member';
+    const user = userEvent.setup();
+    render(
+      <EnvironmentCard
+        entry={makeEntry()}
+        nextEnvName="staging"
+        nextEnvironmentId={99}
+        teamId="1"
+        appId="42"
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /Promote to staging/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Promote v1\.4\.2 to staging/)).toBeInTheDocument();
+    });
+    expect(screen.getByRole('button', { name: 'Promote' })).toBeInTheDocument();
+  });
+
+  it('confirming non-prod popover triggers deployment without ?env=prod', async () => {
+    mockRole = 'member';
+    const user = userEvent.setup();
+    const onDeploymentInitiated = vi.fn();
+    render(
+      <EnvironmentCard
+        entry={makeEntry({ deployedVersion: 'v1.4.2', environmentId: 42 })}
+        nextEnvName="staging"
+        nextEnvironmentId={99}
+        teamId="1"
+        appId="42"
+        onDeploymentInitiated={onDeploymentInitiated}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /Promote to staging/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Promote' })).toBeInTheDocument();
+    });
+    await user.click(screen.getByRole('button', { name: 'Promote' }));
+
+    await waitFor(() => {
+      expect(mockTriggerDeployment).toHaveBeenCalledWith('1', '42', {
+        releaseVersion: 'v1.4.2',
+        environmentId: 99,
+      }, undefined);
+    });
+  });
+
+  it('confirming production modal triggers deployment with isProduction=true', async () => {
+    mockRole = 'lead';
+    const user = userEvent.setup();
+    const onDeploymentInitiated = vi.fn();
+    render(
+      <EnvironmentCard
+        entry={makeEntry({ deployedVersion: 'v1.4.2', environmentId: 42 })}
+        nextEnvName="prod"
+        nextEnvironmentId={99}
+        nextIsProduction
+        teamId="1"
+        appId="42"
+        onDeploymentInitiated={onDeploymentInitiated}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /Promote to prod/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Deploy to Prod' })).toBeInTheDocument();
+    });
+    await user.click(screen.getByRole('button', { name: 'Deploy to Prod' }));
+
+    await waitFor(() => {
+      expect(mockTriggerDeployment).toHaveBeenCalledWith('1', '42', {
+        releaseVersion: 'v1.4.2',
+        environmentId: 99,
+      }, true);
+    });
+  });
+
+  it('canceling confirmation does not trigger deployment', async () => {
+    mockRole = 'member';
+    const user = userEvent.setup();
+    render(
+      <EnvironmentCard
+        entry={makeEntry()}
+        nextEnvName="staging"
+        nextEnvironmentId={99}
+        teamId="1"
+        appId="42"
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /Promote to staging/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
+    });
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(mockTriggerDeployment).not.toHaveBeenCalled();
+  });
+
+  it('deploy dropdown selection shows confirmation before triggering', async () => {
+    mockRole = 'member';
+    const user = userEvent.setup();
+    render(
+      <EnvironmentCard
+        entry={makeEntry({ status: 'NOT_DEPLOYED', deployedVersion: null })}
+        isFirstNotDeployed
+        teamId="1"
+        appId="42"
+        releases={makeReleases()}
+      />,
+    );
+
+    await user.click(screen.getByTestId('deploy-toggle'));
+    await user.click(screen.getByText(/v2\.1\.1/));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Deploy v2\.1\.1 to dev/)).toBeInTheDocument();
+    });
+
+    expect(mockTriggerDeployment).not.toHaveBeenCalled();
+
+    const confirmButtons = screen.getAllByRole('button', { name: 'Deploy' });
+    const confirmBtn = confirmButtons.find((btn) => btn.classList.contains('pf-m-primary'))!;
+    await user.click(confirmBtn);
+
+    await waitFor(() => {
+      expect(mockTriggerDeployment).toHaveBeenCalledWith('1', '42', {
+        releaseVersion: 'v2.1.1',
+        environmentId: 42,
+      }, undefined);
     });
   });
 });

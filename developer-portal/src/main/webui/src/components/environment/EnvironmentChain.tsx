@@ -74,8 +74,12 @@ export function EnvironmentChain({
             >
               <EnvironmentCard
                 entry={env}
+                isProduction={env.isProduction}
                 nextEnvName={environments[index + 1]?.environmentName}
                 nextEnvironmentId={environments[index + 1]?.environmentId ?? undefined}
+                nextIsProduction={environments[index + 1]?.isProduction ?? false}
+                nextNamespace={environments[index + 1]?.namespace}
+                nextCluster={environments[index + 1]?.clusterName}
                 isFirstNotDeployed={index === firstNotDeployedIndex}
                 teamId={teamId}
                 appId={appId}

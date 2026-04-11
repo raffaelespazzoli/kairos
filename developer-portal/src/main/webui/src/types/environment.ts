@@ -17,6 +17,7 @@ export interface EnvironmentChainEntry {
   vaultDeepLink: string | null;
   grafanaDeepLink: string | null;
   environmentId: number | null;
+  isProduction: boolean;
 }
 
 export interface EnvironmentChainResponse {

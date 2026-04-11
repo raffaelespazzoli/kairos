@@ -9,6 +9,17 @@ vi.mock('../../hooks/useDeployments', () => ({
   useDeployments: () => ({ data: null, error: null, isLoading: false, refresh: vi.fn() }),
 }));
 
+vi.mock('../../hooks/useAuth', () => ({
+  useAuth: () => ({
+    username: 'developer',
+    teamName: 'My Team',
+    teamId: '1',
+    role: 'lead',
+    isAuthenticated: true,
+    token: 'dev-token',
+  }),
+}));
+
 const mockTriggerDeployment = vi.fn();
 vi.mock('../../api/deployments', () => ({
   triggerDeployment: (...args: unknown[]) => mockTriggerDeployment(...args),
@@ -27,6 +38,7 @@ const threeEnvs: EnvironmentChainEntry[] = [
     vaultDeepLink: 'https://vault.example.com/ui/vault/secrets/applications/team/team-payments-dev/static-secrets',
     grafanaDeepLink: null,
     environmentId: 1,
+    isProduction: false,
   },
   {
     environmentName: 'staging',
@@ -40,6 +52,7 @@ const threeEnvs: EnvironmentChainEntry[] = [
     vaultDeepLink: 'https://vault.example.com/ui/vault/secrets/applications/team/team-payments-staging/static-secrets',
     grafanaDeepLink: null,
     environmentId: 2,
+    isProduction: false,
   },
   {
     environmentName: 'prod',
@@ -53,6 +66,7 @@ const threeEnvs: EnvironmentChainEntry[] = [
     vaultDeepLink: null,
     grafanaDeepLink: null,
     environmentId: 3,
+    isProduction: true,
   },
 ];
 
@@ -217,7 +231,7 @@ describe('EnvironmentChain', () => {
     expect(screen.getAllByTestId('deploy-toggle')).toHaveLength(1);
   });
 
-  it('computes nextEnvironmentId correctly from environments array', () => {
+  it('computes nextEnvironmentId correctly from environments array', async () => {
     mockTriggerDeployment.mockReset();
     mockTriggerDeployment.mockResolvedValue({});
     const releases: ReleaseSummary[] = [
@@ -239,13 +253,69 @@ describe('EnvironmentChain', () => {
       />,
     );
 
-    return userEvent.click(
+    await userEvent.click(
       screen.getByRole('button', { name: /Promote to staging/i }),
-    ).then(() => {
-      expect(mockTriggerDeployment).toHaveBeenCalledWith('1', '42', {
-        releaseVersion: 'v1.4.2',
-        environmentId: 2,
-      });
-    });
+    );
+
+    const promoteConfirmButton = await screen.findByRole('button', { name: 'Promote' });
+    await userEvent.click(promoteConfirmButton);
+
+    expect(mockTriggerDeployment).toHaveBeenCalledWith('1', '42', {
+      releaseVersion: 'v1.4.2',
+      environmentId: 2,
+    }, undefined);
+  });
+
+  it('passes isProduction from entry to EnvironmentCard', () => {
+    const envsWithProd: EnvironmentChainEntry[] = [
+      { ...threeEnvs[0], status: 'HEALTHY', isProduction: false },
+      { ...threeEnvs[1], status: 'HEALTHY', deployedVersion: 'v1.4.2', isProduction: false },
+      { ...threeEnvs[2], status: 'HEALTHY', deployedVersion: 'v1.4.2', isProduction: true },
+    ];
+
+    render(
+      <EnvironmentChain
+        environments={envsWithProd}
+        teamId="1"
+        appId="42"
+      />,
+    );
+
+    expect(screen.getAllByRole('listitem')).toHaveLength(3);
+  });
+
+  it('computes nextIsProduction for cards where next env is production', async () => {
+    mockTriggerDeployment.mockReset();
+    mockTriggerDeployment.mockResolvedValue({});
+
+    const envsWithProd: EnvironmentChainEntry[] = [
+      { ...threeEnvs[0], status: 'HEALTHY', isProduction: false },
+      {
+        ...threeEnvs[1],
+        environmentName: 'staging',
+        status: 'HEALTHY',
+        deployedVersion: 'v1.4.2',
+        isProduction: false,
+      },
+      {
+        ...threeEnvs[2],
+        environmentName: 'prod',
+        status: 'NOT_DEPLOYED',
+        isProduction: true,
+      },
+    ];
+
+    render(
+      <EnvironmentChain
+        environments={envsWithProd}
+        teamId="1"
+        appId="42"
+      />,
+    );
+
+    const promoteButton = screen.getByRole('button', { name: /Promote to prod/i });
+    await userEvent.click(promoteButton);
+
+    expect(screen.getByText('Deploy to PRODUCTION')).toBeInTheDocument();
   });
 });

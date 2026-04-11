@@ -5,14 +5,13 @@ export function triggerDeployment(
   teamId: string,
   appId: string,
   request: DeployRequest,
+  isProduction?: boolean,
 ): Promise<DeploymentResponse> {
-  return apiFetch<DeploymentResponse>(
-    `/api/v1/teams/${teamId}/applications/${appId}/deployments`,
-    {
-      method: 'POST',
-      body: JSON.stringify(request),
-    },
-  );
+  const url = `/api/v1/teams/${teamId}/applications/${appId}/deployments${isProduction ? '?env=prod' : ''}`;
+  return apiFetch<DeploymentResponse>(url, {
+    method: 'POST',
+    body: JSON.stringify(request),
+  });
 }
 
 export function fetchDeploymentHistory(

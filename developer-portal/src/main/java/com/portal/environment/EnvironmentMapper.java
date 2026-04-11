@@ -33,7 +33,8 @@ public class EnvironmentMapper {
                             status != null ? status.argocdDeepLink() : null,
                             vaultLink != null && !vaultLink.isEmpty() ? vaultLink : null,
                             status != null ? status.grafanaDeepLink() : null,
-                            env.id);
+                            env.id,
+                            Boolean.TRUE.equals(env.isProduction));
                 })
                 .toList();
     }

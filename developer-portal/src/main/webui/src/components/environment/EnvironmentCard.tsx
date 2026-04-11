@@ -1,4 +1,4 @@
-import { forwardRef, useState } from 'react';
+import { forwardRef, useRef, useState } from 'react';
 import {
   Alert,
   Card,
@@ -15,6 +15,7 @@ import {
   FlexItem,
   MenuToggle,
   Spinner,
+  Tooltip,
 } from '@patternfly/react-core';
 import {
   CheckCircleIcon,
@@ -24,7 +25,9 @@ import {
 } from '@patternfly/react-icons';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { DeepLinkButton } from '../shared/DeepLinkButton';
+import { PromotionConfirmation } from './PromotionConfirmation';
 import { useDeployments } from '../../hooks/useDeployments';
+import { useAuth } from '../../hooks/useAuth';
 import { triggerDeployment } from '../../api/deployments';
 import type { EnvironmentChainEntry, EnvironmentStatus } from '../../types/environment';
 import type { DeploymentStatus } from '../../types/deployment';
@@ -32,8 +35,12 @@ import type { ReleaseSummary } from '../../types/release';
 
 interface EnvironmentCardProps {
   entry: EnvironmentChainEntry;
+  isProduction?: boolean;
   nextEnvName?: string;
   nextEnvironmentId?: number;
+  nextIsProduction?: boolean;
+  nextNamespace?: string;
+  nextCluster?: string | null;
   isFirstNotDeployed?: boolean;
   teamId?: string;
   appId?: string;
@@ -117,24 +124,35 @@ function getDeploymentStatusLabel(status: DeploymentStatus) {
 export const EnvironmentCard = forwardRef<HTMLDivElement, EnvironmentCardProps>(
   function EnvironmentCard({
     entry,
+    isProduction = false,
     nextEnvName,
     nextEnvironmentId,
+    nextIsProduction = false,
+    nextNamespace,
+    nextCluster,
     isFirstNotDeployed = false,
     teamId,
     appId,
     releases,
     onDeploymentInitiated,
   }, ref) {
+    const { role } = useAuth();
     const [isExpanded, setIsExpanded] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
     const [pendingAction, setPendingAction] = useState<'deploy' | 'promote' | null>(null);
     const [deployError, setDeployError] = useState<string | null>(null);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [showConfirmation, setShowConfirmation] = useState(false);
+    const [confirmationVersion, setConfirmationVersion] = useState<string>('');
+    const [confirmationType, setConfirmationType] = useState<'deploy' | 'promote'>('deploy');
+    const promoteButtonRef = useRef<HTMLButtonElement | HTMLSpanElement | null>(null);
+    const deployButtonRef = useRef<HTMLButtonElement | null>(null);
 
     const environmentId = isExpanded ? entry.environmentId : null;
     const { data: deployments, error: deploymentsError, isLoading: deploymentsLoading } =
       useDeployments(teamId, appId, environmentId);
 
+    const isMember = role === 'member';
     const hasReleases = releases != null && releases.length > 0;
     const hasDeploymentContext = teamId != null && appId != null;
     const canDeployToCurrentEnvironment =
@@ -143,52 +161,86 @@ export const EnvironmentCard = forwardRef<HTMLDivElement, EnvironmentCardProps>(
       hasDeploymentContext &&
       nextEnvironmentId != null &&
       entry.deployedVersion != null;
+
     const showDeploy =
       hasReleases &&
       canDeployToCurrentEnvironment &&
       (
         entry.status === 'HEALTHY' ||
         (entry.status === 'NOT_DEPLOYED' && isFirstNotDeployed)
-      );
+      ) &&
+      !(isProduction && isMember);
+
     const showPromote =
       entry.status === 'HEALTHY' &&
       nextEnvName != null &&
       canPromoteToNextEnvironment;
 
-    async function handleDeploy(releaseVersion: string) {
-      if (!teamId || !appId || entry.environmentId == null || pendingAction != null) return;
-      setPendingAction('deploy');
+    const promoteDisabled = nextIsProduction && isMember;
+
+    function requestConfirmation(type: 'deploy' | 'promote', version: string) {
+      setConfirmationType(type);
+      setConfirmationVersion(version);
+      setShowConfirmation(true);
+    }
+
+    function cancelConfirmation() {
+      setShowConfirmation(false);
+      setConfirmationVersion('');
+    }
+
+    async function executeDeployment(version: string, envId: number, isProd: boolean) {
+      if (!teamId || !appId) return;
+      const actionType = confirmationType;
+      setPendingAction(actionType);
       setDeployError(null);
-      setIsDropdownOpen(false);
+      setShowConfirmation(false);
       try {
-        await triggerDeployment(teamId, appId, {
-          releaseVersion,
-          environmentId: entry.environmentId,
-        });
+        await triggerDeployment(
+          teamId,
+          appId,
+          { releaseVersion: version, environmentId: envId },
+          isProd || undefined,
+        );
         onDeploymentInitiated?.();
       } catch (e) {
-        setDeployError(e instanceof Error ? e.message : 'Deployment failed');
+        setDeployError(
+          e instanceof Error ? e.message : actionType === 'promote' ? 'Promotion failed' : 'Deployment failed',
+        );
       } finally {
         setPendingAction(null);
       }
     }
 
-    async function handlePromote() {
-      if (!teamId || !appId || !entry.deployedVersion || nextEnvironmentId == null || pendingAction != null) return;
-      setPendingAction('promote');
-      setDeployError(null);
-      try {
-        await triggerDeployment(teamId, appId, {
-          releaseVersion: entry.deployedVersion,
-          environmentId: nextEnvironmentId,
-        });
-        onDeploymentInitiated?.();
-      } catch (e) {
-        setDeployError(e instanceof Error ? e.message : 'Promotion failed');
-      } finally {
-        setPendingAction(null);
+    function handleDeploySelect(releaseVersion: string) {
+      if (pendingAction != null) return;
+      setIsDropdownOpen(false);
+      requestConfirmation('deploy', releaseVersion);
+    }
+
+    function handlePromoteClick() {
+      if (!entry.deployedVersion || pendingAction != null) return;
+      requestConfirmation('promote', entry.deployedVersion);
+    }
+
+    function handleConfirm() {
+      if (confirmationType === 'promote' && nextEnvironmentId != null) {
+        executeDeployment(confirmationVersion, nextEnvironmentId, nextIsProduction);
+      } else if (confirmationType === 'deploy' && entry.environmentId != null) {
+        executeDeployment(confirmationVersion, entry.environmentId, isProduction);
       }
     }
+
+    const confirmationIsProduction =
+      confirmationType === 'promote' ? nextIsProduction : isProduction;
+    const confirmationEnvName =
+      confirmationType === 'promote' ? (nextEnvName ?? '') : entry.environmentName;
+    const confirmationNamespace =
+      confirmationType === 'promote' ? (nextNamespace ?? '') : entry.namespace;
+    const confirmationCluster =
+      confirmationType === 'promote' ? (nextCluster ?? null) : entry.clusterName;
+    const confirmationTriggerRef =
+      confirmationType === 'promote' ? promoteButtonRef : deployButtonRef;
 
     const config = getStatusConfig(entry.status, entry.deployedVersion);
     const statusLabel =
@@ -366,7 +418,10 @@ export const EnvironmentCard = forwardRef<HTMLDivElement, EnvironmentCardProps>(
                     onOpenChange={setIsDropdownOpen}
                     toggle={(toggleRef) => (
                       <MenuToggle
-                        ref={toggleRef}
+                        ref={(el) => {
+                          (toggleRef as React.MutableRefObject<HTMLButtonElement | null>).current = el;
+                          deployButtonRef.current = el;
+                        }}
                         onClick={(e) => {
                           e.stopPropagation();
                           setIsDropdownOpen((prev) => !prev);
@@ -393,7 +448,7 @@ export const EnvironmentCard = forwardRef<HTMLDivElement, EnvironmentCardProps>(
                           key={release.version}
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleDeploy(release.version);
+                            handleDeploySelect(release.version);
                           }}
                         >
                           {release.version} — {relativeTime(release.createdAt)}
@@ -405,24 +460,40 @@ export const EnvironmentCard = forwardRef<HTMLDivElement, EnvironmentCardProps>(
               )}
               {showPromote && (
                 <FlexItem>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handlePromote();
-                    }}
-                    isDisabled={pendingAction != null}
-                  >
-                    {pendingAction === 'promote' ? (
-                      <>
-                        <Spinner size="sm" aria-label="Promoting" />{' '}
-                        Promoting...
-                      </>
-                    ) : (
-                      `Promote to ${nextEnvName}`
-                    )}
-                  </Button>
+                  {promoteDisabled ? (
+                    <Tooltip content="Production deployments require team lead approval">
+                      <span tabIndex={0} ref={promoteButtonRef as React.Ref<HTMLSpanElement>}>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          isDisabled
+                          aria-disabled="true"
+                        >
+                          {`Promote to ${nextEnvName}`}
+                        </Button>
+                      </span>
+                    </Tooltip>
+                  ) : (
+                    <Button
+                      ref={promoteButtonRef as React.Ref<HTMLButtonElement>}
+                      variant="secondary"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePromoteClick();
+                      }}
+                      isDisabled={pendingAction != null}
+                    >
+                      {pendingAction === 'promote' ? (
+                        <>
+                          <Spinner size="sm" aria-label="Promoting" />{' '}
+                          Promoting...
+                        </>
+                      ) : (
+                        `Promote to ${nextEnvName}`
+                      )}
+                    </Button>
+                  )}
                 </FlexItem>
               )}
               {entry.status === 'UNHEALTHY' && entry.argocdDeepLink && (
@@ -440,6 +511,20 @@ export const EnvironmentCard = forwardRef<HTMLDivElement, EnvironmentCardProps>(
                 </FlexItem>
               )}
             </Flex>
+            {showConfirmation && (
+              <PromotionConfirmation
+                version={confirmationVersion}
+                targetEnvName={confirmationEnvName}
+                targetNamespace={confirmationNamespace}
+                targetCluster={confirmationCluster}
+                isProduction={confirmationIsProduction}
+                actionType={confirmationType}
+                isOpen={showConfirmation}
+                onConfirm={handleConfirm}
+                onCancel={cancelConfirmation}
+                triggerRef={confirmationTriggerRef}
+              />
+            )}
           </CardFooter>
         </Card>
       </div>

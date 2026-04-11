@@ -36,6 +36,9 @@ public class Environment extends PanacheEntityBase {
     @Column(name = "promotion_order", nullable = false)
     public Integer promotionOrder;
 
+    @Column(name = "is_production", nullable = false)
+    public Boolean isProduction = false;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     public Instant createdAt;
 

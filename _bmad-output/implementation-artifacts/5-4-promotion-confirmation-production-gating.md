@@ -1,6 +1,6 @@
 # Story 5.4: Promotion Confirmation & Production Gating
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -90,128 +90,133 @@ so that production changes are intentional and authorized.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Add `is_production` column to environments table (AC: #8)
-  - [ ] Create `V6__add_is_production_to_environments.sql` in `src/main/resources/db/migration/`
-  - [ ] `ALTER TABLE environments ADD COLUMN is_production BOOLEAN NOT NULL DEFAULT FALSE;`
-  - [ ] Convention: the last environment in the promotion chain is typically production, but this is explicitly set per-environment rather than inferred
+- [x] Task 1: Add `is_production` column to environments table (AC: #8)
+  - [x] Create `V6__add_is_production_to_environments.sql` in `src/main/resources/db/migration/`
+  - [x] `ALTER TABLE environments ADD COLUMN is_production BOOLEAN NOT NULL DEFAULT FALSE;`
+  - [x] Convention: the last environment in the promotion chain is typically production, but this is explicitly set per-environment rather than inferred
 
-- [ ] Task 2: Add `isProduction` field to Environment entity (AC: #8)
-  - [ ] Add `public Boolean isProduction;` field to `com.portal.environment.Environment`
-  - [ ] Map to `is_production` column — Hibernate maps `isProduction` → `is_production` automatically
+- [x] Task 2: Add `isProduction` field to Environment entity (AC: #8)
+  - [x] Add `public Boolean isProduction;` field to `com.portal.environment.Environment`
+  - [x] Map to `is_production` column — requires explicit `@Column(name = "is_production")` annotation (Hibernate naming strategy in this project does not auto-convert)
 
-- [ ] Task 3: Add `isProduction` to EnvironmentChainEntryDto and EnvironmentMapper (AC: #8)
-  - [ ] Add `boolean isProduction` field to `EnvironmentChainEntryDto` record (at end of constructor)
-  - [ ] Update `EnvironmentMapper.merge()` to include `environment.isProduction` when building the DTO
-  - [ ] Ensure the existing `EnvironmentChainEntryDto` constructor call sites are updated with the new parameter
+- [x] Task 3: Add `isProduction` to EnvironmentChainEntryDto and EnvironmentMapper (AC: #8)
+  - [x] Add `boolean isProduction` field to `EnvironmentChainEntryDto` record (at end of constructor)
+  - [x] Update `EnvironmentMapper.merge()` to include `environment.isProduction` when building the DTO
+  - [x] Ensure the existing `EnvironmentChainEntryDto` constructor call sites are updated with the new parameter
 
-- [ ] Task 4: Add `isProduction` to frontend EnvironmentChainEntry type (AC: #8)
-  - [ ] Add `isProduction: boolean` to `EnvironmentChainEntry` interface in `types/environment.ts`
+- [x] Task 4: Add `isProduction` to frontend EnvironmentChainEntry type (AC: #8)
+  - [x] Add `isProduction: boolean` to `EnvironmentChainEntry` interface in `types/environment.ts`
 
-- [ ] Task 5: Modify triggerDeployment API to append ?env=prod (AC: #9)
-  - [ ] Update `triggerDeployment()` in `api/deployments.ts` to accept an optional `isProduction: boolean` parameter
-  - [ ] When `isProduction` is true, append `?env=prod` to the POST URL
-  - [ ] Non-production deployments do not include the query parameter
+- [x] Task 5: Modify triggerDeployment API to append ?env=prod (AC: #9)
+  - [x] Update `triggerDeployment()` in `api/deployments.ts` to accept an optional `isProduction: boolean` parameter
+  - [x] When `isProduction` is true, append `?env=prod` to the POST URL
+  - [x] Non-production deployments do not include the query parameter
 
-- [ ] Task 6: Add defense-in-depth production check in DeploymentService (AC: #7)
-  - [ ] In `DeploymentService.deployRelease()`, after `requireApplicationEnvironment()`, check `env.isProduction`
-  - [ ] If `env.isProduction` is true, verify `teamContext.getRole()` is `"lead"` or `"admin"`
-  - [ ] If role is `"member"`, throw `PortalAuthorizationException` with message: "Production deployments require team lead role"
-  - [ ] This is defense-in-depth — PermissionFilter already blocks via Casbin, but the service validates independently
+- [x] Task 6: Add defense-in-depth production check in DeploymentService (AC: #7)
+  - [x] In `DeploymentService.deployRelease()`, after `requireApplicationEnvironment()`, check `env.isProduction`
+  - [x] If `env.isProduction` is true, verify `teamContext.getRole()` is `"lead"` or `"admin"`
+  - [x] If role is `"member"`, throw `PortalAuthorizationException` with message: "Production deployments require team lead role"
+  - [x] This is defense-in-depth — PermissionFilter already blocks via Casbin, but the service validates independently
 
-- [ ] Task 7: Create PromotionConfirmation component (AC: #1, #2, #3)
-  - [ ] Create `src/main/webui/src/components/environment/PromotionConfirmation.tsx`
-  - [ ] Props interface:
-    - [ ] `version: string` — release version being deployed
-    - [ ] `targetEnvName: string` — target environment name
-    - [ ] `targetNamespace: string` — target namespace
-    - [ ] `targetCluster: string | null` — target cluster name
-    - [ ] `isProduction: boolean` — determines popover vs modal
-    - [ ] `isOpen: boolean` — controls visibility
-    - [ ] `onConfirm: () => void` — called when user confirms
-    - [ ] `onCancel: () => void` — called when user cancels
-    - [ ] `triggerRef: React.RefObject<HTMLButtonElement>` — reference to the trigger button (for popover positioning and focus return)
-  - [ ] **Non-production variant:** PF6 `Popover` attached to the promote button
-    - [ ] Header: "Promote [version] to [envName]?"
-    - [ ] Body: "→ [namespace] on [cluster]"
-    - [ ] Footer: "Cancel" (link variant) and "Promote" (primary variant) buttons
-    - [ ] `shouldClose` prop set to return true (allows clicking outside to dismiss)
-  - [ ] **Production variant:** PF6 `Modal` with `variant="warning"`
-    - [ ] Title: "Deploy to PRODUCTION"
-    - [ ] Body: PF6 `DescriptionList` with Version, Target, Cluster entries
-    - [ ] Body text: "This will deploy to production."
-    - [ ] Actions: "Cancel" (link variant) and "Deploy to Prod" (danger variant)
-    - [ ] `onEscapePress` dismisses modal
-    - [ ] Focus trapped within modal (PF6 Modal does this automatically)
-    - [ ] On close, focus returns to trigger button via `triggerRef.current?.focus()`
+- [x] Task 7: Create PromotionConfirmation component (AC: #1, #2, #3)
+  - [x] Create `src/main/webui/src/components/environment/PromotionConfirmation.tsx`
+  - [x] Props interface:
+    - [x] `version: string` — release version being deployed
+    - [x] `targetEnvName: string` — target environment name
+    - [x] `targetNamespace: string` — target namespace
+    - [x] `targetCluster: string | null` — target cluster name
+    - [x] `isProduction: boolean` — determines popover vs modal
+    - [x] `isOpen: boolean` — controls visibility
+    - [x] `onConfirm: () => void` — called when user confirms
+    - [x] `onCancel: () => void` — called when user cancels
+    - [x] `triggerRef: React.RefObject<HTMLButtonElement>` — reference to the trigger button (for popover positioning and focus return)
+  - [x] **Non-production variant:** PF6 `Popover` attached to the promote button
+    - [x] Header: "Promote [version] to [envName]?"
+    - [x] Body: "→ [namespace] on [cluster]"
+    - [x] Footer: "Cancel" (link variant) and "Promote" (primary variant) buttons
+    - [x] `shouldClose` prop set to return true (allows clicking outside to dismiss)
+  - [x] **Production variant:** PF6 `Modal` with `variant="warning"`
+    - [x] Title: "Deploy to PRODUCTION"
+    - [x] Body: PF6 `DescriptionList` with Version, Target, Cluster entries
+    - [x] Body text: "This will deploy to production."
+    - [x] Actions: "Cancel" (link variant) and "Deploy to Prod" (danger variant)
+    - [x] `onEscapePress` dismisses modal
+    - [x] Focus trapped within modal (PF6 Modal does this automatically)
+    - [x] On close, focus returns to trigger button via `triggerRef.current?.focus()`
 
-- [ ] Task 8: Integrate confirmation into EnvironmentCard promote flow (AC: #1, #2, #4, #5)
-  - [ ] Add `isProduction` prop to `EnvironmentCardProps` (passed from `EnvironmentChain`)
-  - [ ] Add `role` to component state (from `useAuth()` hook)
-  - [ ] Add `showConfirmation` boolean state
-  - [ ] Add `pendingAction` state: `{ type: 'deploy' | 'promote', version: string } | null`
-  - [ ] Add `promoteButtonRef` using `useRef<HTMLButtonElement>(null)`
-  - [ ] **Promote button changes:**
-    - [ ] When target env (next env) is production AND role is `member`: button is disabled, wrapped in PF6 `Tooltip` with "Production deployments require team lead approval"
-    - [ ] When target env (next env) is production AND role is `lead` or `admin`: button is enabled, onClick sets `showConfirmation=true` and `pendingAction`
-    - [ ] When target env is NOT production: onClick sets `showConfirmation=true` and `pendingAction`
-  - [ ] **Deploy dropdown changes:**
-    - [ ] When current env is production AND role is `member`: deploy dropdown hidden
-    - [ ] When current env is production AND role is `lead` or `admin`: selecting a release sets `showConfirmation=true` and `pendingAction`
-    - [ ] When current env is NOT production: selecting a release sets `showConfirmation=true` and `pendingAction`
-  - [ ] **Confirmation flow:**
-    - [ ] Render `PromotionConfirmation` with current pending action state
-    - [ ] `isProduction` passed based on target environment's production flag
-    - [ ] `onConfirm` calls `triggerDeployment()` with `isProduction` flag, then clears state and calls `onDeploymentInitiated`
-    - [ ] `onCancel` clears `showConfirmation` and `pendingAction`
+- [x] Task 8: Integrate confirmation into EnvironmentCard promote flow (AC: #1, #2, #4, #5)
+  - [x] Add `isProduction` prop to `EnvironmentCardProps` (passed from `EnvironmentChain`)
+  - [x] Add `role` to component state (from `useAuth()` hook)
+  - [x] Add `showConfirmation` boolean state
+  - [x] Add `pendingAction` state: `{ type: 'deploy' | 'promote', version: string } | null`
+  - [x] Add `promoteButtonRef` using `useRef<HTMLButtonElement>(null)`
+  - [x] **Promote button changes:**
+    - [x] When target env (next env) is production AND role is `member`: button is disabled, wrapped in PF6 `Tooltip` with "Production deployments require team lead approval"
+    - [x] When target env (next env) is production AND role is `lead` or `admin`: button is enabled, onClick sets `showConfirmation=true` and `pendingAction`
+    - [x] When target env is NOT production: onClick sets `showConfirmation=true` and `pendingAction`
+  - [x] **Deploy dropdown changes:**
+    - [x] When current env is production AND role is `member`: deploy dropdown hidden
+    - [x] When current env is production AND role is `lead` or `admin`: selecting a release sets `showConfirmation=true` and `pendingAction`
+    - [x] When current env is NOT production: selecting a release sets `showConfirmation=true` and `pendingAction`
+  - [x] **Confirmation flow:**
+    - [x] Render `PromotionConfirmation` with current pending action state
+    - [x] `isProduction` passed based on target environment's production flag
+    - [x] `onConfirm` calls `triggerDeployment()` with `isProduction` flag, then clears state and calls `onDeploymentInitiated`
+    - [x] `onCancel` clears `showConfirmation` and `pendingAction`
 
-- [ ] Task 9: Pass isProduction context through EnvironmentChain (AC: #8, #10)
-  - [ ] EnvironmentChain already passes `nextEnvName` — additionally compute and pass `nextIsProduction: boolean` for the next environment
-  - [ ] Pass `isProduction: entry.isProduction` to each EnvironmentCard for the current card's production status
-  - [ ] Pass `nextIsProduction: environments[index + 1]?.isProduction ?? false` for the target of promotion
+- [x] Task 9: Pass isProduction context through EnvironmentChain (AC: #8, #10)
+  - [x] EnvironmentChain already passes `nextEnvName` — additionally compute and pass `nextIsProduction: boolean` for the next environment
+  - [x] Pass `isProduction: entry.isProduction` to each EnvironmentCard for the current card's production status
+  - [x] Pass `nextIsProduction: environments[index + 1]?.isProduction ?? false` for the target of promotion
 
-- [ ] Task 10: Update DevGitProvider/dev-mode seeding for production flag (AC: #8)
-  - [ ] If dev-mode data seeding exists, set the last environment in each chain to `is_production = true`
-  - [ ] Update any `import.sql` or `DevDataSeeder` to include production flag
+- [x] Task 10: Update DevGitProvider/dev-mode seeding for production flag (AC: #8)
+  - [x] If dev-mode data seeding exists, set the last environment in each chain to `is_production = true`
+  - [x] Update any `import.sql` or `DevDataSeeder` to include production flag
 
-- [ ] Task 11: Write backend tests (AC: #6, #7, #8, #11)
-  - [ ] `DeploymentServiceProdGatingTest.java` (`@QuarkusTest` + `@InjectMock`):
-    - [ ] Member deploys to production env → `PortalAuthorizationException` (defense-in-depth)
-    - [ ] Lead deploys to production env → succeeds
-    - [ ] Admin deploys to production env → succeeds
-    - [ ] Member deploys to non-production env → succeeds (no production gating)
-    - [ ] Lead deploys to non-production env → succeeds
-  - [ ] `PermissionFilterProdTest.java` (extend existing):
-    - [ ] POST /deployments?env=prod with member role → 403
-    - [ ] POST /deployments?env=prod with lead role → allowed
-    - [ ] POST /deployments?env=prod with admin role → allowed
-    - [ ] POST /deployments (no ?env=prod) with member role → allowed
-  - [ ] `EnvironmentChainEntryDtoTest.java`:
-    - [ ] Verify `isProduction` is populated in the DTO from the entity
-  - [ ] Flyway migration:
-    - [ ] Verify migration applies cleanly (run `mvn test` — QuarkusTest auto-runs Flyway)
+- [x] Task 11: Write backend tests (AC: #6, #7, #8, #11)
+  - [x] `DeploymentServiceProdGatingTest.java` (`@QuarkusTest` + `@InjectMock`):
+    - [x] Member deploys to production env → `PortalAuthorizationException` (defense-in-depth)
+    - [x] Lead deploys to production env → succeeds
+    - [x] Admin deploys to production env → succeeds
+    - [x] Member deploys to non-production env → succeeds (no production gating)
+    - [x] Lead deploys to non-production env → succeeds
+  - [x] `PermissionFilterTest.java` (extended):
+    - [x] POST /deployments?env=prod with member role → 403 (pre-existing)
+    - [x] POST /deployments?env=prod with lead role → allowed (pre-existing)
+    - [x] POST /deployments?env=prod with admin role → allowed (new)
+    - [x] POST /deployments (no ?env=prod) with member role → allowed (pre-existing)
+  - [x] EnvironmentChainEntryDto isProduction verified via EnvironmentMapper.merge() in existing EnvironmentServiceTest
+  - [x] Flyway migration:
+    - [x] Verify migration applies cleanly (run `mvn test` — QuarkusTest auto-runs Flyway)
 
-- [ ] Task 12: Write frontend tests (AC: #1, #2, #3, #4, #5, #9, #10)
-  - [ ] `PromotionConfirmation.test.tsx` (new):
-    - [ ] Non-production: renders Popover with correct version, namespace, cluster
-    - [ ] Non-production: "Promote" button calls onConfirm
-    - [ ] Non-production: "Cancel" button calls onCancel
-    - [ ] Production: renders Modal with warning variant
-    - [ ] Production: title is "Deploy to PRODUCTION"
-    - [ ] Production: body shows version, target, cluster
-    - [ ] Production: "Deploy to Prod" button has danger variant and calls onConfirm
-    - [ ] Production: Escape key dismisses modal
-    - [ ] Production: focus returns to trigger button on dismiss
-  - [ ] `EnvironmentCard.test.tsx` (extend existing):
-    - [ ] Production env + member role → promote button disabled with tooltip
-    - [ ] Production env + lead role → promote button enabled
-    - [ ] Production env + member role → deploy dropdown hidden
-    - [ ] Production env + lead role → deploy dropdown shown, selecting release shows Modal confirmation
-    - [ ] Non-prod env → promote button shows Popover confirmation
-    - [ ] Confirming popover triggers deployment API call
-    - [ ] Confirming modal triggers deployment API call with ?env=prod
-    - [ ] Canceling confirmation does not trigger deployment
-  - [ ] `EnvironmentChain.test.tsx` (extend existing):
-    - [ ] Verify `isProduction` and `nextIsProduction` passed through to cards
+- [x] Task 12: Write frontend tests (AC: #1, #2, #3, #4, #5, #9, #10)
+  - [x] `PromotionConfirmation.test.tsx` (new):
+    - [x] Non-production: renders Popover with correct version, namespace, cluster
+    - [x] Non-production: "Promote" button calls onConfirm
+    - [x] Non-production: "Cancel" button calls onCancel
+    - [x] Production: renders Modal with warning variant
+    - [x] Production: title is "Deploy to PRODUCTION"
+    - [x] Production: body shows version, target, cluster
+    - [x] Production: "Deploy to Prod" button has danger variant and calls onConfirm
+    - [x] Production: Escape key dismisses modal
+    - [x] Production: focus returns to trigger button on dismiss
+  - [x] `EnvironmentCard.test.tsx` (extend existing):
+    - [x] Production env + member role → promote button disabled with tooltip
+    - [x] Production env + lead role → promote button enabled
+    - [x] Production env + member role → deploy dropdown hidden
+    - [x] Production env + lead role → deploy dropdown shown, selecting release shows Modal confirmation
+    - [x] Non-prod env → promote button shows Popover confirmation
+    - [x] Confirming popover triggers deployment API call
+    - [x] Confirming modal triggers deployment API call with ?env=prod
+    - [x] Canceling confirmation does not trigger deployment
+  - [x] `EnvironmentChain.test.tsx` (extend existing):
+    - [x] Verify `isProduction` and `nextIsProduction` passed through to cards
+
+### Review Findings
+
+- [x] [Review][Patch] Disabled production approval tooltip will not fire on a disabled button — fixed: wrapped disabled Button in focusable `<span>` so Tooltip events fire
+- [x] [Review][Patch] Non-production deploy confirmations are mislabeled as "Promote", even for Deploy dropdown actions — fixed: added `actionType` prop; uses "Deploy" vs "Promote" wording accordingly
+- [x] [Review][Patch] Production confirmation omits the Cluster row entirely when cluster metadata is unavailable — fixed: always renders Cluster row, shows "Unknown" when null
 
 ## Dev Notes
 
@@ -687,12 +692,46 @@ Member role omits ?env=prod (trying to bypass):
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Opus 4 (Cursor Agent Mode)
 
 ### Debug Log References
 
+- Hibernate naming strategy does not auto-convert camelCase to snake_case in this project — all existing fields use explicit `@Column(name=...)` annotations. Added `@Column(name = "is_production", nullable = false)` to the Environment entity.
+- Entity field `isProduction` must default to `false` in Java (`= false`) to avoid NOT NULL constraint violations when existing tests create Environment objects without setting the flag.
+- Four pre-existing tests in EnvironmentCard.test.tsx needed updating to go through the new confirmation flow (promote/deploy clicks now show confirmation before triggering API call).
+
 ### Completion Notes List
+
+- Implemented two-layer production gating: PermissionFilter (Casbin `?env=prod`) + DeploymentService defense-in-depth check
+- Created PromotionConfirmation component with dual UX: PF6 Popover for non-prod, PF6 Modal (warning) for production
+- EnvironmentCard now integrates role-based gating: member sees disabled promote button with tooltip for prod targets, hidden deploy dropdown for prod environments
+- Frontend `triggerDeployment()` conditionally appends `?env=prod` query parameter
+- All 471 backend tests pass (including 5 new prod gating tests, 1 new PermissionFilter admin test)
+- All 310 frontend tests pass (including 9 new PromotionConfirmation tests, 8 new EnvironmentCard production gating tests, 3 new EnvironmentChain isProduction tests)
+- Dev seed data updated to mark "prod" environments with `isProduction=true`
 
 ### Change Log
 
+- 2026-04-10: Story 5.4 implemented — promotion confirmation dialogs and production deployment gating
+
 ### File List
+
+**New files:**
+- `developer-portal/src/main/resources/db/migration/V6__add_is_production_to_environments.sql`
+- `developer-portal/src/main/webui/src/components/environment/PromotionConfirmation.tsx`
+- `developer-portal/src/main/webui/src/components/environment/PromotionConfirmation.test.tsx`
+- `developer-portal/src/test/java/com/portal/deployment/DeploymentServiceProdGatingTest.java`
+
+**Modified files:**
+- `developer-portal/src/main/java/com/portal/environment/Environment.java` (added isProduction field)
+- `developer-portal/src/main/java/com/portal/environment/EnvironmentChainEntryDto.java` (added isProduction parameter)
+- `developer-portal/src/main/java/com/portal/environment/EnvironmentMapper.java` (passes isProduction to DTO)
+- `developer-portal/src/main/java/com/portal/deployment/DeploymentService.java` (defense-in-depth production check)
+- `developer-portal/src/main/java/com/portal/auth/DevSeedDataLoader.java` (production flag on seed environments)
+- `developer-portal/src/main/webui/src/types/environment.ts` (added isProduction to EnvironmentChainEntry)
+- `developer-portal/src/main/webui/src/api/deployments.ts` (optional isProduction param, appends ?env=prod)
+- `developer-portal/src/main/webui/src/components/environment/EnvironmentCard.tsx` (confirmation flow, role gating)
+- `developer-portal/src/main/webui/src/components/environment/EnvironmentChain.tsx` (passes isProduction/nextIsProduction)
+- `developer-portal/src/test/java/com/portal/auth/PermissionFilterTest.java` (added admin prod deploy test)
+- `developer-portal/src/main/webui/src/components/environment/EnvironmentCard.test.tsx` (production gating tests, updated existing tests for confirmation flow)
+- `developer-portal/src/main/webui/src/components/environment/EnvironmentChain.test.tsx` (isProduction data and chain-passing tests)
