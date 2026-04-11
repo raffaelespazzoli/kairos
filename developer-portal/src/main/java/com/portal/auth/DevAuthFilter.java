@@ -11,6 +11,8 @@ import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.ext.Provider;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Dev-only filter that populates {@link TeamContext} with sensible defaults
@@ -27,6 +29,7 @@ import java.util.List;
 public class DevAuthFilter implements ContainerRequestFilter {
 
     private static final List<String> DEV_TEAM_GROUPS = List.of("team-1", "team-2");
+    private static final Pattern TEAM_PATH_PATTERN = Pattern.compile("api/v1/teams/(\\d+)/");
 
     @Inject
     TeamContext teamContext;
@@ -49,7 +52,14 @@ public class DevAuthFilter implements ContainerRequestFilter {
 
         String teamHeader = ctx.getHeaderString("X-Dev-Team");
         String teamParam = ctx.getUriInfo().getQueryParameters().getFirst("team");
-        String teamName = teamHeader != null ? teamHeader : teamParam != null ? teamParam : "team-1";
+        String teamName;
+        if (teamHeader != null) {
+            teamName = teamHeader;
+        } else if (teamParam != null) {
+            teamName = teamParam;
+        } else {
+            teamName = inferTeamFromPath(path);
+        }
 
         teamContext.setTeamIdentifier(teamName);
         teamContext.setTeamGroups(DEV_TEAM_GROUPS);
@@ -57,5 +67,25 @@ public class DevAuthFilter implements ContainerRequestFilter {
 
         Team team = teamService.findOrCreate(teamName);
         teamContext.setTeamId(team.id);
+    }
+
+    /**
+     * Extracts the team ID from URL paths like {@code api/v1/teams/{id}/...} and
+     * resolves it to the team name. Falls back to team-1 when the path doesn't
+     * match or the team doesn't exist.
+     */
+    private String inferTeamFromPath(String path) {
+        Matcher m = TEAM_PATH_PATTERN.matcher(path);
+        if (m.find()) {
+            try {
+                Long teamId = Long.parseLong(m.group(1));
+                Team t = Team.findById(teamId);
+                if (t != null) {
+                    return t.oidcGroupId;
+                }
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return "team-1";
     }
 }

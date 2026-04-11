@@ -46,6 +46,18 @@ describe('CreateReleaseModal', () => {
     expect(screen.getByText('registry.example.com/team/app:abc1234')).toBeInTheDocument();
   });
 
+  it('updates image tag to match entered version', async () => {
+    const user = userEvent.setup();
+    renderModal();
+
+    expect(screen.getByText('registry.example.com/team/app:abc1234')).toBeInTheDocument();
+
+    await user.type(screen.getByRole('textbox', { name: /Version tag/i }), 'v1.3.0');
+
+    expect(screen.getByText('registry.example.com/team/app:v1.3.0')).toBeInTheDocument();
+    expect(screen.queryByText('registry.example.com/team/app:abc1234')).not.toBeInTheDocument();
+  });
+
   it('shows commit SHA unavailable when null', () => {
     renderModal({ commitSha: null });
     expect(screen.getByText('Commit SHA unavailable')).toBeInTheDocument();

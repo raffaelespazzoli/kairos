@@ -11,8 +11,8 @@ import java.util.List;
 
 /**
  * Dev-mode adapter returning mock environment status data.
- * First environment (promotion_order 0) returns HEALTHY with a version,
- * second returns DEPLOYING, rest return NOT_DEPLOYED.
+ * Uses 1-based promotion_order (matching seed data): first env is HEALTHY,
+ * second is DEPLOYING, rest are NOT_DEPLOYED.
  */
 @ApplicationScoped
 @IfBuildProperty(name = "portal.argocd.provider", stringValue = "dev")
@@ -21,10 +21,15 @@ public class DevArgoCdAdapter implements ArgoCdAdapter {
     @Override
     public List<EnvironmentStatusDto> getEnvironmentStatuses(String appName,
             List<Environment> environments) {
+        int minOrder = environments.stream()
+                .mapToInt(e -> e.promotionOrder)
+                .min()
+                .orElse(1);
+
         return environments.stream()
                 .map(env -> {
-                    int order = env.promotionOrder;
-                    PortalEnvironmentStatus status = switch (order) {
+                    int relative = env.promotionOrder - minOrder;
+                    PortalEnvironmentStatus status = switch (relative) {
                         case 0 -> PortalEnvironmentStatus.HEALTHY;
                         case 1 -> PortalEnvironmentStatus.DEPLOYING;
                         default -> PortalEnvironmentStatus.NOT_DEPLOYED;

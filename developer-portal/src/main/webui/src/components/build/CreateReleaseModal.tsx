@@ -85,7 +85,11 @@ export function CreateReleaseModal({
             <DescriptionListGroup>
               <DescriptionListTerm>Image</DescriptionListTerm>
               <DescriptionListDescription>
-                <code className="pf-v6-u-font-family-mono-vf">{build.imageReference}</code>
+                <code className="pf-v6-u-font-family-mono-vf">
+                  {isValid
+                    ? build.imageReference.replace(/:[^/]+$/, `:${version}`)
+                    : build.imageReference}
+                </code>
               </DescriptionListDescription>
             </DescriptionListGroup>
           )}
