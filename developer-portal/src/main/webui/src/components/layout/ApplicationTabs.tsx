@@ -6,7 +6,7 @@ const APP_TABS = [
   { key: 'builds', label: 'Builds' },
   { key: 'releases', label: 'Releases' },
   { key: 'environments', label: 'Environments' },
-  { key: 'health', label: 'Health' },
+  { key: 'health', label: 'Metrics' },
   { key: 'settings', label: 'Settings' },
 ] as const;
 

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   PageSection,
   Title,
@@ -7,9 +8,12 @@ import {
   Content,
   EmptyState,
   EmptyStateBody,
-  Divider,
   Grid,
   GridItem,
+  Tabs,
+  Tab,
+  TabTitleText,
+  ExpandableSection,
 } from '@patternfly/react-core';
 import { useParams } from 'react-router-dom';
 import { useHealth } from '../hooks/useHealth';
@@ -25,35 +29,43 @@ import { RefreshButton } from '../components/shared/RefreshButton';
 import type { EnvironmentHealthDto } from '../types/health';
 import type { DoraMetricType } from '../types/dora';
 
-function EnvironmentHealthSection({ env }: { env: EnvironmentHealthDto }) {
+function EnvironmentHealthSection({ env, defaultExpanded }: { env: EnvironmentHealthDto; defaultExpanded: boolean }) {
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const hasError = env.error != null;
   const hasHealthStatus = env.healthStatus != null;
   const isNoData = hasHealthStatus && env.healthStatus!.status === 'NO_DATA';
 
-  return (
-    <PageSection>
-      <Flex
-        alignItems={{ default: 'alignItemsCenter' }}
-        spaceItems={{ default: 'spaceItemsMd' }}
-      >
+  const toggleContent = (
+    <Flex
+      alignItems={{ default: 'alignItemsCenter' }}
+      spaceItems={{ default: 'spaceItemsMd' }}
+    >
+      <FlexItem>
+        <Content component="h3">{env.environmentName}</Content>
+      </FlexItem>
+      {hasHealthStatus && (
         <FlexItem>
-          <Content component="h3">{env.environmentName}</Content>
+          <HealthStatusBadge status={env.healthStatus!.status} />
         </FlexItem>
-        {hasHealthStatus && (
-          <FlexItem>
-            <HealthStatusBadge status={env.healthStatus!.status} />
-          </FlexItem>
-        )}
-        <FlexItem>
-          <DeepLinkButton
-            href={env.grafanaDeepLink}
-            toolName="Grafana"
-            label="View in Grafana ↗"
-            ariaLabel={`Open ${env.environmentName} in Grafana`}
-          />
-        </FlexItem>
-      </Flex>
+      )}
+      <FlexItem>
+        <DeepLinkButton
+          href={env.grafanaDeepLink}
+          toolName="Grafana"
+          label="View in Grafana ↗"
+          ariaLabel={`Open ${env.environmentName} in Grafana`}
+        />
+      </FlexItem>
+    </Flex>
+  );
 
+  return (
+    <ExpandableSection
+      toggleContent={toggleContent}
+      isExpanded={isExpanded}
+      onToggle={(_event, expanded) => setIsExpanded(expanded)}
+      className="pf-v6-u-mb-md"
+    >
       {hasError && (
         <Alert
           variant="warning"
@@ -78,7 +90,7 @@ function EnvironmentHealthSection({ env }: { env: EnvironmentHealthDto }) {
           <GoldenSignalsPanel signals={env.healthStatus!.goldenSignals} />
         </div>
       )}
-    </PageSection>
+    </ExpandableSection>
   );
 }
 
@@ -89,17 +101,16 @@ const DORA_METRIC_ORDER: DoraMetricType[] = [
   'MTTR',
 ];
 
-export function ApplicationHealthPage() {
+function ApplicationHealthTab() {
   const { teamId, appId } = useParams();
   const { data, error, isLoading, refresh } = useHealth(teamId, appId);
-  const { data: doraData, error: doraError, isLoading: doraLoading } = useDora(teamId, appId);
 
   return (
     <>
       <PageSection>
         <Flex alignItems={{ default: 'alignItemsCenter' }}>
           <FlexItem grow={{ default: 'grow' }}>
-            <Title headingLevel="h2">Health</Title>
+            <Title headingLevel="h2">Application Health</Title>
           </FlexItem>
           <FlexItem>
             <RefreshButton onRefresh={refresh} isRefreshing={isLoading} />
@@ -113,58 +124,113 @@ export function ApplicationHealthPage() {
           <ErrorAlert error={error} />
         </PageSection>
       )}
-      {data &&
-        data.environments.map((env, index) => (
-          <div key={env.environmentName}>
-            {index > 0 && <Divider />}
-            <EnvironmentHealthSection env={env} />
-          </div>
-        ))}
+      {data && (
+        <PageSection>
+          {data.environments.map((env, index) => (
+            <EnvironmentHealthSection
+              key={env.environmentName}
+              env={env}
+              defaultExpanded={index === 0}
+            />
+          ))}
+        </PageSection>
+      )}
+    </>
+  );
+}
 
-      <Divider />
+function DoraMetricsTab({ grafanaLink }: { grafanaLink: string | null }) {
+  const { teamId, appId } = useParams();
+  const { data: doraData, error: doraError, isLoading: doraLoading } = useDora(teamId, appId);
 
+  return (
+    <>
       <PageSection>
-        <Content component="h2">Delivery Metrics (DORA)</Content>
+        <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsMd' }}>
+          <FlexItem grow={{ default: 'grow' }}>
+            <Title headingLevel="h2">Delivery Metrics (DORA)</Title>
+          </FlexItem>
+          <FlexItem>
+            <DeepLinkButton
+              href={grafanaLink}
+              toolName="Grafana"
+              label="View in Grafana ↗"
+              ariaLabel="Open DORA metrics in Grafana"
+            />
+          </FlexItem>
+        </Flex>
+      </PageSection>
 
-        {doraLoading && <LoadingSpinner systemName="Prometheus" />}
+      {doraLoading && <LoadingSpinner systemName="Prometheus" />}
 
-        {doraError && (
+      {doraError && (
+        <PageSection>
           <Alert
             variant="warning"
             title="Delivery metrics unavailable — metrics system is unreachable"
             isInline
-            className="pf-v6-u-mt-sm"
           />
-        )}
+        </PageSection>
+      )}
 
-        {doraData && !doraData.hasData && (
-          <Grid hasGutter className="pf-v6-u-mt-md">
+      {doraData && !doraData.hasData && (
+        <PageSection>
+          <Grid hasGutter>
             {DORA_METRIC_ORDER.map((type) => (
               <GridItem key={type} span={3} md={6} sm={12}>
                 <DoraStatCard metric={null} type={type} />
               </GridItem>
             ))}
           </Grid>
-        )}
+        </PageSection>
+      )}
 
-        {doraData && doraData.hasData && (
-          <>
-            <Grid hasGutter className="pf-v6-u-mt-md">
-              {DORA_METRIC_ORDER.map((type) => {
-                const metric = doraData.metrics.find((m) => m.type === type) ?? null;
-                return (
-                  <GridItem key={type} span={3} md={6} sm={12}>
-                    <DoraStatCard metric={metric} type={type} />
-                  </GridItem>
-                );
-              })}
-            </Grid>
-            <div className="pf-v6-u-mt-lg">
-              <DoraTrendChart metrics={doraData.metrics} timeRange={doraData.timeRange} />
-            </div>
-          </>
-        )}
+      {doraData && doraData.hasData && (
+        <PageSection>
+          <Grid hasGutter>
+            {DORA_METRIC_ORDER.map((type) => {
+              const metric = doraData.metrics.find((m) => m.type === type) ?? null;
+              return (
+                <GridItem key={type} span={3} md={6} sm={12}>
+                  <DoraStatCard metric={metric} type={type} />
+                </GridItem>
+              );
+            })}
+          </Grid>
+          <div className="pf-v6-u-mt-lg">
+            <DoraTrendChart metrics={doraData.metrics} timeRange={doraData.timeRange} />
+          </div>
+        </PageSection>
+      )}
+    </>
+  );
+}
+
+export function ApplicationHealthPage() {
+  const [activeTab, setActiveTab] = useState<string | number>('health');
+  const { teamId, appId } = useParams();
+  const { data: healthData } = useHealth(teamId, appId);
+
+  const grafanaLink = healthData?.environments
+    .map((e) => e.grafanaDeepLink)
+    .find((link) => link != null) ?? null;
+
+  return (
+    <>
+      <PageSection variant="default" padding={{ default: 'noPadding' }}>
+        <Tabs
+          activeKey={activeTab}
+          onSelect={(_event, tabKey) => setActiveTab(tabKey)}
+          aria-label="Metrics sub-tabs"
+          variant="secondary"
+        >
+          <Tab eventKey="health" title={<TabTitleText>Application Health</TabTitleText>} />
+          <Tab eventKey="dora" title={<TabTitleText>DORA Metrics</TabTitleText>} />
+        </Tabs>
       </PageSection>
+
+      {activeTab === 'health' && <ApplicationHealthTab />}
+      {activeTab === 'dora' && <DoraMetricsTab grafanaLink={grafanaLink} />}
     </>
   );
 }

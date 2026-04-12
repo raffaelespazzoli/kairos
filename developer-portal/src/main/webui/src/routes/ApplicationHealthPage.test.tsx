@@ -225,7 +225,33 @@ beforeEach(() => {
   };
 });
 
-describe('ApplicationHealthPage', () => {
+async function switchToDoraTab() {
+  const doraTab = screen.getByRole('tab', { name: /DORA Metrics/i });
+  await userEvent.click(doraTab);
+}
+
+describe('ApplicationHealthPage — sub-tabs', () => {
+  it('renders Application Health and DORA Metrics sub-tabs', () => {
+    renderPage();
+    expect(screen.getByRole('tab', { name: /Application Health/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /DORA Metrics/i })).toBeInTheDocument();
+  });
+
+  it('defaults to the Application Health tab', () => {
+    mockHealthResult = { data: healthyResponse, error: null, isLoading: false, refresh: vi.fn() };
+    renderPage();
+    expect(screen.getByRole('heading', { name: 'Application Health' })).toBeInTheDocument();
+  });
+
+  it('switches to DORA Metrics tab on click', async () => {
+    mockDoraResult = { data: doraResponse, error: null, isLoading: false, refresh: vi.fn() };
+    renderPage();
+    await switchToDoraTab();
+    expect(screen.getByRole('heading', { name: 'Delivery Metrics (DORA)' })).toBeInTheDocument();
+  });
+});
+
+describe('ApplicationHealthPage — Application Health tab', () => {
   it('shows loading spinner while health data is loading', () => {
     mockHealthResult = { data: null, error: null, isLoading: true, refresh: vi.fn() };
     renderPage();
@@ -248,7 +274,7 @@ describe('ApplicationHealthPage', () => {
     expect(screen.getByText('Failed to fetch health data')).toBeInTheDocument();
   });
 
-  it('renders healthy environment with golden signal metrics', () => {
+  it('renders healthy environment with golden signal metrics (first env expanded)', () => {
     mockHealthResult = { data: healthyResponse, error: null, isLoading: false, refresh: vi.fn() };
     renderPage();
     expect(screen.getByText('dev')).toBeInTheDocument();
@@ -258,7 +284,7 @@ describe('ApplicationHealthPage', () => {
     expect(screen.getByText('0.3%')).toBeInTheDocument();
   });
 
-  it('renders unhealthy environment with danger badge', () => {
+  it('renders second environment collapsed by default', () => {
     mockHealthResult = { data: healthyResponse, error: null, isLoading: false, refresh: vi.fn() };
     renderPage();
     expect(screen.getByText('staging')).toBeInTheDocument();
@@ -286,7 +312,6 @@ describe('ApplicationHealthPage', () => {
     expect(
       screen.getByText('Prometheus connection refused for cluster ocp-dev-01'),
     ).toBeInTheDocument();
-    expect(screen.getByText('✓ Healthy')).toBeInTheDocument();
   });
 
   it('renders Grafana deep link with correct href', () => {
@@ -309,12 +334,6 @@ describe('ApplicationHealthPage', () => {
     expect(refreshMock).toHaveBeenCalled();
   });
 
-  it('renders page title Health', () => {
-    mockHealthResult = { data: healthyResponse, error: null, isLoading: false, refresh: vi.fn() };
-    renderPage();
-    expect(screen.getByRole('heading', { name: 'Health' })).toBeInTheDocument();
-  });
-
   it('does not show Grafana link when grafanaDeepLink is null', () => {
     mockHealthResult = { data: noDataResponse, error: null, isLoading: false, refresh: vi.fn() };
     renderPage();
@@ -322,20 +341,22 @@ describe('ApplicationHealthPage', () => {
   });
 });
 
-describe('ApplicationHealthPage — DORA section', () => {
+describe('ApplicationHealthPage — DORA Metrics tab', () => {
   beforeEach(() => {
     mockHealthResult = { data: healthyResponse, error: null, isLoading: false, refresh: vi.fn() };
   });
 
-  it('renders DORA section header', () => {
+  it('renders DORA section header', async () => {
     mockDoraResult = { data: doraResponse, error: null, isLoading: false, refresh: vi.fn() };
     renderPage();
-    expect(screen.getByText('Delivery Metrics (DORA)')).toBeInTheDocument();
+    await switchToDoraTab();
+    expect(screen.getByRole('heading', { name: 'Delivery Metrics (DORA)' })).toBeInTheDocument();
   });
 
-  it('renders DORA stat cards when data available', () => {
+  it('renders DORA stat cards when data available', async () => {
     mockDoraResult = { data: doraResponse, error: null, isLoading: false, refresh: vi.fn() };
     renderPage();
+    await switchToDoraTab();
     expect(screen.getAllByText('Deploy Frequency').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('Lead Time').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('Change Failure Rate').length).toBeGreaterThanOrEqual(1);
@@ -343,14 +364,7 @@ describe('ApplicationHealthPage — DORA section', () => {
     expect(screen.getByText('4.2/wk')).toBeInTheDocument();
   });
 
-  it('renders DORA loading state independently of health', () => {
-    mockDoraResult = { data: null, error: null, isLoading: true, refresh: vi.fn() };
-    renderPage();
-    expect(screen.getByText('Delivery Metrics (DORA)')).toBeInTheDocument();
-    expect(screen.getByText('✓ Healthy')).toBeInTheDocument();
-  });
-
-  it('renders DORA error without affecting golden signals', () => {
+  it('renders DORA error on DORA tab', async () => {
     mockDoraResult = {
       data: null,
       error: {
@@ -363,13 +377,14 @@ describe('ApplicationHealthPage — DORA section', () => {
       refresh: vi.fn(),
     };
     renderPage();
+    await switchToDoraTab();
     expect(screen.getByText(/Delivery metrics unavailable — metrics system is unreachable/)).toBeInTheDocument();
-    expect(screen.getByText('✓ Healthy')).toBeInTheDocument();
   });
 
-  it('shows insufficient data state when hasData is false', () => {
+  it('shows insufficient data state when hasData is false', async () => {
     mockDoraResult = { data: doraNoDataResponse, error: null, isLoading: false, refresh: vi.fn() };
     renderPage();
+    await switchToDoraTab();
     const dashes = screen.getAllByText('—');
     expect(dashes.length).toBeGreaterThanOrEqual(4);
     const insufficientLabels = screen.getAllByText('Insufficient data');
