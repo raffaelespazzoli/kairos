@@ -113,9 +113,15 @@ public class PrometheusRestAdapter implements PrometheusAdapter {
         String promql = substituteDoraParams(template, appName, timeRange);
         String offsetPromql = "(" + promql + ") offset " + timeRange;
 
-        double currentValue = executeDoraInstantQuery(promql, spec);
-        double previousValue = executeDoraInstantQuery(offsetPromql, spec);
-        List<TimeSeriesPoint> timeSeries = executeDoraRangeQuery(promql, timeRange, step, spec);
+        CompletableFuture<Double> previousFuture = CompletableFuture.supplyAsync(() ->
+                executeDoraInstantQuery(offsetPromql, spec));
+        CompletableFuture<List<TimeSeriesPoint>> timeSeriesFuture = CompletableFuture.supplyAsync(() ->
+                executeDoraRangeQuery(promql, timeRange, step, spec));
+
+        double previousValue = joinDora(previousFuture);
+        List<TimeSeriesPoint> timeSeries = joinDora(timeSeriesFuture);
+
+        double currentValue = timeSeries.isEmpty() ? 0.0 : timeSeries.get(timeSeries.size() - 1).value();
 
         if (timeSeries.size() < MIN_DATAPOINTS_FOR_TREND) {
             return new DoraMetric(spec.type, 0.0, 0.0, TrendDirection.STABLE, spec.unit, timeSeries);

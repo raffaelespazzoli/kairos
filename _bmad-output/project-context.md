@@ -345,6 +345,7 @@ The portal is a developer abstraction layer. All user-facing content (API respon
 - The adapter's responsibility: HTTP call to Prometheus API, parameter substitution, response parsing into portal DTOs
 - The adapter does NOT need to understand PromQL semantics — it executes configured queries and returns numeric results
 - DORA metric queries follow the same pattern — externalized as configuration, parameterized by application and time range
+- **DORA Query Optimization (Design Decision 2026-04-12):** Each DORA metric needs a current value, a previous-period value (for trend), and a time series (for charts). The current value is extracted from the range query's last data point — do NOT make a separate instant query for it. The previous-period value uses Prometheus `offset` modifier via an instant query — do NOT attempt to derive it by extending the range window to 2×, because partial data at boundaries produces skewed trend comparisons. The offset instant query and range query run in parallel via `CompletableFuture` (they are independent). Result: 2 parallel calls per metric instead of 3 sequential
 
 **GitOps Contract — Critical for Onboarding and Deployment:**
 
@@ -385,4 +386,4 @@ When rendering action controls (buttons, dropdowns, menus) whose visibility or b
 - Review quarterly for outdated rules
 - Remove rules that become obvious over time
 
-Last Updated: 2026-04-11
+Last Updated: 2026-04-12
