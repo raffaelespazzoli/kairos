@@ -24,6 +24,14 @@ public interface PrometheusConfig {
 
     Thresholds thresholds();
 
+    DoraQueries doraQueries();
+
+    @WithDefault("30d")
+    String doraDefaultRange();
+
+    @WithDefault("1d")
+    String doraStepInterval();
+
     interface Queries {
         String latencyP50();
 
@@ -46,5 +54,15 @@ public interface PrometheusConfig {
 
         @WithDefault("90.0")
         double saturation();
+    }
+
+    interface DoraQueries {
+        String deploymentFrequency();
+
+        String leadTime();
+
+        String changeFailureRate();
+
+        String mttr();
     }
 }

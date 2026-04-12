@@ -2,9 +2,14 @@ package com.portal.integration.prometheus;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.portal.integration.PortalIntegrationException;
+import com.portal.integration.prometheus.model.DoraMetric;
+import com.portal.integration.prometheus.model.DoraMetricType;
+import com.portal.integration.prometheus.model.DoraMetricsResult;
 import com.portal.integration.prometheus.model.GoldenSignal;
 import com.portal.integration.prometheus.model.GoldenSignalType;
 import com.portal.integration.prometheus.model.HealthSignalsResult;
+import com.portal.integration.prometheus.model.TimeSeriesPoint;
+import com.portal.integration.prometheus.model.TrendDirection;
 import io.quarkus.arc.properties.IfBuildProperty;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -12,8 +17,11 @@ import jakarta.ws.rs.WebApplicationException;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 /**
  * Production Prometheus adapter that executes externalized PromQL queries
@@ -24,6 +32,7 @@ import java.util.List;
 public class PrometheusRestAdapter implements PrometheusAdapter {
 
     private static final Logger LOG = Logger.getLogger(PrometheusRestAdapter.class);
+    private static final double TREND_THRESHOLD = 0.05;
 
     @Inject
     @RestClient
@@ -60,6 +69,187 @@ public class PrometheusRestAdapter implements PrometheusAdapter {
         }
 
         return new HealthSignalsResult(signals, anyData);
+    }
+
+    @Override
+    public DoraMetricsResult getDoraMetrics(String appName, String timeRange) {
+        PrometheusConfig.DoraQueries doraQueries = config.doraQueries();
+        String step = config.doraStepInterval();
+
+        List<DoraQuerySpec> specs = List.of(
+                new DoraQuerySpec(doraQueries.deploymentFrequency(), DoraMetricType.DEPLOYMENT_FREQUENCY, "/wk", true),
+                new DoraQuerySpec(doraQueries.leadTime(), DoraMetricType.LEAD_TIME, "h", false),
+                new DoraQuerySpec(doraQueries.changeFailureRate(), DoraMetricType.CHANGE_FAILURE_RATE, "%", false),
+                new DoraQuerySpec(doraQueries.mttr(), DoraMetricType.MTTR, "m", false)
+        );
+
+        List<CompletableFuture<DoraMetric>> futures = specs.stream()
+                .map(spec -> CompletableFuture.supplyAsync(() ->
+                        fetchDoraMetric(spec, appName, timeRange, step)))
+                .toList();
+
+        List<DoraMetric> metrics;
+        try {
+            metrics = futures.stream()
+                    .map(PrometheusRestAdapter::joinDora)
+                    .toList();
+        } catch (PortalIntegrationException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            throw new PortalIntegrationException("prometheus", "getDoraMetrics",
+                    "Delivery metrics unavailable — metrics system is unreachable", null, e);
+        }
+
+        boolean hasData = metrics.stream()
+                .anyMatch(m -> !m.timeSeries().isEmpty() && m.timeSeries().size() >= 7);
+
+        return new DoraMetricsResult(metrics, hasData);
+    }
+
+    private static final int MIN_DATAPOINTS_FOR_TREND = 7;
+
+    private DoraMetric fetchDoraMetric(DoraQuerySpec spec, String appName, String timeRange, String step) {
+        String template = spec.template;
+        String promql = substituteDoraParams(template, appName, timeRange);
+        String offsetPromql = "(" + promql + ") offset " + timeRange;
+
+        double currentValue = executeDoraInstantQuery(promql, spec);
+        double previousValue = executeDoraInstantQuery(offsetPromql, spec);
+        List<TimeSeriesPoint> timeSeries = executeDoraRangeQuery(promql, timeRange, step, spec);
+
+        if (timeSeries.size() < MIN_DATAPOINTS_FOR_TREND) {
+            return new DoraMetric(spec.type, 0.0, 0.0, TrendDirection.STABLE, spec.unit, timeSeries);
+        }
+
+        TrendDirection trend = calculateTrend(currentValue, previousValue, spec.higherIsBetter);
+
+        return new DoraMetric(spec.type, currentValue, previousValue, trend, spec.unit, timeSeries);
+    }
+
+    private double executeDoraInstantQuery(String promql, DoraQuerySpec spec) {
+        try {
+            JsonNode response = restClient.query(promql);
+            QueryResult qr = parseVectorValue(response);
+            return qr.value;
+        } catch (WebApplicationException e) {
+            int status = e.getResponse().getStatus();
+            if (status == 400 || status == 422) {
+                LOG.warnf("Prometheus returned %d for DORA query [%s]: %s — returning zero for %s",
+                        status, promql, e.getMessage(), spec.type);
+                return 0.0;
+            }
+            throw new PortalIntegrationException("prometheus", "getDoraMetrics",
+                    "Delivery metrics unavailable — metrics system is unreachable", null, e);
+        } catch (PortalIntegrationException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new PortalIntegrationException("prometheus", "getDoraMetrics",
+                    "Delivery metrics unavailable — metrics system is unreachable", null, e);
+        }
+    }
+
+    private List<TimeSeriesPoint> executeDoraRangeQuery(String promql, String timeRange, String step,
+                                                         DoraQuerySpec spec) {
+        long now = Instant.now().getEpochSecond();
+        long rangeSeconds = parseDurationToSeconds(timeRange);
+        long start = now - rangeSeconds;
+
+        try {
+            JsonNode response = restClient.queryRange(promql,
+                    String.valueOf(start), String.valueOf(now), step);
+            return parseMatrixValues(response);
+        } catch (WebApplicationException e) {
+            int status = e.getResponse().getStatus();
+            if (status == 400 || status == 422) {
+                LOG.warnf("Prometheus returned %d for DORA range query [%s]: %s — returning empty series for %s",
+                        status, promql, e.getMessage(), spec.type);
+                return List.of();
+            }
+            throw new PortalIntegrationException("prometheus", "getDoraMetrics",
+                    "Delivery metrics unavailable — metrics system is unreachable", null, e);
+        } catch (PortalIntegrationException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new PortalIntegrationException("prometheus", "getDoraMetrics",
+                    "Delivery metrics unavailable — metrics system is unreachable", null, e);
+        }
+    }
+
+    List<TimeSeriesPoint> parseMatrixValues(JsonNode response) {
+        JsonNode result = response.path("data").path("result");
+        if (!result.isArray() || result.isEmpty()) {
+            return List.of();
+        }
+        if (result.size() > 1) {
+            LOG.warnf("DORA range query returned %d series, using first only", result.size());
+        }
+        JsonNode values = result.get(0).path("values");
+        if (!values.isArray()) {
+            return List.of();
+        }
+        List<TimeSeriesPoint> points = new ArrayList<>();
+        for (JsonNode pair : values) {
+            if (!pair.isArray() || pair.size() < 2) {
+                continue;
+            }
+            long timestamp = pair.get(0).asLong();
+            String raw = pair.get(1).asText("0");
+            try {
+                double val = Double.parseDouble(raw);
+                if (Double.isNaN(val) || Double.isInfinite(val)) {
+                    continue;
+                }
+                points.add(new TimeSeriesPoint(timestamp, val));
+            } catch (NumberFormatException e) {
+                // skip unparseable
+            }
+        }
+        return points;
+    }
+
+    TrendDirection calculateTrend(double current, double previous, boolean higherIsBetter) {
+        if (previous == 0 && current == 0) {
+            return TrendDirection.STABLE;
+        }
+        if (previous == 0) {
+            return higherIsBetter ? TrendDirection.IMPROVING : TrendDirection.DECLINING;
+        }
+        double changeRatio = (current - previous) / Math.abs(previous);
+        if (Math.abs(changeRatio) < TREND_THRESHOLD) {
+            return TrendDirection.STABLE;
+        }
+        if (higherIsBetter) {
+            return current > previous ? TrendDirection.IMPROVING : TrendDirection.DECLINING;
+        } else {
+            return current < previous ? TrendDirection.IMPROVING : TrendDirection.DECLINING;
+        }
+    }
+
+    String substituteDoraParams(String template, String appName, String range) {
+        return template
+                .replace("{appName}", appName)
+                .replace("{range}", range);
+    }
+
+    long parseDurationToSeconds(String duration) {
+        if (duration == null || duration.length() < 2) {
+            return 30L * 24 * 3600;
+        }
+        char unit = duration.charAt(duration.length() - 1);
+        long value;
+        try {
+            value = Long.parseLong(duration.substring(0, duration.length() - 1));
+        } catch (NumberFormatException e) {
+            LOG.warnf("Unparseable DORA duration '%s', falling back to 30d default", duration);
+            return 30L * 24 * 3600;
+        }
+        return switch (unit) {
+            case 'd' -> value * 24 * 3600;
+            case 'h' -> value * 3600;
+            case 'm' -> value * 60;
+            case 's' -> value;
+            default -> value * 24 * 3600;
+        };
     }
 
     String substituteParams(String template, String namespace, String interval) {
@@ -114,10 +304,28 @@ public class PrometheusRestAdapter implements PrometheusAdapter {
         }
     }
 
+    private static <T> T joinDora(CompletableFuture<T> future) {
+        try {
+            return future.join();
+        } catch (CompletionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof PortalIntegrationException pie) {
+                throw pie;
+            }
+            if (cause instanceof RuntimeException re) {
+                throw re;
+            }
+            throw e;
+        }
+    }
+
     record QueryResult(double value, boolean hasResult) {
         static final QueryResult NO_RESULT = new QueryResult(0.0, false);
     }
 
     private record QuerySpec(String template, String name, String unit, GoldenSignalType type, double multiplier) {
+    }
+
+    private record DoraQuerySpec(String template, DoraMetricType type, String unit, boolean higherIsBetter) {
     }
 }

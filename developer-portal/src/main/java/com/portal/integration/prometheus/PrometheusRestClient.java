@@ -21,4 +21,13 @@ public interface PrometheusRestClient {
     @GET
     @Path("/query")
     JsonNode query(@QueryParam("query") String query);
+
+    @GET
+    @Path("/query_range")
+    JsonNode queryRange(
+            @QueryParam("query") String query,
+            @QueryParam("start") String start,
+            @QueryParam("end") String end,
+            @QueryParam("step") String step
+    );
 }

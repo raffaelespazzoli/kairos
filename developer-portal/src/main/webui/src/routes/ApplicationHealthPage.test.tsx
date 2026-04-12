@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { ApplicationHealthPage } from './ApplicationHealthPage';
 import type { HealthResponse } from '../types/health';
+import type { DoraMetricsResponse } from '../types/dora';
 import type { PortalError } from '../types/error';
 
 const healthyResponse: HealthResponse = {
@@ -108,6 +109,67 @@ const perEnvErrorResponse: HealthResponse = {
   ],
 };
 
+const doraResponse: DoraMetricsResponse = {
+  metrics: [
+    {
+      type: 'DEPLOYMENT_FREQUENCY',
+      currentValue: 4.2,
+      previousValue: 3.6,
+      trend: 'IMPROVING',
+      percentageChange: 16.7,
+      unit: '/wk',
+      timeSeries: [
+        { timestamp: 1712345678, value: 4.0 },
+        { timestamp: 1712432078, value: 4.2 },
+      ],
+    },
+    {
+      type: 'LEAD_TIME',
+      currentValue: 2.1,
+      previousValue: 2.8,
+      trend: 'IMPROVING',
+      percentageChange: -25.0,
+      unit: 'h',
+      timeSeries: [
+        { timestamp: 1712345678, value: 2.5 },
+        { timestamp: 1712432078, value: 2.1 },
+      ],
+    },
+    {
+      type: 'CHANGE_FAILURE_RATE',
+      currentValue: 2.3,
+      previousValue: 3.1,
+      trend: 'IMPROVING',
+      percentageChange: -25.8,
+      unit: '%',
+      timeSeries: [
+        { timestamp: 1712345678, value: 3.0 },
+        { timestamp: 1712432078, value: 2.3 },
+      ],
+    },
+    {
+      type: 'MTTR',
+      currentValue: 45,
+      previousValue: 48,
+      trend: 'STABLE',
+      percentageChange: -6.3,
+      unit: 'm',
+      timeSeries: [
+        { timestamp: 1712345678, value: 46 },
+        { timestamp: 1712432078, value: 45 },
+      ],
+    },
+  ],
+  timeRange: '30d',
+  hasData: true,
+};
+
+const doraNoDataResponse: DoraMetricsResponse = {
+  metrics: [],
+  timeRange: '30d',
+  hasData: false,
+};
+
 let mockHealthResult: {
   data: HealthResponse | null;
   error: PortalError | null;
@@ -115,8 +177,27 @@ let mockHealthResult: {
   refresh: ReturnType<typeof vi.fn>;
 };
 
+let mockDoraResult: {
+  data: DoraMetricsResponse | null;
+  error: PortalError | null;
+  isLoading: boolean;
+  refresh: ReturnType<typeof vi.fn>;
+};
+
 vi.mock('../hooks/useHealth', () => ({
   useHealth: () => mockHealthResult,
+}));
+
+vi.mock('../hooks/useDora', () => ({
+  useDora: () => mockDoraResult,
+}));
+
+vi.mock('@patternfly/react-charts/victory', () => ({
+  Chart: ({ children }: { children: React.ReactNode }) => <div data-testid="chart">{children}</div>,
+  ChartAxis: () => <div />,
+  ChartGroup: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  ChartLine: () => <div />,
+  ChartVoronoiContainer: () => <div />,
 }));
 
 function renderPage(route = '/teams/1/apps/42/health') {
@@ -131,6 +212,12 @@ function renderPage(route = '/teams/1/apps/42/health') {
 
 beforeEach(() => {
   mockHealthResult = {
+    data: null,
+    error: null,
+    isLoading: false,
+    refresh: vi.fn(),
+  };
+  mockDoraResult = {
     data: null,
     error: null,
     isLoading: false,
@@ -232,5 +319,62 @@ describe('ApplicationHealthPage', () => {
     mockHealthResult = { data: noDataResponse, error: null, isLoading: false, refresh: vi.fn() };
     renderPage();
     expect(screen.queryByText(/View in Grafana/)).not.toBeInTheDocument();
+  });
+});
+
+describe('ApplicationHealthPage — DORA section', () => {
+  beforeEach(() => {
+    mockHealthResult = { data: healthyResponse, error: null, isLoading: false, refresh: vi.fn() };
+  });
+
+  it('renders DORA section header', () => {
+    mockDoraResult = { data: doraResponse, error: null, isLoading: false, refresh: vi.fn() };
+    renderPage();
+    expect(screen.getByText('Delivery Metrics (DORA)')).toBeInTheDocument();
+  });
+
+  it('renders DORA stat cards when data available', () => {
+    mockDoraResult = { data: doraResponse, error: null, isLoading: false, refresh: vi.fn() };
+    renderPage();
+    expect(screen.getAllByText('Deploy Frequency').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Lead Time').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Change Failure Rate').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('MTTR').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('4.2/wk')).toBeInTheDocument();
+  });
+
+  it('renders DORA loading state independently of health', () => {
+    mockDoraResult = { data: null, error: null, isLoading: true, refresh: vi.fn() };
+    renderPage();
+    expect(screen.getByText('Delivery Metrics (DORA)')).toBeInTheDocument();
+    expect(screen.getByText('✓ Healthy')).toBeInTheDocument();
+  });
+
+  it('renders DORA error without affecting golden signals', () => {
+    mockDoraResult = {
+      data: null,
+      error: {
+        error: 'integration-failure',
+        message: 'Delivery metrics unavailable',
+        system: 'Prometheus',
+        timestamp: '2026-04-12T00:00:00Z',
+      },
+      isLoading: false,
+      refresh: vi.fn(),
+    };
+    renderPage();
+    expect(screen.getByText(/Delivery metrics unavailable — metrics system is unreachable/)).toBeInTheDocument();
+    expect(screen.getByText('✓ Healthy')).toBeInTheDocument();
+  });
+
+  it('shows insufficient data state when hasData is false', () => {
+    mockDoraResult = { data: doraNoDataResponse, error: null, isLoading: false, refresh: vi.fn() };
+    renderPage();
+    const dashes = screen.getAllByText('—');
+    expect(dashes.length).toBeGreaterThanOrEqual(4);
+    const insufficientLabels = screen.getAllByText('Insufficient data');
+    expect(insufficientLabels.length).toBe(4);
+    const insufficientTexts = screen.getAllByText('Available after 7 days of activity');
+    expect(insufficientTexts.length).toBe(4);
   });
 });

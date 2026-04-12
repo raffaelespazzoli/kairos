@@ -13,3 +13,9 @@
 ## Deferred from: code review of 5-2-deployment-status-history (2026-04-10)
 
 - `EnvironmentMapper.merge()` still uses `Collectors.toMap()` without a merge function, so duplicate `EnvironmentStatusDto.environmentName` values would still throw an `IllegalStateException`; deferred because that behavior predates story 5.2 and was not introduced by this change set.
+
+## Deferred from: code review of 6-3-dora-metrics-retrieval-display (2026-04-12)
+
+- DORA queries within `fetchDoraMetric` execute 3 HTTP calls sequentially per metric (current, previous, range). Dev Notes spec'd 12 fully concurrent queries. Functionally correct; performance optimization for future.
+- No caching or deduplication for the 12 Prometheus calls per DORA request. Under load or large ranges, this creates high fan-out. Operational optimization for future.
+- No OpenAPI/codegen for frontend/backend DTO contract (`dora.ts` hand-maintained). Pre-existing project pattern across all endpoints.

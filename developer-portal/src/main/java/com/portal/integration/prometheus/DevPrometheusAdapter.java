@@ -1,21 +1,27 @@
 package com.portal.integration.prometheus;
 
+import com.portal.integration.prometheus.model.DoraMetric;
+import com.portal.integration.prometheus.model.DoraMetricType;
+import com.portal.integration.prometheus.model.DoraMetricsResult;
 import com.portal.integration.prometheus.model.GoldenSignal;
 import com.portal.integration.prometheus.model.GoldenSignalType;
 import com.portal.integration.prometheus.model.HealthSignalsResult;
+import com.portal.integration.prometheus.model.TimeSeriesPoint;
+import com.portal.integration.prometheus.model.TrendDirection;
 import io.quarkus.arc.properties.IfBuildProperty;
 import jakarta.enterprise.context.ApplicationScoped;
 
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Dev-mode adapter returning deterministic mock golden signal data.
+ * Dev-mode adapter returning deterministic mock golden signal and DORA data.
  * Mirrors the DevArgoCdAdapter pattern: first distinct namespace → Healthy,
  * second → Degraded (elevated saturation), rest → Healthy.
- * Namespace call order is tracked so repeated calls for the same namespace
- * return a stable result.
  */
 @ApplicationScoped
 @IfBuildProperty(name = "portal.prometheus.provider", stringValue = "dev")
@@ -32,6 +38,41 @@ public class DevPrometheusAdapter implements PrometheusAdapter {
             return degradedSignals();
         }
         return healthySignals();
+    }
+
+    @Override
+    public DoraMetricsResult getDoraMetrics(String appName, String timeRange) {
+        long now = Instant.now().getEpochSecond();
+        long daySeconds = 86400L;
+
+        List<DoraMetric> metrics = List.of(
+                new DoraMetric(DoraMetricType.DEPLOYMENT_FREQUENCY, 4.2, 3.6,
+                        TrendDirection.IMPROVING, "/wk",
+                        generateTimeSeries(now, daySeconds, 30, 4.0, 0.5)),
+                new DoraMetric(DoraMetricType.LEAD_TIME, 2.1, 2.8,
+                        TrendDirection.IMPROVING, "h",
+                        generateTimeSeries(now, daySeconds, 30, 2.5, 0.4)),
+                new DoraMetric(DoraMetricType.CHANGE_FAILURE_RATE, 2.3, 3.1,
+                        TrendDirection.IMPROVING, "%",
+                        generateTimeSeries(now, daySeconds, 30, 2.7, 0.3)),
+                new DoraMetric(DoraMetricType.MTTR, 45.0, 48.0,
+                        TrendDirection.STABLE, "m",
+                        generateTimeSeries(now, daySeconds, 30, 46.0, 3.0))
+        );
+
+        return new DoraMetricsResult(metrics, true);
+    }
+
+    private List<TimeSeriesPoint> generateTimeSeries(long now, long stepSeconds, int count,
+                                                      double baseValue, double variance) {
+        List<TimeSeriesPoint> points = new ArrayList<>();
+        ThreadLocalRandom rng = ThreadLocalRandom.current();
+        for (int i = count - 1; i >= 0; i--) {
+            long timestamp = now - (i * stepSeconds);
+            double value = baseValue + rng.nextDouble(-variance, variance);
+            points.add(new TimeSeriesPoint(timestamp, Math.max(0, value)));
+        }
+        return points;
     }
 
     private HealthSignalsResult healthySignals() {
