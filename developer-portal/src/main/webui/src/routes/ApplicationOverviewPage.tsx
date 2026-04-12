@@ -15,9 +15,11 @@ import {
   Flex,
   FlexItem,
 } from '@patternfly/react-core';
+import { useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { useApplications } from '../contexts/ApplicationsContext';
 import { useEnvironments } from '../hooks/useEnvironments';
+import { useHealth } from '../hooks/useHealth';
 import { useReleases } from '../hooks/useReleases';
 import { EnvironmentChain } from '../components/environment/EnvironmentChain';
 import { DeepLinkButton } from '../components/shared/DeepLinkButton';
@@ -35,6 +37,12 @@ export function ApplicationOverviewPage() {
     refresh: refreshEnv,
   } = useEnvironments(teamId, appId);
   const { data: releases, error: releasesError } = useReleases(teamId, appId);
+  const { data: healthData, refresh: refreshHealth } = useHealth(teamId, appId);
+
+  const refreshAll = useCallback(() => {
+    refreshEnv();
+    refreshHealth();
+  }, [refreshEnv, refreshHealth]);
 
   if (appsLoading) return <LoadingSpinner systemName="Portal" />;
   if (appsError) return <ErrorAlert error={appsError} />;
@@ -66,7 +74,7 @@ export function ApplicationOverviewPage() {
             </FlexItem>
           )}
           <FlexItem>
-            <RefreshButton onRefresh={refreshEnv} isRefreshing={envLoading} />
+            <RefreshButton onRefresh={refreshAll} isRefreshing={envLoading} />
           </FlexItem>
         </Flex>
 
@@ -113,7 +121,8 @@ export function ApplicationOverviewPage() {
             teamId={teamId}
             appId={appId}
             releases={releases}
-            onDeploymentInitiated={refreshEnv}
+            healthData={healthData}
+            onDeploymentInitiated={refreshAll}
           />
         )}
       </PageSection>

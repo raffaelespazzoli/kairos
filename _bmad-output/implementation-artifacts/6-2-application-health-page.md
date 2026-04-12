@@ -1,6 +1,6 @@
 # Story 6.2: Application Health Page
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -69,8 +69,8 @@ so that I can verify my application is running well and investigate further when
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create health TypeScript types (AC: #1, #2, #3)
-  - [ ] Create `src/main/webui/src/types/health.ts` with types matching backend DTOs:
+- [x] Task 1: Create health TypeScript types (AC: #1, #2, #3)
+  - [x] Create `src/main/webui/src/types/health.ts` with types matching backend DTOs:
     - `GoldenSignalType` union type
     - `GoldenSignal` interface
     - `HealthStatus` union type
@@ -78,48 +78,48 @@ so that I can verify my application is running well and investigate further when
     - `EnvironmentHealthDto` interface
     - `HealthResponse` interface
 
-- [ ] Task 2: Create health API client function (AC: #1)
-  - [ ] Create `src/main/webui/src/api/health.ts`
-  - [ ] `fetchHealth(teamId, appId)` function using `apiFetch<HealthResponse>`
-  - [ ] Path: `/api/v1/teams/${teamId}/applications/${appId}/health`
+- [x] Task 2: Create health API client function (AC: #1)
+  - [x] Create `src/main/webui/src/api/health.ts`
+  - [x] `fetchHealth(teamId, appId)` function using `apiFetch<HealthResponse>`
+  - [x] Path: `/api/v1/teams/${teamId}/applications/${appId}/health`
 
-- [ ] Task 3: Create useHealth hook (AC: #1)
-  - [ ] Create `src/main/webui/src/hooks/useHealth.ts`
-  - [ ] Use `useApiFetch<HealthResponse>` with conditional path (null when teamId/appId missing)
-  - [ ] Returns `{ data, error, isLoading, refresh }`
+- [x] Task 3: Create useHealth hook (AC: #1)
+  - [x] Create `src/main/webui/src/hooks/useHealth.ts`
+  - [x] Use `useApiFetch<HealthResponse>` with conditional path (null when teamId/appId missing)
+  - [x] Returns `{ data, error, isLoading, refresh }`
 
-- [ ] Task 4: Create HealthStatusBadge component (AC: #3)
-  - [ ] Create `src/main/webui/src/components/health/HealthStatusBadge.tsx`
-  - [ ] Maps `HealthStatus` → PatternFly `Label` with icon and color:
+- [x] Task 4: Create HealthStatusBadge component (AC: #3)
+  - [x] Create `src/main/webui/src/components/health/HealthStatusBadge.tsx`
+  - [x] Maps `HealthStatus` → PatternFly `Label` with icon and color:
     - `HEALTHY` → success Label, `CheckCircleIcon`, "✓ Healthy"
     - `UNHEALTHY` → danger Label, `ExclamationCircleIcon`, "✕ Unhealthy"
     - `DEGRADED` → warning Label, `SyncAltIcon`, "⟳ Degraded"
     - `NO_DATA` → grey Label, `MinusCircleIcon`, "No Data"
-  - [ ] Uses same pattern as `getStatusConfig()` in `EnvironmentCard.tsx`
+  - [x] Uses same pattern as `getStatusConfig()` in `EnvironmentCard.tsx`
 
-- [ ] Task 5: Create GoldenSignalsPanel component (AC: #2, #3)
-  - [ ] Create `src/main/webui/src/components/health/GoldenSignalsPanel.tsx`
-  - [ ] Renders four metric cards in a row using PatternFly `Grid` (4-column on lg, 2 on md, 1 on sm)
-  - [ ] Each card is a PatternFly `Card` with:
+- [x] Task 5: Create GoldenSignalsPanel component (AC: #2, #3)
+  - [x] Create `src/main/webui/src/components/health/GoldenSignalsPanel.tsx`
+  - [x] Renders four metric cards in a row using PatternFly `Grid` (4-column on lg, 2 on md, 1 on sm)
+  - [x] Each card is a PatternFly `Card` with:
     - Metric name as card title
     - Value prominently displayed with unit
     - Color-coded border/accent: green (healthy), yellow (warning), red (critical)
-  - [ ] Metric card content:
+  - [x] Metric card content:
     - **Latency:** show p95 (primary) — format seconds to ms (e.g., 0.245 → "245ms")
     - **Traffic:** show request rate — format as "X.X req/s"
     - **Errors:** show error rate — format as "X.X%"
     - **Saturation:** show CPU and memory — format as "CPU X%, Mem X%"
-  - [ ] Color thresholds (matching backend defaults):
+  - [x] Color thresholds (matching backend defaults):
     - Error rate: <1% green, 1-5% yellow, >5% red
     - Saturation (CPU or Mem): <70% green, 70-90% yellow, >90% red
     - Latency p95: <500ms green, 500-1000ms yellow, >1000ms red
     - Traffic: always default/blue (informational, no threshold)
 
-- [ ] Task 6: Implement ApplicationHealthPage (AC: #1, #2, #3, #4, #6, #7)
-  - [ ] Replace placeholder in `src/main/webui/src/routes/ApplicationHealthPage.tsx`
-  - [ ] Use `useParams()` for `teamId`, `appId`
-  - [ ] Use `useHealth(teamId, appId)` hook for data
-  - [ ] Page layout:
+- [x] Task 6: Implement ApplicationHealthPage (AC: #1, #2, #3, #4, #6, #7)
+  - [x] Replace placeholder in `src/main/webui/src/routes/ApplicationHealthPage.tsx`
+  - [x] Use `useParams()` for `teamId`, `appId`
+  - [x] Use `useHealth(teamId, appId)` hook for data
+  - [x] Page layout:
     - `PageSection` with Title "Health" + `RefreshButton`
     - Loading: `LoadingSpinner` with `systemName="Prometheus"`
     - Error (whole request): `ErrorAlert`
@@ -130,48 +130,48 @@ so that I can verify my application is running well and investigate further when
       - If `healthStatus.status === 'NO_DATA'`: show empty state message
       - If healthy data: render `GoldenSignalsPanel`
 
-- [ ] Task 7: Enable Grafana deep link in EnvironmentCard (AC: #5)
-  - [ ] In `src/main/webui/src/components/environment/EnvironmentCard.tsx`
-  - [ ] Replace disabled placeholder button (line ~335-338) with functional `DeepLinkButton`
-  - [ ] Use `entry.grafanaDeepLink` (already exists in `EnvironmentChainEntry` type)
+- [x] Task 7: Enable Grafana deep link in EnvironmentCard (AC: #5)
+  - [x] In `src/main/webui/src/components/environment/EnvironmentCard.tsx`
+  - [x] Replace disabled placeholder button (line ~335-338) with functional `DeepLinkButton`
+  - [x] Use `entry.grafanaDeepLink` (already exists in `EnvironmentChainEntry` type)
 
-- [ ] Task 7b: Enrich environment chain cards with Prometheus health status (AC: #5)
-  - [ ] In `ApplicationOverviewPage.tsx`: add `useHealth(teamId, appId)` call alongside existing `useEnvironments`
-  - [ ] Pass health data as optional `healthData?: HealthResponse` prop to `EnvironmentChain`
-  - [ ] In `EnvironmentChain.tsx`: accept optional `healthData` prop, look up each environment's `EnvironmentHealthDto` by matching `environmentName`
-  - [ ] Pass matched `EnvironmentHealthDto` as optional `healthInfo` prop to `EnvironmentCard`
-  - [ ] In `EnvironmentCard.tsx`: when `healthInfo` is available and has `healthStatus`:
+- [x] Task 7b: Enrich environment chain cards with Prometheus health status (AC: #5)
+  - [x] In `ApplicationOverviewPage.tsx`: add `useHealth(teamId, appId)` call alongside existing `useEnvironments`
+  - [x] Pass health data as optional `healthData?: HealthResponse` prop to `EnvironmentChain`
+  - [x] In `EnvironmentChain.tsx`: accept optional `healthData` prop, look up each environment's `EnvironmentHealthDto` by matching `environmentName`
+  - [x] Pass matched `EnvironmentHealthDto` as optional `healthInfo` prop to `EnvironmentCard`
+  - [x] In `EnvironmentCard.tsx`: when `healthInfo` is available and has `healthStatus`:
     - If Prometheus health status is WORSE than ArgoCD status, override the displayed status (UNHEALTHY > DEGRADED > HEALTHY)
     - Show a secondary "Prometheus: Degraded" or similar subtle indicator when Prometheus disagrees with ArgoCD
-  - [ ] Health data loading does NOT block chain rendering — chain renders immediately from ArgoCD data, Prometheus enrichment appears when ready
-  - [ ] If health fetch fails, chain renders normally with ArgoCD-only status (no error shown for health enrichment failure)
+  - [x] Health data loading does NOT block chain rendering — chain renders immediately from ArgoCD data, Prometheus enrichment appears when ready
+  - [x] If health fetch fails, chain renders normally with ArgoCD-only status (no error shown for health enrichment failure)
 
-- [ ] Task 8: Write ApplicationHealthPage tests (AC: #1, #2, #3, #6, #7)
-  - [ ] Create `src/main/webui/src/routes/ApplicationHealthPage.test.tsx`
-  - [ ] Test loading state shows `LoadingSpinner`
-  - [ ] Test successful render with healthy environments
-  - [ ] Test unhealthy environment shows danger badge
-  - [ ] Test degraded environment shows warning badge
-  - [ ] Test NO_DATA shows empty state message
-  - [ ] Test per-environment error shows warning Alert
-  - [ ] Test Grafana deep link renders with correct href
-  - [ ] Test refresh button triggers data refetch
+- [x] Task 8: Write ApplicationHealthPage tests (AC: #1, #2, #3, #6, #7)
+  - [x] Create `src/main/webui/src/routes/ApplicationHealthPage.test.tsx`
+  - [x] Test loading state shows `LoadingSpinner`
+  - [x] Test successful render with healthy environments
+  - [x] Test unhealthy environment shows danger badge
+  - [x] Test degraded environment shows warning badge
+  - [x] Test NO_DATA shows empty state message
+  - [x] Test per-environment error shows warning Alert
+  - [x] Test Grafana deep link renders with correct href
+  - [x] Test refresh button triggers data refetch
 
-- [ ] Task 9: Write GoldenSignalsPanel tests (AC: #2, #3)
-  - [ ] Create `src/main/webui/src/components/health/GoldenSignalsPanel.test.tsx`
-  - [ ] Test renders four metric cards
-  - [ ] Test metric values formatted correctly (seconds→ms, percentages)
-  - [ ] Test color coding for healthy, warning, critical ranges
-  - [ ] Test handles empty/zero signals gracefully
+- [x] Task 9: Write GoldenSignalsPanel tests (AC: #2, #3)
+  - [x] Create `src/main/webui/src/components/health/GoldenSignalsPanel.test.tsx`
+  - [x] Test renders four metric cards
+  - [x] Test metric values formatted correctly (seconds→ms, percentages)
+  - [x] Test color coding for healthy, warning, critical ranges
+  - [x] Test handles empty/zero signals gracefully
 
-- [ ] Task 10: Write HealthStatusBadge tests (AC: #3)
-  - [ ] Create `src/main/webui/src/components/health/HealthStatusBadge.test.tsx`
-  - [ ] Test each status renders correct label, icon, and color
+- [x] Task 10: Write HealthStatusBadge tests (AC: #3)
+  - [x] Create `src/main/webui/src/components/health/HealthStatusBadge.test.tsx`
+  - [x] Test each status renders correct label, icon, and color
 
-- [ ] Task 11: Update EnvironmentCard Grafana link test (AC: #5)
-  - [ ] Update `src/main/webui/src/components/environment/EnvironmentCard.test.tsx`
-  - [ ] Test that Grafana deep link renders when `grafanaDeepLink` is present
-  - [ ] Test that Grafana deep link is absent when `grafanaDeepLink` is null
+- [x] Task 11: Update EnvironmentCard Grafana link test (AC: #5)
+  - [x] Update `src/main/webui/src/components/environment/EnvironmentCard.test.tsx`
+  - [x] Test that Grafana deep link renders when `grafanaDeepLink` is present
+  - [x] Test that Grafana deep link is absent when `grafanaDeepLink` is null
 
 ## Dev Notes
 
@@ -439,10 +439,42 @@ developer-portal/src/main/webui/src/
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Opus 4.6 (via Cursor)
 
 ### Debug Log References
 
+- All 353 tests passing (34 test files), zero regressions
+
 ### Completion Notes List
 
+- Created health TypeScript types matching backend DTOs (GoldenSignalType, GoldenSignal, HealthStatus, HealthStatusDto, EnvironmentHealthDto, HealthResponse)
+- Created fetchHealth API client following existing apiFetch pattern
+- Created useHealth hook following useApiFetch conditional path pattern
+- Created HealthStatusBadge component mapping 4 health states to PF6 Labels with icons
+- Created GoldenSignalsPanel with 4 metric cards (Latency, Traffic, Errors, Saturation) with color-coded thresholds and metric value formatting (seconds→ms conversion, percentages, req/s)
+- Implemented ApplicationHealthPage replacing placeholder — shows per-environment sections with health badges, Grafana deep links, golden signal panels, graceful degradation for errors and NO_DATA
+- Enabled Grafana deep link in EnvironmentCard — replaced disabled placeholder with functional DeepLinkButton using entry.grafanaDeepLink
+- Enriched environment chain cards with Prometheus health — added useHealth to ApplicationOverviewPage, passed through EnvironmentChain to EnvironmentCard with status merging logic (more severe status wins, DEPLOYING/NOT_DEPLOYED not overridden)
+- Added DisplayStatus type and DEGRADED case to EnvironmentCard's getStatusConfig for Prometheus-reported degraded state
+- Added subtle "Prometheus: Degraded/Unhealthy" secondary indicator when Prometheus disagrees with ArgoCD
+- Wrote comprehensive tests: 10 ApplicationHealthPage tests, 18 GoldenSignalsPanel tests (including formatMetricValue unit tests), 4 HealthStatusBadge tests, 7 new EnvironmentCard tests (Grafana link + health enrichment)
+- Updated existing EnvironmentCard test to remove expectation for disabled Grafana placeholder text
+
 ### File List
+
+**New files:**
+- developer-portal/src/main/webui/src/types/health.ts
+- developer-portal/src/main/webui/src/api/health.ts
+- developer-portal/src/main/webui/src/hooks/useHealth.ts
+- developer-portal/src/main/webui/src/components/health/HealthStatusBadge.tsx
+- developer-portal/src/main/webui/src/components/health/HealthStatusBadge.test.tsx
+- developer-portal/src/main/webui/src/components/health/GoldenSignalsPanel.tsx
+- developer-portal/src/main/webui/src/components/health/GoldenSignalsPanel.test.tsx
+- developer-portal/src/main/webui/src/routes/ApplicationHealthPage.test.tsx
+
+**Modified files:**
+- developer-portal/src/main/webui/src/routes/ApplicationHealthPage.tsx
+- developer-portal/src/main/webui/src/routes/ApplicationOverviewPage.tsx
+- developer-portal/src/main/webui/src/components/environment/EnvironmentChain.tsx
+- developer-portal/src/main/webui/src/components/environment/EnvironmentCard.tsx
+- developer-portal/src/main/webui/src/components/environment/EnvironmentCard.test.tsx

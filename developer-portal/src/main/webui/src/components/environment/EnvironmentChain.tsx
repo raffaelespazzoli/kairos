@@ -3,6 +3,7 @@ import { Alert } from '@patternfly/react-core';
 import { ArrowRightIcon } from '@patternfly/react-icons';
 import { EnvironmentCard } from './EnvironmentCard';
 import type { EnvironmentChainEntry } from '../../types/environment';
+import type { HealthResponse } from '../../types/health';
 import type { ReleaseSummary } from '../../types/release';
 
 interface EnvironmentChainProps {
@@ -11,6 +12,7 @@ interface EnvironmentChainProps {
   teamId?: string;
   appId?: string;
   releases?: ReleaseSummary[] | null;
+  healthData?: HealthResponse | null;
   onDeploymentInitiated?: () => void;
 }
 
@@ -20,6 +22,7 @@ export function EnvironmentChain({
   teamId,
   appId,
   releases,
+  healthData,
   onDeploymentInitiated,
 }: EnvironmentChainProps) {
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -66,7 +69,11 @@ export function EnvironmentChain({
         }}
         onKeyDown={handleArrowKeyNavigation}
       >
-        {environments.map((env, index) => (
+        {environments.map((env, index) => {
+          const envHealth = healthData?.environments.find(
+            (h) => h.environmentName === env.environmentName,
+          );
+          return (
           <Fragment key={env.environmentName}>
             <div
               role="listitem"
@@ -84,6 +91,7 @@ export function EnvironmentChain({
                 teamId={teamId}
                 appId={appId}
                 releases={releases}
+                healthInfo={envHealth}
                 onDeploymentInitiated={onDeploymentInitiated}
                 ref={setCardRef(index)}
               />
@@ -101,7 +109,8 @@ export function EnvironmentChain({
               </div>
             )}
           </Fragment>
-        ))}
+          );
+        })}
       </div>
     </>
   );

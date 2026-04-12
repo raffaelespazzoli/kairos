@@ -243,7 +243,6 @@ describe('EnvironmentCard', () => {
     expect(screen.getByText(/Namespace: payments-dev/)).toBeInTheDocument();
     expect(screen.getByText(/Cluster: ocp-dev-01/)).toBeInTheDocument();
     expect(screen.getByText(/Open in ArgoCD ↗/)).toBeInTheDocument();
-    expect(screen.getByText(/View in Grafana ↗/)).toBeInTheDocument();
   });
 
   it('shows aria-label on expanded ArgoCD deep link', async () => {
@@ -917,6 +916,109 @@ describe('EnvironmentCard', () => {
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
 
     expect(mockTriggerDeployment).not.toHaveBeenCalled();
+  });
+
+  // --- Grafana deep link tests ---
+
+  it('shows Grafana deep link when grafanaDeepLink is present', async () => {
+    const user = userEvent.setup();
+    render(
+      <EnvironmentCard
+        entry={makeEntry({ grafanaDeepLink: 'https://grafana.example.com/d/abc?var-namespace=payments-dev' })}
+      />,
+    );
+
+    await user.click(screen.getByText('dev'));
+
+    const link = screen.getByRole('link', { name: 'Open dev in Grafana' });
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute('href', 'https://grafana.example.com/d/abc?var-namespace=payments-dev');
+    expect(link).toHaveAttribute('target', '_blank');
+  });
+
+  it('does not show Grafana deep link when grafanaDeepLink is null', async () => {
+    const user = userEvent.setup();
+    render(
+      <EnvironmentCard entry={makeEntry({ grafanaDeepLink: null })} />,
+    );
+
+    await user.click(screen.getByText('dev'));
+
+    expect(screen.queryByRole('link', { name: /Grafana/ })).not.toBeInTheDocument();
+  });
+
+  // --- Health enrichment tests ---
+
+  it('shows degraded status when Prometheus reports DEGRADED on ArgoCD HEALTHY', () => {
+    render(
+      <EnvironmentCard
+        entry={makeEntry({ status: 'HEALTHY' })}
+        healthInfo={{
+          environmentName: 'dev',
+          healthStatus: { status: 'DEGRADED', goldenSignals: [], namespace: 'payments-dev' },
+          grafanaDeepLink: null,
+          error: null,
+        }}
+      />,
+    );
+
+    expect(screen.getByText('⟳ Degraded')).toBeInTheDocument();
+    expect(screen.getByText(/Prometheus: Degraded/)).toBeInTheDocument();
+  });
+
+  it('shows unhealthy status when Prometheus reports UNHEALTHY on ArgoCD HEALTHY', () => {
+    render(
+      <EnvironmentCard
+        entry={makeEntry({ status: 'HEALTHY' })}
+        healthInfo={{
+          environmentName: 'dev',
+          healthStatus: { status: 'UNHEALTHY', goldenSignals: [], namespace: 'payments-dev' },
+          grafanaDeepLink: null,
+          error: null,
+        }}
+      />,
+    );
+
+    expect(screen.getByText('✕ Unhealthy')).toBeInTheDocument();
+    expect(screen.getByText(/Prometheus: Unhealthy/)).toBeInTheDocument();
+  });
+
+  it('keeps ArgoCD status when Prometheus reports NO_DATA', () => {
+    render(
+      <EnvironmentCard
+        entry={makeEntry({ status: 'HEALTHY' })}
+        healthInfo={{
+          environmentName: 'dev',
+          healthStatus: { status: 'NO_DATA', goldenSignals: [], namespace: 'payments-dev' },
+          grafanaDeepLink: null,
+          error: null,
+        }}
+      />,
+    );
+
+    expect(screen.getByText('✓ Healthy')).toBeInTheDocument();
+    expect(screen.queryByText(/Prometheus:/)).not.toBeInTheDocument();
+  });
+
+  it('does not override DEPLOYING status with Prometheus data', () => {
+    render(
+      <EnvironmentCard
+        entry={makeEntry({ status: 'DEPLOYING', deployedVersion: 'v1.4.2' })}
+        healthInfo={{
+          environmentName: 'dev',
+          healthStatus: { status: 'UNHEALTHY', goldenSignals: [], namespace: 'payments-dev' },
+          grafanaDeepLink: null,
+          error: null,
+        }}
+      />,
+    );
+
+    expect(screen.getByText(/⟳ Deploying v1\.4\.2/)).toBeInTheDocument();
+  });
+
+  it('renders normally without healthInfo prop', () => {
+    render(<EnvironmentCard entry={makeEntry({ status: 'HEALTHY' })} />);
+    expect(screen.getByText('✓ Healthy')).toBeInTheDocument();
   });
 
   it('deploy dropdown selection shows confirmation before triggering', async () => {

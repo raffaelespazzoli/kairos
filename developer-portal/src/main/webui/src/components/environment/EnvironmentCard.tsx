@@ -30,8 +30,52 @@ import { useDeployments } from '../../hooks/useDeployments';
 import { useAuth } from '../../hooks/useAuth';
 import { triggerDeployment } from '../../api/deployments';
 import type { EnvironmentChainEntry, EnvironmentStatus } from '../../types/environment';
+import type { EnvironmentHealthDto, HealthStatus } from '../../types/health';
 import type { DeploymentStatus } from '../../types/deployment';
 import type { ReleaseSummary } from '../../types/release';
+
+type DisplayStatus = EnvironmentStatus | 'DEGRADED';
+
+const HEALTH_SEVERITY: Record<HealthStatus, number> = {
+  NO_DATA: -1,
+  HEALTHY: 0,
+  DEGRADED: 1,
+  UNHEALTHY: 2,
+};
+
+const ENV_STATUS_TO_HEALTH: Partial<Record<EnvironmentStatus, HealthStatus>> = {
+  HEALTHY: 'HEALTHY',
+  UNHEALTHY: 'UNHEALTHY',
+};
+
+/**
+ * When Prometheus and ArgoCD disagree, display the more severe status.
+ * DEPLOYING and NOT_DEPLOYED are ArgoCD-only states that Prometheus cannot override.
+ * NO_DATA from Prometheus means no enrichment — keep ArgoCD status.
+ * UNKNOWN from ArgoCD can be overridden by any Prometheus data.
+ */
+function mergeHealthStatus(
+  argoStatus: EnvironmentStatus,
+  healthInfo?: EnvironmentHealthDto,
+): DisplayStatus {
+  if (!healthInfo?.healthStatus) return argoStatus;
+  const promStatus = healthInfo.healthStatus.status;
+  if (promStatus === 'NO_DATA') return argoStatus;
+  if (argoStatus === 'DEPLOYING' || argoStatus === 'NOT_DEPLOYED') return argoStatus;
+
+  if (argoStatus === 'UNKNOWN') {
+    if (promStatus === 'UNHEALTHY') return 'UNHEALTHY';
+    if (promStatus === 'DEGRADED') return 'DEGRADED';
+    return 'HEALTHY';
+  }
+
+  const argoHealth = ENV_STATUS_TO_HEALTH[argoStatus];
+  if (!argoHealth) return argoStatus;
+
+  return HEALTH_SEVERITY[promStatus] > HEALTH_SEVERITY[argoHealth]
+    ? (promStatus as DisplayStatus)
+    : argoStatus;
+}
 
 interface EnvironmentCardProps {
   entry: EnvironmentChainEntry;
@@ -45,6 +89,7 @@ interface EnvironmentCardProps {
   teamId?: string;
   appId?: string;
   releases?: ReleaseSummary[] | null;
+  healthInfo?: EnvironmentHealthDto;
   onDeploymentInitiated?: () => void;
 }
 
@@ -56,7 +101,7 @@ interface StatusConfig {
 }
 
 function getStatusConfig(
-  status: EnvironmentStatus,
+  status: DisplayStatus,
   deployedVersion: string | null,
 ): StatusConfig {
   switch (status) {
@@ -73,6 +118,13 @@ function getStatusConfig(
         labelProps: { status: 'danger' },
         icon: <ExclamationCircleIcon />,
         text: '✕ Unhealthy',
+      };
+    case 'DEGRADED':
+      return {
+        borderColor: 'var(--pf-t--global--color--status--warning--default)',
+        labelProps: { status: 'warning' },
+        icon: <SyncAltIcon />,
+        text: '⟳ Degraded',
       };
     case 'DEPLOYING':
       return {
@@ -134,6 +186,7 @@ export const EnvironmentCard = forwardRef<HTMLDivElement, EnvironmentCardProps>(
     teamId,
     appId,
     releases,
+    healthInfo,
     onDeploymentInitiated,
   }, ref) {
     const { role } = useAuth();
@@ -242,11 +295,12 @@ export const EnvironmentCard = forwardRef<HTMLDivElement, EnvironmentCardProps>(
     const confirmationTriggerRef =
       confirmationType === 'promote' ? promoteButtonRef : deployButtonRef;
 
-    const config = getStatusConfig(entry.status, entry.deployedVersion);
+    const displayStatus = mergeHealthStatus(entry.status, healthInfo);
+    const config = getStatusConfig(displayStatus, entry.deployedVersion);
     const statusLabel =
-      entry.status === 'UNKNOWN'
+      displayStatus === 'UNKNOWN'
         ? 'status unavailable'
-        : entry.status.toLowerCase().replace('_', ' ');
+        : displayStatus.toLowerCase().replace('_', ' ');
     const ariaLabel = `${entry.environmentName} environment, version ${entry.deployedVersion ?? 'none'}, ${statusLabel}`;
 
     return (
@@ -289,6 +343,19 @@ export const EnvironmentCard = forwardRef<HTMLDivElement, EnvironmentCardProps>(
                 >
                   {config.text}
                 </Label>
+                {healthInfo?.healthStatus &&
+                  healthInfo.healthStatus.status !== 'NO_DATA' &&
+                  displayStatus !== entry.status && (
+                    <Content
+                      component="small"
+                      style={{
+                        marginLeft: 'var(--pf-t--global--spacer--sm)',
+                        color: 'var(--pf-t--global--text--color--subtle)',
+                      }}
+                    >
+                      Prometheus: {healthInfo.healthStatus.status.charAt(0) + healthInfo.healthStatus.status.slice(1).toLowerCase()}
+                    </Content>
+                  )}
               </FlexItem>
             </Flex>
           </CardHeader>
@@ -332,9 +399,12 @@ export const EnvironmentCard = forwardRef<HTMLDivElement, EnvironmentCardProps>(
                   </FlexItem>
                 )}
                 <FlexItem>
-                  <Button variant="link" isInline isDisabled>
-                    View in Grafana ↗
-                  </Button>
+                  <DeepLinkButton
+                    href={entry.grafanaDeepLink}
+                    toolName="Grafana"
+                    label="View in Grafana ↗"
+                    ariaLabel={`Open ${entry.environmentName} in Grafana`}
+                  />
                 </FlexItem>
                 <FlexItem>
                   {deploymentsLoading && (
