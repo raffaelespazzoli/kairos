@@ -1,6 +1,6 @@
 # Story 6.1: Prometheus Adapter & Health Signals
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -86,113 +86,120 @@ so that I can see health indicators per environment without opening Grafana.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create PrometheusAdapter interface (AC: #1, #2)
-  - [ ] Create `com.portal.integration.prometheus` package
-  - [ ] Create `PrometheusAdapter` interface with method: `HealthSignalsResult getGoldenSignals(String namespace)`
-  - [ ] `HealthSignalsResult` is a record containing the list of `GoldenSignal` values and a boolean `hasData` flag
+- [x] Task 1: Create PrometheusAdapter interface (AC: #1, #2)
+  - [x] Create `com.portal.integration.prometheus` package
+  - [x] Create `PrometheusAdapter` interface with method: `HealthSignalsResult getGoldenSignals(String namespace)`
+  - [x] `HealthSignalsResult` is a record containing the list of `GoldenSignal` values and a boolean `hasData` flag
 
-- [ ] Task 2: Create Prometheus model types (AC: #2, #3)
-  - [ ] Create `com.portal.integration.prometheus.model.GoldenSignal` record: `String name`, `double value`, `String unit`, `GoldenSignalType type`
-  - [ ] Create `com.portal.integration.prometheus.model.GoldenSignalType` enum: `LATENCY_P50`, `LATENCY_P95`, `LATENCY_P99`, `TRAFFIC_RATE`, `ERROR_RATE`, `SATURATION_CPU`, `SATURATION_MEMORY`
-  - [ ] Create `com.portal.integration.prometheus.model.HealthSignalsResult` record: `List<GoldenSignal> signals`, `boolean hasData`
+- [x] Task 2: Create Prometheus model types (AC: #2, #3)
+  - [x] Create `com.portal.integration.prometheus.model.GoldenSignal` record: `String name`, `double value`, `String unit`, `GoldenSignalType type`
+  - [x] Create `com.portal.integration.prometheus.model.GoldenSignalType` enum: `LATENCY_P50`, `LATENCY_P95`, `LATENCY_P99`, `TRAFFIC_RATE`, `ERROR_RATE`, `SATURATION_CPU`, `SATURATION_MEMORY`
+  - [x] Create `com.portal.integration.prometheus.model.HealthSignalsResult` record: `List<GoldenSignal> signals`, `boolean hasData`
 
-- [ ] Task 3: Create PrometheusConfig (AC: #1, #2, #3)
-  - [ ] Create `com.portal.integration.prometheus.PrometheusConfig` using `@ConfigMapping(prefix = "portal.prometheus")`
-  - [ ] Properties: `provider()` (String, default "prometheus"), `url()` (String), `queries()` (nested interface with methods for each query key: `latencyP50()`, `latencyP95()`, `latencyP99()`, `trafficRate()`, `errorRate()`, `saturationCpu()`, `saturationMemory()`)
-  - [ ] Thresholds: nested `thresholds()` interface with `errorRate()` (default 5.0), `saturation()` (default 90.0)
-  - [ ] Query interval: `queryInterval()` (default "5m") — the `{interval}` placeholder value
+- [x] Task 3: Create PrometheusConfig (AC: #1, #2, #3)
+  - [x] Create `com.portal.integration.prometheus.PrometheusConfig` using `@ConfigMapping(prefix = "portal.prometheus")`
+  - [x] Properties: `provider()` (String, default "prometheus"), `url()` (String), `queries()` (nested interface with methods for each query key: `latencyP50()`, `latencyP95()`, `latencyP99()`, `trafficRate()`, `errorRate()`, `saturationCpu()`, `saturationMemory()`)
+  - [x] Thresholds: nested `thresholds()` interface with `errorRate()` (default 5.0), `saturation()` (default 90.0)
+  - [x] Query interval: `queryInterval()` (default "5m") — the `{interval}` placeholder value
 
-- [ ] Task 4: Create PrometheusRestAdapter (AC: #1, #2, #4, #5)
-  - [ ] Create `com.portal.integration.prometheus.PrometheusRestAdapter` as `@ApplicationScoped` with `@IfBuildProperty(name = "portal.prometheus.provider", stringValue = "prometheus", enableIfMissing = true)`
-  - [ ] Inject `PrometheusConfig`
-  - [ ] Use Quarkus `rest-client-jackson` via a `@RegisterRestClient(configKey = "prometheus-api")` REST client interface `PrometheusRestClient` with a `@GET @Path("/api/v1/query")` method accepting `@QueryParam("query") String query`
-  - [ ] `getGoldenSignals(namespace)` implementation:
-    - [ ] For each of the 7 query keys, read the PromQL template from config, substitute `{namespace}` and `{interval}`, call Prometheus instant query endpoint
-    - [ ] Parse JSON response: navigate `data.result[0].value[1]` for scalar value (Prometheus instant query vector result format)
-    - [ ] Build `GoldenSignal` record for each with appropriate name, value, unit
-    - [ ] If all results are empty vectors (`data.result` is empty array), return `HealthSignalsResult(signals, false)` — "No Data"
-    - [ ] If any query succeeds, return `HealthSignalsResult(signals, true)`
-  - [ ] Wrap HTTP/connection failures in `PortalIntegrationException(system="prometheus", operation="getGoldenSignals", message="Health data unavailable — metrics system is unreachable")`
-  - [ ] Handle Prometheus 400/422 errors (bad query) differently — log warning with the query that failed, return zero for that signal rather than failing the whole call
+- [x] Task 4: Create PrometheusRestAdapter (AC: #1, #2, #4, #5)
+  - [x] Create `com.portal.integration.prometheus.PrometheusRestAdapter` as `@ApplicationScoped` with `@IfBuildProperty(name = "portal.prometheus.provider", stringValue = "prometheus", enableIfMissing = true)`
+  - [x] Inject `PrometheusConfig`
+  - [x] Use Quarkus `rest-client-jackson` via a `@RegisterRestClient(configKey = "prometheus-api")` REST client interface `PrometheusRestClient` with a `@GET @Path("/api/v1/query")` method accepting `@QueryParam("query") String query`
+  - [x] `getGoldenSignals(namespace)` implementation:
+    - [x] For each of the 7 query keys, read the PromQL template from config, substitute `{namespace}` and `{interval}`, call Prometheus instant query endpoint
+    - [x] Parse JSON response: navigate `data.result[0].value[1]` for scalar value (Prometheus instant query vector result format)
+    - [x] Build `GoldenSignal` record for each with appropriate name, value, unit
+    - [x] If all results are empty vectors (`data.result` is empty array), return `HealthSignalsResult(signals, false)` — "No Data"
+    - [x] If any query succeeds, return `HealthSignalsResult(signals, true)`
+  - [x] Wrap HTTP/connection failures in `PortalIntegrationException(system="prometheus", operation="getGoldenSignals", message="Health data unavailable — metrics system is unreachable")`
+  - [x] Handle Prometheus 400/422 errors (bad query) differently — log warning with the query that failed, return zero for that signal rather than failing the whole call
 
-- [ ] Task 5: Create DevPrometheusAdapter (AC: #10)
-  - [ ] Create `com.portal.integration.prometheus.DevPrometheusAdapter` as `@ApplicationScoped` with `@IfBuildProperty(name = "portal.prometheus.provider", stringValue = "dev")`
-  - [ ] Returns mock golden signal data: latency p50=45ms, p95=245ms, p99=890ms, traffic=42.5 req/s, errors=0.3%, saturation CPU=45%, memory=62%
-  - [ ] `hasData = true` for all calls
+- [x] Task 5: Create DevPrometheusAdapter (AC: #10)
+  - [x] Create `com.portal.integration.prometheus.DevPrometheusAdapter` as `@ApplicationScoped` with `@IfBuildProperty(name = "portal.prometheus.provider", stringValue = "dev")`
+  - [x] Returns mock golden signal data: latency p50=45ms, p95=245ms, p99=890ms, traffic=42.5 req/s, errors=0.3%, saturation CPU=45%, memory=62%
+  - [x] `hasData = true` for all calls
 
-- [ ] Task 6: Create health domain DTOs (AC: #3, #6)
-  - [ ] Create `com.portal.health.HealthStatus` enum: `HEALTHY`, `UNHEALTHY`, `DEGRADED`, `NO_DATA`
-  - [ ] Create `com.portal.health.HealthStatusDto` record: `HealthStatus status`, `List<GoldenSignal> goldenSignals`, `String namespace`
-  - [ ] Create `com.portal.health.EnvironmentHealthDto` record: `String environmentName`, `HealthStatusDto healthStatus`, `String grafanaDeepLink`, `String error`
-  - [ ] Create `com.portal.health.HealthResponse` record: `List<EnvironmentHealthDto> environments`
+- [x] Task 6: Create health domain DTOs (AC: #3, #6)
+  - [x] Create `com.portal.health.HealthStatus` enum: `HEALTHY`, `UNHEALTHY`, `DEGRADED`, `NO_DATA`
+  - [x] Create `com.portal.health.HealthStatusDto` record: `HealthStatus status`, `List<GoldenSignal> goldenSignals`, `String namespace`
+  - [x] Create `com.portal.health.EnvironmentHealthDto` record: `String environmentName`, `HealthStatusDto healthStatus`, `String grafanaDeepLink`, `String error`
+  - [x] Create `com.portal.health.HealthResponse` record: `List<EnvironmentHealthDto> environments`
 
-- [ ] Task 7: Create HealthService (AC: #3, #5, #6, #7, #8)
-  - [ ] Create `com.portal.health.HealthService` as `@ApplicationScoped`
-  - [ ] Inject `PrometheusAdapter`, `DeepLinkService`, `PrometheusConfig` (for thresholds)
-  - [ ] `getApplicationHealth(Long teamId, Long appId)` method:
-    - [ ] `requireTeamApplication(teamId, appId)` — Application lookup with team ownership validation → 404
-    - [ ] Load all environments: `Environment.findByApplicationOrderByPromotionOrder(appId)`
-    - [ ] For each environment, submit a `CompletableFuture` calling `prometheusAdapter.getGoldenSignals(env.namespace)`
-    - [ ] Unwrap `CompletionException` to extract real cause (same pattern as `ArgoCdRestAdapter`)
-    - [ ] Per-environment failure isolation: catch `PortalIntegrationException` per future, set `error` field on `EnvironmentHealthDto`
-    - [ ] For each successful result, derive `HealthStatus` from golden signals using configurable thresholds
-    - [ ] Generate Grafana deep link via `deepLinkService.generateGrafanaLink(env.namespace)`
-    - [ ] Return `HealthResponse` with all `EnvironmentHealthDto` entries
+- [x] Task 7: Create HealthService (AC: #3, #5, #6, #7, #8)
+  - [x] Create `com.portal.health.HealthService` as `@ApplicationScoped`
+  - [x] Inject `PrometheusAdapter`, `DeepLinkService`, `PrometheusConfig` (for thresholds)
+  - [x] `getApplicationHealth(Long teamId, Long appId)` method:
+    - [x] `requireTeamApplication(teamId, appId)` — Application lookup with team ownership validation → 404
+    - [x] Load all environments: `Environment.findByApplicationOrderByPromotionOrder(appId)`
+    - [x] For each environment, submit a `CompletableFuture` calling `prometheusAdapter.getGoldenSignals(env.namespace)`
+    - [x] Unwrap `CompletionException` to extract real cause (same pattern as `ArgoCdRestAdapter`)
+    - [x] Per-environment failure isolation: catch `PortalIntegrationException` per future, set `error` field on `EnvironmentHealthDto`
+    - [x] For each successful result, derive `HealthStatus` from golden signals using configurable thresholds
+    - [x] Generate Grafana deep link via `deepLinkService.generateGrafanaLink(env.namespace)`
+    - [x] Return `HealthResponse` with all `EnvironmentHealthDto` entries
 
-- [ ] Task 8: Create HealthResource REST endpoint (AC: #6, #8, #9)
-  - [ ] Create `com.portal.health.HealthResource` with `@Path("/api/v1/teams/{teamId}/applications/{appId}/health")`
-  - [ ] `@GET` method returning `HealthResponse`
-  - [ ] Path params: `@PathParam("teamId") Long teamId`, `@PathParam("appId") Long appId`
-  - [ ] Inject `HealthService`, delegate to `getApplicationHealth(teamId, appId)`
+- [x] Task 8: Create HealthResource REST endpoint (AC: #6, #8, #9)
+  - [x] Create `com.portal.health.HealthResource` with `@Path("/api/v1/teams/{teamId}/applications/{appId}/health")`
+  - [x] `@GET` method returning `HealthResponse`
+  - [x] Path params: `@PathParam("teamId") Long teamId`, `@PathParam("appId") Long appId`
+  - [x] Inject `HealthService`, delegate to `getApplicationHealth(teamId, appId)`
 
-- [ ] Task 9: Create PrometheusRestClient interface (AC: #1)
-  - [ ] Create `com.portal.integration.prometheus.PrometheusRestClient` interface with `@RegisterRestClient(configKey = "prometheus-api")`
-  - [ ] Method: `@GET @Path("/api/v1/query") JsonNode query(@QueryParam("query") String query)`
-  - [ ] The Quarkus REST client URL is configured via `quarkus.rest-client.prometheus-api.url=${portal.prometheus.url}`
+- [x] Task 9: Create PrometheusRestClient interface (AC: #1)
+  - [x] Create `com.portal.integration.prometheus.PrometheusRestClient` interface with `@RegisterRestClient(configKey = "prometheus-api")`
+  - [x] Method: `@GET @Path("/api/v1/query") JsonNode query(@QueryParam("query") String query)`
+  - [x] The Quarkus REST client URL is configured via `quarkus.rest-client.prometheus-api.url=${portal.prometheus.url}`
 
-- [ ] Task 10: Update Casbin policy (AC: #9)
-  - [ ] Add policy line: `p, member, health, read` in `src/main/resources/casbin/policy.csv`
-  - [ ] `member` inherits to `lead` and `admin` via existing role hierarchy
+- [x] Task 10: Update Casbin policy (AC: #9)
+  - [x] Add policy line: `p, member, health, read` in `src/main/resources/casbin/policy.csv`
+  - [x] `member` inherits to `lead` and `admin` via existing role hierarchy
 
-- [ ] Task 11: Update configuration files (AC: #1, #2, #3, #10)
-  - [ ] `application.properties`:
-    - [ ] Add `portal.prometheus.provider=${PROMETHEUS_PROVIDER:prometheus}`
-    - [ ] Add `portal.prometheus.url=${PROMETHEUS_URL:}`
-    - [ ] Add `portal.prometheus.query-interval=${PROMETHEUS_QUERY_INTERVAL:5m}`
-    - [ ] Add `portal.prometheus.thresholds.error-rate=5.0`
-    - [ ] Add `portal.prometheus.thresholds.saturation=90.0`
-    - [ ] Add default PromQL query templates under `portal.prometheus.queries.*` (placeholder values that platform teams will customize)
-    - [ ] Add `quarkus.rest-client.prometheus-api.url=${portal.prometheus.url}`
-  - [ ] `application-dev.properties` / dev profile: `%dev.portal.prometheus.provider=dev`
-  - [ ] `application-test.properties`: `portal.prometheus.provider=prometheus` (tests mock the adapter via `@InjectMock`)
+- [x] Task 11: Update configuration files (AC: #1, #2, #3, #10)
+  - [x] `application.properties`:
+    - [x] Add `portal.prometheus.provider=${PROMETHEUS_PROVIDER:prometheus}`
+    - [x] Add `portal.prometheus.url=${PROMETHEUS_URL:}`
+    - [x] Add `portal.prometheus.query-interval=${PROMETHEUS_QUERY_INTERVAL:5m}`
+    - [x] Add `portal.prometheus.thresholds.error-rate=5.0`
+    - [x] Add `portal.prometheus.thresholds.saturation=90.0`
+    - [x] Add default PromQL query templates under `portal.prometheus.queries.*` (placeholder values that platform teams will customize)
+    - [x] Add `quarkus.rest-client.prometheus-api.url=${portal.prometheus.url}`
+  - [x] `application-dev.properties` / dev profile: `%dev.portal.prometheus.provider=dev`
+  - [x] `application-test.properties`: `portal.prometheus.provider=prometheus` (tests mock the adapter via `@InjectMock`)
 
-- [ ] Task 12: Write PrometheusRestAdapter unit tests (AC: #1, #2, #4, #5)
-  - [ ] Create `src/test/java/com/portal/integration/prometheus/PrometheusRestAdapterTest.java`
-  - [ ] Test successful golden signal parsing from Prometheus JSON response
-  - [ ] Test empty result set → `hasData = false` (No Data case)
-  - [ ] Test Prometheus unreachable → `PortalIntegrationException` with `system="prometheus"`
-  - [ ] Test bad PromQL response (400/422) → graceful degradation, zero value for that signal
-  - [ ] Test `{namespace}` and `{interval}` substitution in query templates
-  - [ ] Mock `PrometheusRestClient` via `@InjectMock`
+- [x] Task 12: Write PrometheusRestAdapter unit tests (AC: #1, #2, #4, #5)
+  - [x] Create `src/test/java/com/portal/integration/prometheus/PrometheusRestAdapterTest.java`
+  - [x] Test successful golden signal parsing from Prometheus JSON response
+  - [x] Test empty result set → `hasData = false` (No Data case)
+  - [x] Test Prometheus unreachable → `PortalIntegrationException` with `system="prometheus"`
+  - [x] Test bad PromQL response (400/422) → graceful degradation, zero value for that signal
+  - [x] Test `{namespace}` and `{interval}` substitution in query templates
+  - [x] Mock `PrometheusRestClient` via `@InjectMock`
 
-- [ ] Task 13: Write HealthService unit tests (AC: #3, #5, #6, #7, #8)
-  - [ ] Create `src/test/java/com/portal/health/HealthServiceTest.java`
-  - [ ] Test health status derivation: low error + low saturation → `HEALTHY`
-  - [ ] Test health status derivation: high error rate → `UNHEALTHY`
-  - [ ] Test health status derivation: high saturation → `DEGRADED`
-  - [ ] Test no data → `NO_DATA`
-  - [ ] Test parallel environment querying returns correct per-environment results
-  - [ ] Test per-environment failure isolation — one environment fails, others succeed
-  - [ ] Test resource ownership: wrong team → 404
-  - [ ] Test resource ownership: non-existent application → 404
+- [x] Task 13: Write HealthService unit tests (AC: #3, #5, #6, #7, #8)
+  - [x] Create `src/test/java/com/portal/health/HealthServiceTest.java`
+  - [x] Test health status derivation: low error + low saturation → `HEALTHY`
+  - [x] Test health status derivation: high error rate → `UNHEALTHY`
+  - [x] Test health status derivation: high saturation → `DEGRADED`
+  - [x] Test no data → `NO_DATA`
+  - [x] Test parallel environment querying returns correct per-environment results
+  - [x] Test per-environment failure isolation — one environment fails, others succeed
+  - [x] Test resource ownership: wrong team → 404
+  - [x] Test resource ownership: non-existent application → 404
 
-- [ ] Task 14: Write HealthResource integration test (AC: #6, #8, #9)
-  - [ ] Create `src/test/java/com/portal/health/HealthResourceIT.java`
-  - [ ] `@QuarkusTest` with `@InjectMock PrometheusAdapter`
-  - [ ] Test `GET /api/v1/teams/{teamId}/applications/{appId}/health` returns 200 with expected structure
-  - [ ] Test cross-team access returns 404
-  - [ ] Test non-existent application returns 404
-  - [ ] Test Casbin permits member, lead, admin roles
+- [x] Task 14: Write HealthResource integration test (AC: #6, #8, #9)
+  - [x] Create `src/test/java/com/portal/health/HealthResourceIT.java`
+  - [x] `@QuarkusTest` with `@InjectMock PrometheusAdapter`
+  - [x] Test `GET /api/v1/teams/{teamId}/applications/{appId}/health` returns 200 with expected structure
+  - [x] Test cross-team access returns 404
+  - [x] Test non-existent application returns 404
+  - [x] Test Casbin permits member, lead, admin roles
+
+### Review Findings
+
+- [x] [Review][Patch] `hasData` treats successful zero-valued Prometheus samples as "no data" [`developer-portal/src/main/java/com/portal/integration/prometheus/PrometheusRestAdapter.java:56`]
+  **Fixed:** Introduced `QueryResult` record that separates `hasResult` (was the Prometheus vector non-empty?) from the numeric value. `hasData` now becomes true when any query returns a non-empty result set, regardless of the value. Added `zeroValuedNonEmptyVectorStillHasData` test.
+- [x] [Review][Patch] Dev-mode adapter does not implement the required first/second/rest environment behavior [`developer-portal/src/main/java/com/portal/integration/prometheus/DevPrometheusAdapter.java:20`]
+  **Fixed:** Added namespace-tracking with `ConcurrentHashMap` + `AtomicInteger` counter mirroring `DevArgoCdAdapter`. First namespace → healthy signals, second → degraded (92% CPU saturation), rest → healthy.
 
 ## Dev Notes
 
@@ -397,10 +404,48 @@ Patterns established: adapter interface + real + dev implementations, `@IfBuildP
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Opus 4.6 (Cursor)
 
 ### Debug Log References
 
+- Initial `@InjectMock PrometheusRestClient` failed — REST client beans require `@RestClient` qualifier alongside `@InjectMock`. Fixed by adding `@RestClient` annotation to mock field.
+
 ### Completion Notes List
 
+- Implemented PrometheusAdapter interface with two implementations: `PrometheusRestAdapter` (production, queries real Prometheus HTTP API) and `DevPrometheusAdapter` (dev mode, returns deterministic mock data). Build-time selection via `@IfBuildProperty`.
+- Created `PrometheusConfig` with `@ConfigMapping` supporting externalized PromQL queries, configurable thresholds, and query interval — adapter is a generic query executor, not a PromQL author.
+- Built `HealthService` with parallel `CompletableFuture`-based querying across all environments, per-environment failure isolation, configurable health status derivation (error rate → UNHEALTHY, saturation → DEGRADED), and `requireTeamApplication` ownership validation.
+- Created `HealthResource` REST endpoint at `/api/v1/teams/{teamId}/applications/{appId}/health` returning `HealthResponse` with `EnvironmentHealthDto` per environment including Grafana deep links.
+- Casbin policy `p, member, health, read` was already present from sprint planning.
+- All 7 default PromQL query templates added to `application.properties` with `{namespace}` and `{interval}` placeholders.
+- 9 unit tests for PrometheusRestAdapter, 9 unit tests for HealthService, 5 integration tests for HealthResource — all passing. Full regression suite green (0 failures).
+
 ### File List
+
+New files:
+- developer-portal/src/main/java/com/portal/integration/prometheus/PrometheusAdapter.java
+- developer-portal/src/main/java/com/portal/integration/prometheus/PrometheusConfig.java
+- developer-portal/src/main/java/com/portal/integration/prometheus/PrometheusRestAdapter.java
+- developer-portal/src/main/java/com/portal/integration/prometheus/PrometheusRestClient.java
+- developer-portal/src/main/java/com/portal/integration/prometheus/DevPrometheusAdapter.java
+- developer-portal/src/main/java/com/portal/integration/prometheus/model/GoldenSignal.java
+- developer-portal/src/main/java/com/portal/integration/prometheus/model/GoldenSignalType.java
+- developer-portal/src/main/java/com/portal/integration/prometheus/model/HealthSignalsResult.java
+- developer-portal/src/main/java/com/portal/health/HealthStatus.java
+- developer-portal/src/main/java/com/portal/health/HealthStatusDto.java
+- developer-portal/src/main/java/com/portal/health/EnvironmentHealthDto.java
+- developer-portal/src/main/java/com/portal/health/HealthResponse.java
+- developer-portal/src/main/java/com/portal/health/HealthService.java
+- developer-portal/src/main/java/com/portal/health/HealthResource.java
+- developer-portal/src/test/java/com/portal/integration/prometheus/PrometheusRestAdapterTest.java
+- developer-portal/src/test/java/com/portal/health/HealthServiceTest.java
+- developer-portal/src/test/java/com/portal/health/HealthResourceIT.java
+
+Modified files:
+- developer-portal/src/main/resources/application.properties
+- developer-portal/src/test/resources/application.properties
+
+### Change Log
+
+- 2026-04-12: Story 6.1 implemented — Prometheus adapter, health domain layer, REST endpoint, configuration, and full test coverage
+- 2026-04-12: Code review fixes — hasData logic corrected to track non-empty result sets (not positive values), DevPrometheusAdapter now varies by namespace per AC10, added zero-value test
