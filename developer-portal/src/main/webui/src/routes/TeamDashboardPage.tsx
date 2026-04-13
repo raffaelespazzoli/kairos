@@ -3,6 +3,7 @@ import {
   Title,
   Content,
   Card,
+  CardTitle,
   CardBody,
   Grid,
   GridItem,
@@ -16,6 +17,8 @@ import { ErrorAlert } from '../components/shared/ErrorAlert';
 import { NoApplicationsEmptyState } from '../components/shared/NoApplicationsEmptyState';
 import { DoraStatCard } from '../components/dashboard/DoraStatCard';
 import { ApplicationHealthGrid } from '../components/dashboard/ApplicationHealthGrid';
+import { DoraTrendChart } from '../components/dashboard/DoraTrendChart';
+import { ActivityFeed } from '../components/dashboard/ActivityFeed';
 import type { DoraMetricType } from '../types/dora';
 
 const DORA_METRIC_ORDER: DoraMetricType[] = [
@@ -110,18 +113,56 @@ export function TeamDashboardPage() {
       </PageSection>
 
       <PageSection>
-        {activityError && (
-          <Alert variant="warning" title="Activity data unavailable" isInline style={{ marginBottom: 'var(--pf-t--global--spacer--md)' }}>
-            {activityError}
-          </Alert>
-        )}
-        <Card>
-          <CardBody>
-            <Content component="p" style={{ color: 'var(--pf-t--global--text--color--subtle)' }}>
-              Activity feed and DORA trends — coming in Story 7.3
-            </Content>
-          </CardBody>
-        </Card>
+        <Grid hasGutter>
+          <GridItem span={6}>
+            <Card>
+              <CardTitle>DORA Trends</CardTitle>
+              <CardBody>
+                {isLoading ? (
+                  <div className="pf-v6-u-display-flex pf-v6-u-flex-direction-column pf-v6-u-align-items-center pf-v6-u-p-lg">
+                    <Spinner aria-label="Loading DORA trends" size="lg" />
+                  </div>
+                ) : (
+                  <>
+                    {doraError && (
+                      <Alert variant="warning" title="DORA trends unavailable" isInline style={{ marginBottom: 'var(--pf-t--global--spacer--md)' }}>
+                        {doraError}
+                      </Alert>
+                    )}
+                    {!doraError && doraHasData && doraMetrics.some((m) => m.timeSeries.length > 0) ? (
+                      <DoraTrendChart metrics={doraMetrics} timeRange={data?.dora?.timeRange ?? '30d'} />
+                    ) : !doraError ? (
+                      <Content component="p" style={{ color: 'var(--pf-t--global--text--color--subtle)', textAlign: 'center' }}>
+                        Trend data available after 7 days of activity
+                      </Content>
+                    ) : null}
+                  </>
+                )}
+              </CardBody>
+            </Card>
+          </GridItem>
+          <GridItem span={6}>
+            <Card>
+              <CardTitle>Recent Activity</CardTitle>
+              <CardBody>
+                {isLoading ? (
+                  <div className="pf-v6-u-display-flex pf-v6-u-flex-direction-column pf-v6-u-align-items-center pf-v6-u-p-lg">
+                    <Spinner aria-label="Loading activity feed" size="lg" />
+                  </div>
+                ) : (
+                  <>
+                    {activityError && (
+                      <Alert variant="warning" title="Activity data unavailable" isInline style={{ marginBottom: 'var(--pf-t--global--spacer--md)' }}>
+                        {activityError}
+                      </Alert>
+                    )}
+                    {!activityError && <ActivityFeed events={data?.recentActivity ?? []} />}
+                  </>
+                )}
+              </CardBody>
+            </Card>
+          </GridItem>
+        </Grid>
       </PageSection>
     </>
   );

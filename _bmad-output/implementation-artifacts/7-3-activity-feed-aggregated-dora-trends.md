@@ -1,6 +1,6 @@
 # Story 7.3: Activity Feed & Aggregated DORA Trends
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -83,50 +83,56 @@ so that I have temporal context on what's happening and how delivery performance
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create `ActivityFeed` component (AC: #2, #3, #4, #8)
-  - [ ] 1.1 Create `src/main/webui/src/components/dashboard/ActivityFeed.tsx`
-  - [ ] 1.2 Implement PatternFly `DataList` with `DataListItem` per event from `TeamActivityEventDto[]`
-  - [ ] 1.3 Render event type icon: `BuildIcon` for `build`, `RocketIcon` for `deployment`, `TagIcon` for `release`
-  - [ ] 1.4 Render application name, reference (version/build number), status `Label` with appropriate variant, relative timestamp, actor name
-  - [ ] 1.5 Render `environmentName` inline for deployment events (e.g. "→ qa")
-  - [ ] 1.6 Implement `formatRelativeTime` helper for relative timestamps (e.g. "5 minutes ago", "2 hours ago", "3 days ago")
-  - [ ] 1.7 Implement `onSelectDataListItem` to navigate: build → `builds`, deployment → `overview`, release → `releases`
-  - [ ] 1.8 Add `aria-label` on each `DataListItem` combining event type, app name, status, and relative time
-  - [ ] 1.9 Handle empty state: show "No recent activity across team applications" when `recentActivity` is empty
+- [x] Task 1: Create `ActivityFeed` component (AC: #2, #3, #4, #8)
+  - [x] 1.1 Create `src/main/webui/src/components/dashboard/ActivityFeed.tsx`
+  - [x] 1.2 Implement PatternFly `DataList` with `DataListItem` per event from `TeamActivityEventDto[]`
+  - [x] 1.3 Render event type icon: `BuildIcon` for `build`, `RocketIcon` for `deployment`, `TagIcon` for `release`
+  - [x] 1.4 Render application name, reference (version/build number), status `Label` with appropriate variant, relative timestamp, actor name
+  - [x] 1.5 Render `environmentName` inline for deployment events (e.g. "→ qa")
+  - [x] 1.6 Implement `formatRelativeTime` helper for relative timestamps (e.g. "5 minutes ago", "2 hours ago", "3 days ago")
+  - [x] 1.7 Implement `onSelectDataListItem` to navigate: build → `builds`, deployment → `overview`, release → `releases`
+  - [x] 1.8 Add `aria-label` on each `DataListItem` combining event type, app name, status, and relative time
+  - [x] 1.9 Handle empty state: show "No recent activity across team applications" when `recentActivity` is empty
 
-- [ ] Task 2: Create `DoraTrendsSection` wrapper (AC: #5, #6)
-  - [ ] 2.1 Create a section wrapper in `TeamDashboardPage` (or inline) that passes `dora.metrics` and `dora.timeRange` to existing `DoraTrendChart`
-  - [ ] 2.2 Handle `dora.hasData === false` or all time series empty: show "Trend data available after 7 days of activity"
+- [x] Task 2: Create `DoraTrendsSection` wrapper (AC: #5, #6)
+  - [x] 2.1 Create a section wrapper in `TeamDashboardPage` (or inline) that passes `dora.metrics` and `dora.timeRange` to existing `DoraTrendChart`
+  - [x] 2.2 Handle `dora.hasData === false` or all time series empty: show "Trend data available after 7 days of activity"
 
-- [ ] Task 3: Update `TeamDashboardPage` bottom section (AC: #1, #7, #9)
-  - [ ] 3.1 Replace the Story 7.3 placeholder in `TeamDashboardPage.tsx` with a two-column `Grid` layout (`span={6}` per column)
-  - [ ] 3.2 Left column: DORA trend charts via `DoraTrendChart` with team-aggregated data from `useDashboard` response
-  - [ ] 3.3 Right column: `ActivityFeed` component with `recentActivity` from `useDashboard` response
-  - [ ] 3.4 Handle `doraError`: show inline `Alert` (warning) in left column, still render activity feed
-  - [ ] 3.5 Handle `activityError`: show inline `Alert` (warning) in right column, still render DORA trends
-  - [ ] 3.6 Handle loading state: show skeleton/spinner per column while dashboard is loading
+- [x] Task 3: Update `TeamDashboardPage` bottom section (AC: #1, #7, #9)
+  - [x] 3.1 Replace the Story 7.3 placeholder in `TeamDashboardPage.tsx` with a two-column `Grid` layout (`span={6}` per column)
+  - [x] 3.2 Left column: DORA trend charts via `DoraTrendChart` with team-aggregated data from `useDashboard` response
+  - [x] 3.3 Right column: `ActivityFeed` component with `recentActivity` from `useDashboard` response
+  - [x] 3.4 Handle `doraError`: show inline `Alert` (warning) in left column, still render activity feed
+  - [x] 3.5 Handle `activityError`: show inline `Alert` (warning) in right column, still render DORA trends
+  - [x] 3.6 Handle loading state: show skeleton/spinner per column while dashboard is loading
 
-- [ ] Task 4: Tests (all AC)
-  - [ ] 4.1 Create `src/main/webui/src/components/dashboard/ActivityFeed.test.tsx`
-    - [ ] Renders correct number of DataList items
-    - [ ] Shows correct icon per event type
-    - [ ] Shows application name, reference, status label, relative time, actor
-    - [ ] Shows environment name for deployment events
-    - [ ] Click on build event navigates to builds page
-    - [ ] Click on deployment event navigates to overview page
-    - [ ] Click on release event navigates to releases page
-    - [ ] Keyboard: Enter on item triggers navigation
-    - [ ] Empty state message when no events
-    - [ ] Each item has correct `aria-label`
-  - [ ] 4.2 Update `src/main/webui/src/routes/TeamDashboardPage.test.tsx`
-    - [ ] Bottom section renders two-column layout with DORA trends and activity feed
-    - [ ] DORA trends show charts when `dora.hasData` is true
-    - [ ] DORA trends show insufficient data message when `dora.hasData` is false
-    - [ ] Activity feed renders events from dashboard response
-    - [ ] Activity feed shows empty state when no events
-    - [ ] `doraError` shows inline Alert in DORA column, activity feed still renders
-    - [ ] `activityError` shows inline Alert in activity column, DORA trends still render
-    - [ ] Mock `@patternfly/react-charts/victory` per existing pattern
+- [x] Task 4: Tests (all AC)
+  - [x] 4.1 Create `src/main/webui/src/components/dashboard/ActivityFeed.test.tsx`
+    - [x] Renders correct number of DataList items
+    - [x] Shows correct icon per event type
+    - [x] Shows application name, reference, status label, relative time, actor
+    - [x] Shows environment name for deployment events
+    - [x] Click on build event navigates to builds page
+    - [x] Click on deployment event navigates to overview page
+    - [x] Click on release event navigates to releases page
+    - [x] Keyboard: Enter on item triggers navigation
+    - [x] Empty state message when no events
+    - [x] Each item has correct `aria-label`
+  - [x] 4.2 Update `src/main/webui/src/routes/TeamDashboardPage.test.tsx`
+    - [x] Bottom section renders two-column layout with DORA trends and activity feed
+    - [x] DORA trends show charts when `dora.hasData` is true
+    - [x] DORA trends show insufficient data message when `dora.hasData` is false
+    - [x] Activity feed renders events from dashboard response
+    - [x] Activity feed shows empty state when no events
+    - [x] `doraError` shows inline Alert in DORA column, activity feed still renders
+    - [x] `activityError` shows inline Alert in activity column, DORA trends still render
+    - [x] Mock `@patternfly/react-charts/victory` per existing pattern
+
+### Review Findings
+
+- [x] [Review][Patch] Use a collision-safe identity for activity rows and selection lookup [developer-portal/src/main/webui/src/components/dashboard/ActivityFeed.tsx:82]
+- [x] [Review][Patch] Harden `formatRelativeTime()` against invalid and future timestamps [developer-portal/src/main/webui/src/components/dashboard/ActivityFeed.tsx:30]
+- [x] [Review][Patch] Add a keyboard activation test for activity items to cover the AC8 Enter-path [developer-portal/src/main/webui/src/components/dashboard/ActivityFeed.test.tsx:105]
 
 ## Dev Notes
 
@@ -453,8 +459,36 @@ Key patterns from these commits:
 
 ### Agent Model Used
 
+Claude Opus 4 (Cursor Agent)
+
 ### Debug Log References
+
+- Test failures due to duplicate text matches (DORA metric titles appearing in both stat cards and trend charts; "checkout-api" appearing in both health grid and activity feed). Fixed by using `getAllByText` assertions where text appears in multiple components.
 
 ### Completion Notes List
 
+- Created `ActivityFeed` component with PatternFly `DataList`, event type icons (BuildIcon/RocketIcon/TagIcon), status labels with color mapping, relative timestamps, actor names, environment names for deployments, click-to-navigate, and aria-labels
+- Exported `formatRelativeTime` helper for timestamp display ("just now", "5m ago", "2h ago", "3d ago")
+- Integrated `DoraTrendChart` (reused as-is) into the bottom section with `hasData` and `doraError` handling, including "Trend data available after 7 days of activity" insufficient data message
+- Replaced Story 7.3 placeholder in `TeamDashboardPage` with two-column `Grid` layout (span={6} each): DORA trends (left) and Activity Feed (right)
+- Independent section-level error handling: `doraError` shows warning Alert in DORA column only; `activityError` shows warning Alert in activity column only
+- Independent loading states per column with Spinner
+- Updated chart mock in `TeamDashboardPage.test.tsx` to include `Chart`, `ChartAxis`, `ChartLine` needed by `DoraTrendChart`
+- Added `recentActivity` sample events to `fullDashboardResponse` test fixture
+- Updated existing tests to handle duplicate text from new bottom section (stat card + trend chart titles, health grid + activity feed app names)
+- All 35 tests in the 2 story-related test files pass; 415/416 full suite tests pass (1 pre-existing failure in `ApplicationTabs.test.tsx` unrelated to this story)
+
+### Change Log
+
+- 2026-04-13: Implemented Story 7.3 — Activity Feed & Aggregated DORA Trends
+
 ### File List
+
+**New files:**
+- `developer-portal/src/main/webui/src/components/dashboard/ActivityFeed.tsx`
+- `developer-portal/src/main/webui/src/components/dashboard/ActivityFeed.test.tsx`
+
+**Modified files:**
+- `developer-portal/src/main/webui/src/routes/TeamDashboardPage.tsx`
+- `developer-portal/src/main/webui/src/routes/TeamDashboardPage.test.tsx`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`

@@ -7,12 +7,15 @@ import type { TeamDashboardResponse } from '../types/dashboard';
 import type { PortalError } from '../types/error';
 
 vi.mock('@patternfly/react-charts/victory', () => ({
+  Chart: ({ children, ...props }: any) => <div data-testid="chart" {...props}>{children}</div>,
   ChartArea: ({ 'aria-label': ariaLabel }: Record<string, unknown>) => (
     <div data-testid="chart-area" aria-label={ariaLabel as string} />
   ),
+  ChartAxis: () => <div />,
   ChartGroup: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="chart-group">{children}</div>
   ),
+  ChartLine: () => <div data-testid="chart-line" />,
   ChartVoronoiContainer: () => <div />,
 }));
 
@@ -121,7 +124,28 @@ const fullDashboardResponse: TeamDashboardResponse = {
     timeRange: '30d',
     hasData: true,
   },
-  recentActivity: [],
+  recentActivity: [
+    {
+      eventType: 'build' as const,
+      applicationId: 1,
+      applicationName: 'checkout-api',
+      reference: '#142',
+      timestamp: '2026-04-13T14:00:00Z',
+      status: 'Passed',
+      actor: 'Marco',
+      environmentName: null,
+    },
+    {
+      eventType: 'deployment' as const,
+      applicationId: 1,
+      applicationName: 'checkout-api',
+      reference: 'v2.1.0',
+      timestamp: '2026-04-13T12:00:00Z',
+      status: 'Deployed',
+      actor: 'Alice',
+      environmentName: 'qa',
+    },
+  ],
   healthError: null,
   doraError: null,
   activityError: null,
@@ -195,10 +219,10 @@ describe('TeamDashboardPage', () => {
       refresh: vi.fn(),
     };
     renderPage();
-    expect(screen.getByText('Deploy Frequency')).toBeInTheDocument();
-    expect(screen.getByText('Lead Time')).toBeInTheDocument();
-    expect(screen.getByText('Change Failure Rate')).toBeInTheDocument();
-    expect(screen.getByText('MTTR')).toBeInTheDocument();
+    expect(screen.getAllByText('Deploy Frequency').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Lead Time').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Change Failure Rate').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('MTTR').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('4.2/wk')).toBeInTheDocument();
   });
 
@@ -210,8 +234,8 @@ describe('TeamDashboardPage', () => {
       refresh: vi.fn(),
     };
     renderPage();
-    expect(screen.getByText('checkout-api')).toBeInTheDocument();
-    expect(screen.getByText('payments-service')).toBeInTheDocument();
+    expect(screen.getAllByText('checkout-api').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('payments-service').length).toBeGreaterThanOrEqual(1);
   });
 
   it('renders page title with team name', () => {
@@ -238,7 +262,7 @@ describe('TeamDashboardPage', () => {
     };
     renderPage();
     expect(screen.getByText('DORA metrics unavailable')).toBeInTheDocument();
-    expect(screen.getByText('Prometheus unreachable')).toBeInTheDocument();
+    expect(screen.getAllByText('Prometheus unreachable').length).toBeGreaterThanOrEqual(1);
     const insufficientLabels = screen.getAllByText('Insufficient data');
     expect(insufficientLabels.length).toBe(4);
   });
@@ -256,7 +280,7 @@ describe('TeamDashboardPage', () => {
     renderPage();
     expect(screen.getByText('Health data unavailable')).toBeInTheDocument();
     expect(screen.getByText('ArgoCD connection failed')).toBeInTheDocument();
-    expect(screen.getByText('checkout-api')).toBeInTheDocument();
+    expect(screen.getAllByText('checkout-api').length).toBeGreaterThanOrEqual(1);
   });
 
   it('renders DORA cards while health section shows error (partial failure)', () => {
@@ -271,7 +295,7 @@ describe('TeamDashboardPage', () => {
     };
     renderPage();
     expect(screen.getByText('Health data unavailable')).toBeInTheDocument();
-    expect(screen.getByText('Deploy Frequency')).toBeInTheDocument();
+    expect(screen.getAllByText('Deploy Frequency').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('4.2/wk')).toBeInTheDocument();
   });
 
@@ -287,10 +311,10 @@ describe('TeamDashboardPage', () => {
     };
     renderPage();
     expect(screen.getByText('DORA metrics unavailable')).toBeInTheDocument();
-    expect(screen.getByText('checkout-api')).toBeInTheDocument();
+    expect(screen.getAllByText('checkout-api').length).toBeGreaterThanOrEqual(1);
   });
 
-  it('shows Story 7.3 placeholder section', () => {
+  it('renders bottom section with two-column layout containing DORA trends and activity feed', () => {
     mockDashboardResult = {
       data: fullDashboardResponse,
       error: null,
@@ -298,12 +322,85 @@ describe('TeamDashboardPage', () => {
       refresh: vi.fn(),
     };
     renderPage();
+    expect(screen.getByText('DORA Trends')).toBeInTheDocument();
+    expect(screen.getByText('Recent Activity')).toBeInTheDocument();
+  });
+
+  it('renders DORA trend charts when dora.hasData is true', () => {
+    mockDashboardResult = {
+      data: fullDashboardResponse,
+      error: null,
+      isLoading: false,
+      refresh: vi.fn(),
+    };
+    renderPage();
+    expect(screen.getAllByTestId('chart-line').length).toBeGreaterThan(0);
+  });
+
+  it('shows insufficient data message when dora.hasData is false', () => {
+    mockDashboardResult = {
+      data: {
+        ...fullDashboardResponse,
+        dora: { metrics: [], timeRange: '30d', hasData: false },
+        doraError: null,
+      },
+      error: null,
+      isLoading: false,
+      refresh: vi.fn(),
+    };
+    renderPage();
     expect(
-      screen.getByText('Activity feed and DORA trends — coming in Story 7.3'),
+      screen.getByText('Trend data available after 7 days of activity'),
     ).toBeInTheDocument();
   });
 
-  it('shows activityError warning in bottom section', () => {
+  it('renders activity feed events from dashboard response', () => {
+    mockDashboardResult = {
+      data: fullDashboardResponse,
+      error: null,
+      isLoading: false,
+      refresh: vi.fn(),
+    };
+    renderPage();
+    expect(screen.getByText('#142')).toBeInTheDocument();
+    expect(screen.getAllByText('v2.1.0').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Passed')).toBeInTheDocument();
+    expect(screen.getByText('Deployed')).toBeInTheDocument();
+  });
+
+  it('shows activity feed empty state when no events', () => {
+    mockDashboardResult = {
+      data: {
+        ...fullDashboardResponse,
+        recentActivity: [],
+      },
+      error: null,
+      isLoading: false,
+      refresh: vi.fn(),
+    };
+    renderPage();
+    expect(
+      screen.getByText('No recent activity across team applications'),
+    ).toBeInTheDocument();
+  });
+
+  it('shows doraError inline Alert in DORA column while activity feed still renders', () => {
+    mockDashboardResult = {
+      data: {
+        ...fullDashboardResponse,
+        doraError: 'Prometheus connection failed',
+      },
+      error: null,
+      isLoading: false,
+      refresh: vi.fn(),
+    };
+    renderPage();
+    expect(screen.getByText('DORA trends unavailable')).toBeInTheDocument();
+    expect(screen.getAllByText('Prometheus connection failed').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('#142')).toBeInTheDocument();
+  });
+
+  it('shows activityError inline Alert in activity column while DORA trends still render', () => {
     mockDashboardResult = {
       data: {
         ...fullDashboardResponse,
@@ -316,6 +413,14 @@ describe('TeamDashboardPage', () => {
     renderPage();
     expect(screen.getByText('Activity data unavailable')).toBeInTheDocument();
     expect(screen.getByText('Activity service timeout')).toBeInTheDocument();
+    expect(screen.getAllByTestId('chart-line').length).toBeGreaterThan(0);
+  });
+
+  it('shows loading spinners in bottom section columns while loading', () => {
+    mockDashboardResult = { data: null, error: null, isLoading: true, refresh: vi.fn() };
+    renderPage();
+    expect(screen.getByLabelText('Loading DORA trends')).toBeInTheDocument();
+    expect(screen.getByLabelText('Loading activity feed')).toBeInTheDocument();
   });
 
   it('renders DORA cards with insufficient data when hasData is false', () => {
