@@ -1,6 +1,6 @@
 # Story 7.1: Team Dashboard Backend & Aggregation
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -109,82 +109,91 @@ so that the dashboard loads efficiently with one request instead of many.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create dashboard domain DTOs in `com.portal.dashboard` (AC: #1, #3, #6, #7)
-  - [ ] Create `TeamDashboardDto.java`
-  - [ ] Create `ApplicationHealthSummaryDto.java`
-  - [ ] Create `DashboardEnvironmentEntryDto.java`
-  - [ ] Create `TeamActivityEventDto.java`
-  - [ ] Shape `TeamDashboardDto` to include `applications`, `dora`, `recentActivity`, `healthError`, `doraError`, and `activityError`
-  - [ ] Reuse `DoraMetricsDto` for the team DORA section instead of inventing a parallel metrics DTO
+- [x] Task 1: Create dashboard domain DTOs in `com.portal.dashboard` (AC: #1, #3, #6, #7)
+  - [x] Create `TeamDashboardDto.java`
+  - [x] Create `ApplicationHealthSummaryDto.java`
+  - [x] Create `DashboardEnvironmentEntryDto.java`
+  - [x] Create `TeamActivityEventDto.java`
+  - [x] Shape `TeamDashboardDto` to include `applications`, `dora`, `recentActivity`, `healthError`, `doraError`, and `activityError`
+  - [x] Reuse `DoraMetricsDto` for the team DORA section instead of inventing a parallel metrics DTO
 
-- [ ] Task 2: Create `DashboardService` scaffold and team-scoped loading flow (AC: #1, #2, #8)
-  - [ ] Create `DashboardService.java` in `com.portal.dashboard`
-  - [ ] Inject `ApplicationService`, `EnvironmentService`, `DoraService` or equivalent DORA helper, `BuildService`, `ReleaseService`, and `DeploymentService`
-  - [ ] Load team applications through `ApplicationService.getApplicationsForTeam(teamId)` rather than querying `Application.findByTeam(...)` directly inside the dashboard package
-  - [ ] Fan out application-level aggregation work with `CompletableFuture.supplyAsync(...)`
-  - [ ] Add a single `joinSafely`/unwrap helper matching the existing `HealthService` pattern
+- [x] Task 2: Create `DashboardService` scaffold and team-scoped loading flow (AC: #1, #2, #8)
+  - [x] Create `DashboardService.java` in `com.portal.dashboard`
+  - [x] Inject `ApplicationService`, `EnvironmentService`, `DoraService` or equivalent DORA helper, `BuildService`, `ReleaseService`, and `DeploymentService`
+  - [x] Load team applications through `ApplicationService.getApplicationsForTeam(teamId)` rather than querying `Application.findByTeam(...)` directly inside the dashboard package
+  - [x] Fan out application-level aggregation work with `CompletableFuture.supplyAsync(...)`
+  - [x] Add a single `joinSafely`/unwrap helper matching the existing `HealthService` pattern
 
-- [ ] Task 3: Implement compact application health aggregation (AC: #2, #3, #4, #7)
-  - [ ] Reuse `EnvironmentService.getEnvironmentChain(teamId, appId)` to obtain ordered environments, existing `UNKNOWN` fallback behavior, deployed version, and last deployment timestamp
-  - [ ] For environments whose base status is `HEALTHY` or `UNHEALTHY`, enrich with Prometheus golden-signal health using the existing `PrometheusAdapter`
-  - [ ] Apply the merge rules from AC #4 exactly; do not create a second dashboard-specific status vocabulary
-  - [ ] Populate `statusDetail` with useful tooltip text such as `Healthy`, `Unhealthy`, `Degraded`, `Not deployed`, `Deploying`, or `Status unavailable`
-  - [ ] If ArgoCD status retrieval failed for an application, keep the environment entries but leave them as `UNKNOWN` with the source error reflected in `statusDetail`
-  - [ ] If Prometheus enrichment fails for an environment, preserve the base environment-chain status and capture the missing health signal in `statusDetail` without failing the whole application summary
+- [x] Task 3: Implement compact application health aggregation (AC: #2, #3, #4, #7)
+  - [x] Reuse `EnvironmentService.getEnvironmentChain(teamId, appId)` to obtain ordered environments, existing `UNKNOWN` fallback behavior, deployed version, and last deployment timestamp
+  - [x] For environments whose base status is `HEALTHY` or `UNHEALTHY`, enrich with Prometheus golden-signal health using the existing `PrometheusAdapter`
+  - [x] Apply the merge rules from AC #4 exactly; do not create a second dashboard-specific status vocabulary
+  - [x] Populate `statusDetail` with useful tooltip text such as `Healthy`, `Unhealthy`, `Degraded`, `Not deployed`, `Deploying`, or `Status unavailable`
+  - [x] If ArgoCD status retrieval failed for an application, keep the environment entries but leave them as `UNKNOWN` with the source error reflected in `statusDetail`
+  - [x] If Prometheus enrichment fails for an environment, preserve the base environment-chain status and capture the missing health signal in `statusDetail` without failing the whole application summary
 
-- [ ] Task 4: Implement aggregated DORA metric composition (AC: #1, #2, #5, #7)
-  - [ ] Gather per-application DORA data in parallel for the default 30-day range already used by the existing DORA flow
-  - [ ] Aggregate `currentValue` and `previousValue` per metric using the required math:
-    - [ ] Deployment Frequency: sum
-    - [ ] Lead Time: median
-    - [ ] Change Failure Rate: weighted average using deployment frequency as the weight
-    - [ ] MTTR: median
-  - [ ] Aggregate `timeSeries` as well so Story 7.3 can render charts without needing a contract change:
-    - [ ] align points by timestamp bucket
-    - [ ] sum deployment frequency points
-    - [ ] median lead-time points
-    - [ ] weighted-average change-failure-rate points using deployment-frequency points as weights when available
-    - [ ] median MTTR points
-  - [ ] Reuse the existing DORA trend semantics and percentage-change calculation rules from the current DORA implementation
-  - [ ] If some applications fail DORA retrieval, aggregate from successful applications and set `doraError`
-  - [ ] If all applications fail or all return insufficient data, return a valid `DoraMetricsDto` with `hasData = false` and a non-empty `doraError`
+- [x] Task 4: Implement aggregated DORA metric composition (AC: #1, #2, #5, #7)
+  - [x] Gather per-application DORA data in parallel for the default 30-day range already used by the existing DORA flow
+  - [x] Aggregate `currentValue` and `previousValue` per metric using the required math:
+    - [x] Deployment Frequency: sum
+    - [x] Lead Time: median
+    - [x] Change Failure Rate: weighted average using deployment frequency as the weight
+    - [x] MTTR: median
+  - [x] Aggregate `timeSeries` as well so Story 7.3 can render charts without needing a contract change:
+    - [x] align points by timestamp bucket
+    - [x] sum deployment frequency points
+    - [x] median lead-time points
+    - [x] weighted-average change-failure-rate points using deployment-frequency points as weights when available
+    - [x] median MTTR points
+  - [x] Reuse the existing DORA trend semantics and percentage-change calculation rules from the current DORA implementation
+  - [x] If some applications fail DORA retrieval, aggregate from successful applications and set `doraError`
+  - [x] If all applications fail or all return insufficient data, return a valid `DoraMetricsDto` with `hasData = false` and a non-empty `doraError`
 
-- [ ] Task 5: Implement team activity aggregation (AC: #1, #2, #6, #7)
-  - [ ] For each application, fetch builds, releases, and deployments in parallel through the existing services
-  - [ ] Trim each source per application before global merge to keep the fan-out bounded (for example, take the most recent handful from each source, then merge and cap the final list at 20)
-  - [ ] Normalize source DTOs into `TeamActivityEventDto`
-  - [ ] Map fields explicitly:
-    - [ ] build event: `reference = buildId`, `timestamp = startedAt`, `status = status`
-    - [ ] release event: `reference = version`, `timestamp = createdAt`, `status = "Released"`
-    - [ ] deployment event: `reference = releaseVersion`, `timestamp = startedAt`, `status = status`, `environmentName = environmentName`
-  - [ ] Set `actor` from the best available source:
-    - [ ] deployment: existing `deployedBy`
-    - [ ] build: any available Tekton metadata if present, otherwise `System`
-    - [ ] release: any available Git/tag metadata if present, otherwise `System`
-  - [ ] Sort the merged activity list by timestamp descending and return the top 20 entries
-  - [ ] If one activity source fails for one or more applications, keep successful events and set `activityError`
+- [x] Task 5: Implement team activity aggregation (AC: #1, #2, #6, #7)
+  - [x] For each application, fetch builds, releases, and deployments in parallel through the existing services
+  - [x] Trim each source per application before global merge to keep the fan-out bounded (for example, take the most recent handful from each source, then merge and cap the final list at 20)
+  - [x] Normalize source DTOs into `TeamActivityEventDto`
+  - [x] Map fields explicitly:
+    - [x] build event: `reference = buildId`, `timestamp = startedAt`, `status = status`
+    - [x] release event: `reference = version`, `timestamp = createdAt`, `status = "Released"`
+    - [x] deployment event: `reference = releaseVersion`, `timestamp = startedAt`, `status = status`, `environmentName = environmentName`
+  - [x] Set `actor` from the best available source:
+    - [x] deployment: existing `deployedBy`
+    - [x] build: any available Tekton metadata if present, otherwise `System`
+    - [x] release: any available Git/tag metadata if present, otherwise `System`
+  - [x] Sort the merged activity list by timestamp descending and return the top 20 entries
+  - [x] If one activity source fails for one or more applications, keep successful events and set `activityError`
 
-- [ ] Task 6: Add dashboard REST resource and wire authorization correctly (AC: #1, #8)
-  - [ ] Create `DashboardResource.java` with `@Path("/api/v1/teams/{teamId}/dashboard")`
-  - [ ] Follow the same team-access validation approach used by existing resources (`BuildResource`, `ReleaseResource`, `DeploymentResource`)
-  - [ ] Delegate all orchestration to `DashboardService`
-  - [ ] Verify the terminal path segment remains `dashboard` so the current `PermissionFilter` maps the resource correctly
-  - [ ] Verify `p, member, dashboard, read` already exists in `policy.csv`; only modify policy if it is missing
+- [x] Task 6: Add dashboard REST resource and wire authorization correctly (AC: #1, #8)
+  - [x] Create `DashboardResource.java` with `@Path("/api/v1/teams/{teamId}/dashboard")`
+  - [x] Follow the same team-access validation approach used by existing resources (`BuildResource`, `ReleaseResource`, `DeploymentResource`)
+  - [x] Delegate all orchestration to `DashboardService`
+  - [x] Verify the terminal path segment remains `dashboard` so the current `PermissionFilter` maps the resource correctly
+  - [x] Verify `p, member, dashboard, read` already exists in `policy.csv`; only modify policy if it is missing
 
-- [ ] Task 7: Add focused backend tests for the dashboard contract and aggregation math (AC: #2, #4, #5, #6, #7, #8)
-  - [ ] Create `src/test/java/com/portal/dashboard/DashboardServiceTest.java`
-  - [ ] Test application summaries preserve environment `promotion_order`
-  - [ ] Test status merge rules, especially:
-    - [ ] `DEGRADED` Prometheus health downgrades `HEALTHY` to compact `UNHEALTHY`
-    - [ ] `NO_DATA` does not override ArgoCD status
-    - [ ] missing ArgoCD data yields `UNKNOWN`
-  - [ ] Test DORA aggregation math for sum, median, weighted average, and time-series alignment
-  - [ ] Test recent activity sort order and 20-item cap across mixed event types
-  - [ ] Test partial-failure behavior returns section data plus the correct error field instead of throwing
-  - [ ] Create `src/test/java/com/portal/dashboard/DashboardResourceIT.java`
-  - [ ] Test `GET /api/v1/teams/{teamId}/dashboard` returns `200` with the expected JSON shape
-  - [ ] Test non-existent team and cross-team access both return `404`
-  - [ ] Test `member`, `lead`, and `admin` can all read the dashboard endpoint
+- [x] Task 7: Add focused backend tests for the dashboard contract and aggregation math (AC: #2, #4, #5, #6, #7, #8)
+  - [x] Create `src/test/java/com/portal/dashboard/DashboardServiceTest.java`
+  - [x] Test application summaries preserve environment `promotion_order`
+  - [x] Test status merge rules, especially:
+    - [x] `DEGRADED` Prometheus health downgrades `HEALTHY` to compact `UNHEALTHY`
+    - [x] `NO_DATA` does not override ArgoCD status
+    - [x] missing ArgoCD data yields `UNKNOWN`
+  - [x] Test DORA aggregation math for sum, median, weighted average, and time-series alignment
+  - [x] Test recent activity sort order and 20-item cap across mixed event types
+  - [x] Test partial-failure behavior returns section data plus the correct error field instead of throwing
+  - [x] Create `src/test/java/com/portal/dashboard/DashboardResourceIT.java`
+  - [x] Test `GET /api/v1/teams/{teamId}/dashboard` returns `200` with the expected JSON shape
+  - [x] Test non-existent team and cross-team access both return `404`
+  - [x] Test `member`, `lead`, and `admin` can all read the dashboard endpoint
+
+### Review Findings
+
+- [x] [Review][Patch] Shared `errors` lists are mutated from multiple threads without consistent synchronization — **Fixed:** replaced `ArrayList` with `CopyOnWriteArrayList`, removed `synchronized` blocks
+- [x] [Review][Patch] ArgoCD failures are reduced to generic `"Status unavailable"` instead of surfacing the upstream error in `statusDetail` — **Fixed:** appends actual ArgoCD error text
+- [x] [Review][Patch] Prometheus outages preserve the base status but do not record that live health enrichment was unavailable in `statusDetail` — **Fixed:** appends "(live health unavailable)" when Prometheus is down
+- [x] [Review][Patch] Team-level DORA trends reimplement trend logic and drop the existing 5% stability threshold used by the current DORA flow — **Fixed:** aligned with `PrometheusRestAdapter.calculateTrend` (5% threshold + `higherIsBetter` semantics)
+- [x] [Review][Patch] Release and deployment trimming is not sorted by recency before `limit(10)`, so older events can displace newer ones in the merged activity feed — **Fixed:** added `.sorted(Comparator.comparing(..., reverseOrder()))` before `.limit()`
+- [x] [Review][Patch] CFR weighting rewrites zero/negative deployment frequency weights to `1.0`, which breaks the specified weighted-average math — **Fixed:** excludes zero-DF apps from weighted average, falls back to simple average when all weights are zero
 
 ## Dev Notes
 
@@ -401,12 +410,36 @@ developer-portal/src/main/resources/casbin/policy.csv           # only if dashbo
 
 ### Agent Model Used
 
-GPT-5.4 (Cursor)
+Claude Opus 4.6 (Cursor)
 
 ### Debug Log References
+
+None — clean implementation with all tests passing on first run.
 
 ### Completion Notes List
 
 - Ultimate context engine analysis completed - comprehensive developer guide created.
+- Task 1: Created 4 dashboard DTOs as Java records in `com.portal.dashboard` package. `TeamDashboardDto` reuses `DoraMetricsDto` from the health package for DORA section.
+- Task 2: Built `DashboardService` with `CompletableFuture`-based parallel fan-out across health, DORA, and activity aggregation. Uses `joinSafely` pattern from `HealthService`. Delegates to `ApplicationService.getApplicationsForTeam()` for team-scoped discovery.
+- Task 3: Implemented health merge rules per AC #4. `DEGRADED` Prometheus status downgrades to `UNHEALTHY` in compact view with `statusDetail = "Degraded"`. `NO_DATA` preserves ArgoCD status. Missing ArgoCD yields `UNKNOWN`. `DEPLOYING`/`NOT_DEPLOYED` pass through unchanged.
+- Task 4: DORA aggregation uses sum for deployment frequency, median for lead time and MTTR, weighted average (by DF) for CFR. Time-series aggregation aligns by timestamp bucket with matching math per metric type.
+- Task 5: Activity feed merges builds, releases, and deployments from per-app services. Each source limited to 10 per app, merged and sorted by timestamp descending, capped at 20. Actor normalized to `System` when unavailable.
+- Task 6: Created `DashboardResource` at `/api/v1/teams/{teamId}/dashboard`. Uses same `validateTeamAccess` pattern as `BuildResource`/`ReleaseResource`. Casbin policy `p, member, dashboard, read` already existed.
+- Task 7: 17 unit tests in `DashboardServiceTest` covering merge rules, DORA math (sum, odd/even median, weighted CFR), time-series alignment, activity sort/cap, and partial failures. 6 integration tests in `DashboardResourceIT` covering JSON shape, 404 for missing/cross-team, and member/lead/admin access.
+- Full regression suite: 548 tests, 0 failures, 0 errors.
 
 ### File List
+
+- `developer-portal/src/main/java/com/portal/dashboard/TeamDashboardDto.java` (new)
+- `developer-portal/src/main/java/com/portal/dashboard/ApplicationHealthSummaryDto.java` (new)
+- `developer-portal/src/main/java/com/portal/dashboard/DashboardEnvironmentEntryDto.java` (new)
+- `developer-portal/src/main/java/com/portal/dashboard/TeamActivityEventDto.java` (new)
+- `developer-portal/src/main/java/com/portal/dashboard/DashboardService.java` (new)
+- `developer-portal/src/main/java/com/portal/dashboard/DashboardResource.java` (new)
+- `developer-portal/src/test/java/com/portal/dashboard/DashboardServiceTest.java` (new)
+- `developer-portal/src/test/java/com/portal/dashboard/DashboardResourceIT.java` (new)
+
+### Change Log
+
+- 2026-04-13: Story 7.1 implemented — Team dashboard backend aggregation endpoint with health, DORA, and activity sections. 8 new files, 23 new tests, 0 regressions across 548-test suite.
+- 2026-04-13: Applied 6 code-review patches — thread-safe error lists (CopyOnWriteArrayList), richer ArgoCD/Prometheus statusDetail, aligned DORA trend threshold (5%), sorted activity sources before limiting, corrected zero-weight CFR exclusion. 548 tests pass, 0 regressions.
