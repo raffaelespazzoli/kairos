@@ -1,87 +1,336 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { TeamDashboardPage } from './TeamDashboardPage';
-import { ApplicationsProvider } from '../contexts/ApplicationsContext';
 import { TeamsProvider } from '../contexts/TeamsContext';
-import type { ApplicationSummary } from '../types/application';
+import type { TeamDashboardResponse } from '../types/dashboard';
 import type { PortalError } from '../types/error';
+
+vi.mock('@patternfly/react-charts/victory', () => ({
+  ChartArea: ({ 'aria-label': ariaLabel }: Record<string, unknown>) => (
+    <div data-testid="chart-area" aria-label={ariaLabel as string} />
+  ),
+  ChartGroup: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="chart-group">{children}</div>
+  ),
+  ChartVoronoiContainer: () => <div />,
+}));
 
 const activeTeam = { id: 1, name: 'My Team', oidcGroupId: 'default' };
 
-function renderPage(
-  applications: ApplicationSummary[] = [],
-  isLoading = false,
-  error: PortalError | null = null,
-) {
+let mockDashboardResult: {
+  data: TeamDashboardResponse | null;
+  error: PortalError | null;
+  isLoading: boolean;
+  refresh: ReturnType<typeof vi.fn>;
+};
+
+vi.mock('../hooks/useDashboard', () => ({
+  useDashboard: () => mockDashboardResult,
+}));
+
+const fullDashboardResponse: TeamDashboardResponse = {
+  applications: [
+    {
+      applicationId: 1,
+      applicationName: 'checkout-api',
+      runtimeType: 'quarkus',
+      environments: [
+        {
+          environmentName: 'dev',
+          status: 'HEALTHY',
+          deployedVersion: 'v2.1.0',
+          lastDeploymentAt: '2026-04-10T14:30:00Z',
+          statusDetail: null,
+        },
+        {
+          environmentName: 'prod',
+          status: 'UNHEALTHY',
+          deployedVersion: 'v2.0.8',
+          lastDeploymentAt: '2026-04-09T10:00:00Z',
+          statusDetail: 'High error rate',
+        },
+      ],
+    },
+    {
+      applicationId: 2,
+      applicationName: 'payments-service',
+      runtimeType: 'spring-boot',
+      environments: [
+        {
+          environmentName: 'dev',
+          status: 'HEALTHY',
+          deployedVersion: 'v1.0.0',
+          lastDeploymentAt: '2026-04-08T09:00:00Z',
+          statusDetail: null,
+        },
+      ],
+    },
+  ],
+  dora: {
+    metrics: [
+      {
+        type: 'DEPLOYMENT_FREQUENCY',
+        currentValue: 4.2,
+        previousValue: 3.6,
+        trend: 'IMPROVING',
+        percentageChange: 16.7,
+        unit: '/wk',
+        timeSeries: [
+          { timestamp: 1712345678, value: 4.0 },
+          { timestamp: 1712432078, value: 4.2 },
+        ],
+      },
+      {
+        type: 'LEAD_TIME',
+        currentValue: 2.1,
+        previousValue: 2.8,
+        trend: 'IMPROVING',
+        percentageChange: -25.0,
+        unit: 'h',
+        timeSeries: [
+          { timestamp: 1712345678, value: 2.5 },
+          { timestamp: 1712432078, value: 2.1 },
+        ],
+      },
+      {
+        type: 'CHANGE_FAILURE_RATE',
+        currentValue: 2.3,
+        previousValue: 3.1,
+        trend: 'IMPROVING',
+        percentageChange: -25.8,
+        unit: '%',
+        timeSeries: [
+          { timestamp: 1712345678, value: 3.0 },
+          { timestamp: 1712432078, value: 2.3 },
+        ],
+      },
+      {
+        type: 'MTTR',
+        currentValue: 45,
+        previousValue: 48,
+        trend: 'STABLE',
+        percentageChange: -6.3,
+        unit: 'm',
+        timeSeries: [
+          { timestamp: 1712345678, value: 46 },
+          { timestamp: 1712432078, value: 45 },
+        ],
+      },
+    ],
+    timeRange: '30d',
+    hasData: true,
+  },
+  recentActivity: [],
+  healthError: null,
+  doraError: null,
+  activityError: null,
+};
+
+function renderPage() {
   return render(
     <TeamsProvider value={{ teams: [activeTeam], activeTeamId: 1, activeTeam }}>
-      <ApplicationsProvider value={{ applications, isLoading, error }}>
-        <MemoryRouter initialEntries={['/teams/1']}>
-          <Routes>
-            <Route path="/teams/:teamId" element={<TeamDashboardPage />} />
-          </Routes>
-        </MemoryRouter>
-      </ApplicationsProvider>
+      <MemoryRouter initialEntries={['/teams/1']}>
+        <Routes>
+          <Route path="/teams/:teamId" element={<TeamDashboardPage />} />
+        </Routes>
+      </MemoryRouter>
     </TeamsProvider>,
   );
 }
 
-const sampleApps: ApplicationSummary[] = [
-  {
-    id: 1,
-    name: 'alpha-api',
-    runtimeType: 'quarkus',
-    onboardedAt: '2026-04-01T10:00:00Z',
-    onboardingPrUrl: 'https://github.com/org/infra/pull/1',
-    gitRepoUrl: 'https://github.com/org/alpha-api.git',
-    devSpacesDeepLink: null,
-  },
-  {
-    id: 2,
-    name: 'beta-service',
-    runtimeType: 'spring-boot',
-    onboardedAt: '2026-04-02T10:00:00Z',
-    onboardingPrUrl: '',
-    gitRepoUrl: 'https://github.com/org/beta-service.git',
-    devSpacesDeepLink: null,
-  },
-];
+beforeEach(() => {
+  mockDashboardResult = {
+    data: null,
+    error: null,
+    isLoading: false,
+    refresh: vi.fn(),
+  };
+});
 
 describe('TeamDashboardPage', () => {
-  it('shows loading spinner while applications are loading', () => {
-    renderPage([], true);
-    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+  it('shows section-level loading states while dashboard is loading', () => {
+    mockDashboardResult = { data: null, error: null, isLoading: true, refresh: vi.fn() };
+    renderPage();
+    expect(screen.getByLabelText('Loading health grid')).toBeInTheDocument();
   });
 
-  it('shows error alert when fetch fails', () => {
-    renderPage([], false, {
-      error: 'unknown',
-      message: 'Failed to load applications',
-      timestamp: '2026-04-06T00:00:00Z',
-    });
-    expect(screen.getByText('Failed to load applications')).toBeInTheDocument();
+  it('shows error alert when fetch fails completely', () => {
+    mockDashboardResult = {
+      data: null,
+      error: {
+        error: 'unknown',
+        message: 'Failed to load dashboard',
+        timestamp: '2026-04-13T00:00:00Z',
+      },
+      isLoading: false,
+      refresh: vi.fn(),
+    };
+    renderPage();
+    expect(screen.getByText('Failed to load dashboard')).toBeInTheDocument();
   });
 
   it('shows empty state when no applications exist', () => {
-    renderPage([]);
+    mockDashboardResult = {
+      data: {
+        ...fullDashboardResponse,
+        applications: [],
+        healthError: null,
+      },
+      error: null,
+      isLoading: false,
+      refresh: vi.fn(),
+    };
+    renderPage();
     expect(
       screen.getByText('No applications onboarded yet'),
     ).toBeInTheDocument();
   });
 
-  it('shows dashboard content when applications exist', () => {
-    renderPage(sampleApps);
+  it('renders DORA stat cards with correct values', () => {
+    mockDashboardResult = {
+      data: fullDashboardResponse,
+      error: null,
+      isLoading: false,
+      refresh: vi.fn(),
+    };
+    renderPage();
+    expect(screen.getByText('Deploy Frequency')).toBeInTheDocument();
+    expect(screen.getByText('Lead Time')).toBeInTheDocument();
+    expect(screen.getByText('Change Failure Rate')).toBeInTheDocument();
+    expect(screen.getByText('MTTR')).toBeInTheDocument();
+    expect(screen.getByText('4.2/wk')).toBeInTheDocument();
+  });
+
+  it('renders application health grid with applications', () => {
+    mockDashboardResult = {
+      data: fullDashboardResponse,
+      error: null,
+      isLoading: false,
+      refresh: vi.fn(),
+    };
+    renderPage();
+    expect(screen.getByText('checkout-api')).toBeInTheDocument();
+    expect(screen.getByText('payments-service')).toBeInTheDocument();
+  });
+
+  it('renders page title with team name', () => {
+    mockDashboardResult = {
+      data: fullDashboardResponse,
+      error: null,
+      isLoading: false,
+      refresh: vi.fn(),
+    };
+    renderPage();
     expect(screen.getByText('My Team Dashboard')).toBeInTheDocument();
   });
 
-  it('shows correct application count for multiple apps', () => {
-    renderPage(sampleApps);
-    expect(screen.getByText('2 applications onboarded')).toBeInTheDocument();
+  it('shows DORA warning alert and insufficient cards when doraError is present', () => {
+    mockDashboardResult = {
+      data: {
+        ...fullDashboardResponse,
+        doraError: 'Prometheus unreachable',
+        dora: { metrics: [], timeRange: '30d', hasData: false },
+      },
+      error: null,
+      isLoading: false,
+      refresh: vi.fn(),
+    };
+    renderPage();
+    expect(screen.getByText('DORA metrics unavailable')).toBeInTheDocument();
+    expect(screen.getByText('Prometheus unreachable')).toBeInTheDocument();
+    const insufficientLabels = screen.getAllByText('Insufficient data');
+    expect(insufficientLabels.length).toBe(4);
   });
 
-  it('uses singular form for single application', () => {
-    renderPage([sampleApps[0]]);
-    expect(screen.getByText('1 application onboarded')).toBeInTheDocument();
+  it('shows health error alert alongside grid when healthError present with apps', () => {
+    mockDashboardResult = {
+      data: {
+        ...fullDashboardResponse,
+        healthError: 'ArgoCD connection failed',
+      },
+      error: null,
+      isLoading: false,
+      refresh: vi.fn(),
+    };
+    renderPage();
+    expect(screen.getByText('Health data unavailable')).toBeInTheDocument();
+    expect(screen.getByText('ArgoCD connection failed')).toBeInTheDocument();
+    expect(screen.getByText('checkout-api')).toBeInTheDocument();
+  });
+
+  it('renders DORA cards while health section shows error (partial failure)', () => {
+    mockDashboardResult = {
+      data: {
+        ...fullDashboardResponse,
+        healthError: 'ArgoCD timeout',
+      },
+      error: null,
+      isLoading: false,
+      refresh: vi.fn(),
+    };
+    renderPage();
+    expect(screen.getByText('Health data unavailable')).toBeInTheDocument();
+    expect(screen.getByText('Deploy Frequency')).toBeInTheDocument();
+    expect(screen.getByText('4.2/wk')).toBeInTheDocument();
+  });
+
+  it('renders health grid while DORA section shows error (partial failure)', () => {
+    mockDashboardResult = {
+      data: {
+        ...fullDashboardResponse,
+        doraError: 'DORA metrics failed',
+      },
+      error: null,
+      isLoading: false,
+      refresh: vi.fn(),
+    };
+    renderPage();
+    expect(screen.getByText('DORA metrics unavailable')).toBeInTheDocument();
+    expect(screen.getByText('checkout-api')).toBeInTheDocument();
+  });
+
+  it('shows Story 7.3 placeholder section', () => {
+    mockDashboardResult = {
+      data: fullDashboardResponse,
+      error: null,
+      isLoading: false,
+      refresh: vi.fn(),
+    };
+    renderPage();
+    expect(
+      screen.getByText('Activity feed and DORA trends — coming in Story 7.3'),
+    ).toBeInTheDocument();
+  });
+
+  it('shows activityError warning in bottom section', () => {
+    mockDashboardResult = {
+      data: {
+        ...fullDashboardResponse,
+        activityError: 'Activity service timeout',
+      },
+      error: null,
+      isLoading: false,
+      refresh: vi.fn(),
+    };
+    renderPage();
+    expect(screen.getByText('Activity data unavailable')).toBeInTheDocument();
+    expect(screen.getByText('Activity service timeout')).toBeInTheDocument();
+  });
+
+  it('renders DORA cards with insufficient data when hasData is false', () => {
+    mockDashboardResult = {
+      data: {
+        ...fullDashboardResponse,
+        dora: { metrics: [], timeRange: '30d', hasData: false },
+        doraError: null,
+      },
+      error: null,
+      isLoading: false,
+      refresh: vi.fn(),
+    };
+    renderPage();
+    const insufficientLabels = screen.getAllByText('Insufficient data');
+    expect(insufficientLabels.length).toBe(4);
   });
 });

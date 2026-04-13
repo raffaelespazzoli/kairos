@@ -1,6 +1,6 @@
 # Story 7.2: Team Dashboard Page & Application Health Grid
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -34,34 +34,43 @@ so that I can quickly spot problems and take action.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create dashboard TypeScript types (AC: #1, #3, #4, #5)
-  - [ ] 1.1 Create `src/types/dashboard.ts` with `TeamDashboardResponse`, `ApplicationHealthSummaryDto`, `DashboardEnvironmentEntryDto`, `TeamActivityEventDto` types matching the 7.1 backend contract
-  - [ ] 1.2 Define `EnvironmentDotStatus` union type: `'HEALTHY' | 'UNHEALTHY' | 'DEPLOYING' | 'NOT_DEPLOYED' | 'UNKNOWN'`
+- [x] Task 1: Create dashboard TypeScript types (AC: #1, #3, #4, #5)
+  - [x] 1.1 Create `src/types/dashboard.ts` with `TeamDashboardResponse`, `ApplicationHealthSummaryDto`, `DashboardEnvironmentEntryDto`, `TeamActivityEventDto` types matching the 7.1 backend contract
+  - [x] 1.2 Define `EnvironmentDotStatus` union type: `'HEALTHY' | 'UNHEALTHY' | 'DEPLOYING' | 'NOT_DEPLOYED' | 'UNKNOWN'`
 
-- [ ] Task 2: Create dashboard API client and hook (AC: #1, #10, #11)
-  - [ ] 2.1 Create `src/api/dashboard.ts` with `fetchTeamDashboard(teamId)` calling `GET /api/v1/teams/${teamId}/dashboard` via `apiFetch`
-  - [ ] 2.2 Create `src/hooks/useDashboard.ts` using `useApiFetch<TeamDashboardResponse>` pattern
+- [x] Task 2: Create dashboard API client and hook (AC: #1, #10, #11)
+  - [x] 2.1 Create `src/api/dashboard.ts` with `fetchTeamDashboard(teamId)` calling `GET /api/v1/teams/${teamId}/dashboard` via `apiFetch`
+  - [x] 2.2 Create `src/hooks/useDashboard.ts` using `useApiFetch<TeamDashboardResponse>` pattern
 
-- [ ] Task 3: Create `ApplicationHealthGrid` component (AC: #3, #4, #5, #6, #7, #9)
-  - [ ] 3.1 Create `src/components/dashboard/ApplicationHealthGrid.tsx` — PatternFly `Table` (compact) with one row per `ApplicationHealthSummaryDto`
-  - [ ] 3.2 Implement `EnvironmentDot` inline component — 8px colored circle using PF CSS tokens, with `Tooltip` showing env name, status, version, `lastDeploymentAt`
-  - [ ] 3.3 Implement `DeploymentSparkline` inline component using PatternFly `ChartArea`/`ChartGroup` (sparkline variant) for 30-day deployment activity from DORA `timeSeries`
-  - [ ] 3.4 Implement row click → `navigate` to application overview
-  - [ ] 3.5 Implement keyboard navigation: focusable rows, Enter/Space activates
+- [x] Task 3: Create `ApplicationHealthGrid` component (AC: #3, #4, #5, #6, #7, #9)
+  - [x] 3.1 Create `src/components/dashboard/ApplicationHealthGrid.tsx` — PatternFly `Table` (compact) with one row per `ApplicationHealthSummaryDto`
+  - [x] 3.2 Implement `EnvironmentDot` inline component — 8px colored circle using PF CSS tokens, with `Tooltip` showing env name, status, version, `lastDeploymentAt`
+  - [x] 3.3 Implement `DeploymentSparkline` inline component using PatternFly `ChartArea`/`ChartGroup` (sparkline variant) for 30-day deployment activity from DORA `timeSeries`
+  - [x] 3.4 Implement row click → `navigate` to application overview
+  - [x] 3.5 Implement keyboard navigation: focusable rows, Enter/Space activates
 
-- [ ] Task 4: Rewrite `TeamDashboardPage` with full dashboard layout (AC: #1, #2, #8, #10, #11)
-  - [ ] 4.1 Replace current `TeamDashboardPage.tsx` content: use `useDashboard` hook instead of `useApplications` context
-  - [ ] 4.2 Add DORA stat cards row (4-column `Grid` of `DoraStatCard` components, reused from Story 6.3)
-  - [ ] 4.3 Add `ApplicationHealthGrid` in middle section
-  - [ ] 4.4 Add placeholder bottom section for Story 7.3 (activity feed + DORA trends)
-  - [ ] 4.5 Handle empty state via `NoApplicationsEmptyState`
-  - [ ] 4.6 Handle section-level errors with inline `Alert` (warning variant)
-  - [ ] 4.7 Handle independent loading states per section
+- [x] Task 4: Rewrite `TeamDashboardPage` with full dashboard layout (AC: #1, #2, #8, #10, #11)
+  - [x] 4.1 Replace current `TeamDashboardPage.tsx` content: use `useDashboard` hook instead of `useApplications` context
+  - [x] 4.2 Add DORA stat cards row (4-column `Grid` of `DoraStatCard` components, reused from Story 6.3)
+  - [x] 4.3 Add `ApplicationHealthGrid` in middle section
+  - [x] 4.4 Add placeholder bottom section for Story 7.3 (activity feed + DORA trends)
+  - [x] 4.5 Handle empty state via `NoApplicationsEmptyState`
+  - [x] 4.6 Handle section-level errors with inline `Alert` (warning variant)
+  - [x] 4.7 Handle independent loading states per section
 
-- [ ] Task 5: Tests (all AC)
-  - [ ] 5.1 Create `src/components/dashboard/ApplicationHealthGrid.test.tsx` — renders rows, dots with correct colors, tooltips, sparklines, row click navigation, keyboard nav, empty state
-  - [ ] 5.2 Update `src/routes/TeamDashboardPage.test.tsx` — DORA cards rendering, health grid rendering, loading states, error states, section errors, empty state
-  - [ ] 5.3 Mock `@patternfly/react-charts/victory` in tests (follow `ApplicationHealthPage.test.tsx` pattern)
+- [x] Task 5: Tests (all AC)
+  - [x] 5.1 Create `src/components/dashboard/ApplicationHealthGrid.test.tsx` — renders rows, dots with correct colors, tooltips, sparklines, row click navigation, keyboard nav, empty state
+  - [x] 5.2 Update `src/routes/TeamDashboardPage.test.tsx` — DORA cards rendering, health grid rendering, loading states, error states, section errors, empty state
+  - [x] 5.3 Mock `@patternfly/react-charts/victory` in tests (follow `ApplicationHealthPage.test.tsx` pattern)
+
+### Review Findings
+
+- [x] [Review][Patch] Render four `DoraStatCard` components in insufficient-data state when `doraError` is present, instead of replacing the entire section with a warning alert.
+- [x] [Review][Patch] Preserve the health grid when `healthError` is present so partial application data still renders alongside the warning alert.
+- [x] [Review][Patch] Replace the full-page initial `LoadingSpinner` with section-level loading states so the dashboard does not use a global loading view on first fetch.
+- [x] [Review][Patch] Implement and test explicit keyboard activation for application rows (`Enter`/`Space`) instead of relying on `isClickable` alone.
+- [x] [Review][Patch] Include `statusDetail` in the environment tooltip when present so the tooltip exposes the full status text required by the story.
+- [x] [Review][Patch] Surface `activityError` in the placeholder bottom section with an inline warning alert so all section-level dashboard errors are represented.
 
 ## Dev Notes
 
@@ -367,8 +376,37 @@ Patterns established: PF chart mocking in tests, `useApiFetch` for data hooks, i
 
 ### Agent Model Used
 
+Cursor Agent (Opus 4.6)
+
 ### Debug Log References
+
+- App.test.tsx required update to mock the new `/dashboard` endpoint via `useApiFetch` — the old test relied on `ApplicationsProvider` which the rewritten page no longer uses.
+- Pre-existing test failure in `ApplicationTabs.test.tsx` (expects "Health" tab label but component renders "Metrics") — not related to this story.
 
 ### Completion Notes List
 
+- Created `types/dashboard.ts` with all DTOs matching Story 7.1 backend contract, including `EnvironmentDotStatus` union type and `TeamDashboardResponse` interface importing `DoraMetricsResponse`.
+- Created `api/dashboard.ts` and `hooks/useDashboard.ts` following existing project patterns (`apiFetch` wrapper, `useApiFetch` hook with conditional path).
+- Built `ApplicationHealthGrid` component with: PatternFly compact Table, inline `EnvironmentDot` (8px colored circles using PF CSS tokens, Tooltip with env details, aria-label), `DeploymentSparkline` (ChartArea/ChartGroup, 80×24px, aria-label with deployment count), clickable rows via `isClickable` prop with navigate to app overview.
+- Rewrote `TeamDashboardPage` with full dashboard layout: DORA stat cards in 4-column Grid, ApplicationHealthGrid in Card, placeholder section for Story 7.3, independent loading/error/empty states per section, inline Alert (warning) for section-level errors.
+- Wrote 9 component tests for ApplicationHealthGrid and 12 page tests for TeamDashboardPage covering: loading, success, empty, fatal error, partial errors (doraError, healthError), DORA insufficient data, placeholder section.
+- Updated `App.test.tsx` to mock `/dashboard` endpoint for the rewritten page.
+- All 390 tests pass; 1 pre-existing failure in ApplicationTabs unrelated to this story.
+
+### Change Log
+
+- 2026-04-13: Story 7.2 implementation complete — Team Dashboard Page with DORA stat cards, Application Health Grid, section-level error handling, and comprehensive test coverage.
+
 ### File List
+
+**New files:**
+- `developer-portal/src/main/webui/src/types/dashboard.ts`
+- `developer-portal/src/main/webui/src/api/dashboard.ts`
+- `developer-portal/src/main/webui/src/hooks/useDashboard.ts`
+- `developer-portal/src/main/webui/src/components/dashboard/ApplicationHealthGrid.tsx`
+- `developer-portal/src/main/webui/src/components/dashboard/ApplicationHealthGrid.test.tsx`
+
+**Modified files:**
+- `developer-portal/src/main/webui/src/routes/TeamDashboardPage.tsx` (rewritten)
+- `developer-portal/src/main/webui/src/routes/TeamDashboardPage.test.tsx` (rewritten)
+- `developer-portal/src/main/webui/src/App.test.tsx` (updated mock for dashboard endpoint)

@@ -13,9 +13,11 @@ vi.mock('./hooks/useApiFetch', () => ({
   useApiFetch: (path: string | null) => ({
     data: path !== null && path.endsWith('/teams')
       ? [{ id: 1, name: 'My Team', oidcGroupId: 'default' }]
-      : path !== null && path.includes('/applications')
-        ? []
-        : null,
+      : path !== null && path.includes('/dashboard')
+        ? { applications: [], dora: { metrics: [], timeRange: '30d', hasData: false }, recentActivity: [], healthError: null, doraError: null, activityError: null }
+        : path !== null && path.includes('/applications')
+          ? []
+          : null,
     error: null,
     isLoading: false,
     refresh: vi.fn(),
