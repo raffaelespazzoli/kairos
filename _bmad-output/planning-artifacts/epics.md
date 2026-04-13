@@ -1777,3 +1777,78 @@ So that I have temporal context on what's happening and how delivery performance
 **Then** DataList items are keyboard-navigable (Tab between items, Enter to navigate)
 **And** each item has an aria-label combining event type, app name, status, and time (e.g., "Build, checkout-api, passed, 5 minutes ago")
 **And** charts have aria-labels describing the metric and trend summary
+
+### Story 7.4: Environments Tab — Promotion Pipeline & Settings Consolidation
+
+As a developer,
+I want a dedicated Environments tab that shows the full promotion pipeline with per-environment details, deep links, and secrets access,
+So that I can understand my application's deployment path and access all environment-related tooling from one place — replacing the separate Settings tab.
+
+**Acceptance Criteria:**
+
+**Given** a developer navigates to the Environments tab for an application
+**When** the page renders
+**Then** it displays the ordered promotion pipeline (dev → staging → prod, as defined at onboarding)
+**And** the last environment is visually marked as the production environment
+
+**Given** the environments are displayed
+**When** viewing each environment entry
+**Then** each shows: environment name, cluster name, namespace, deployed version, deployment status, and last deployment timestamp
+**And** the production environment is distinguished with a visual indicator (e.g., badge or icon)
+
+**Given** each environment entry in the pipeline view
+**When** deep links are available
+**Then** the following deep links are displayed per environment:
+- ArgoCD deep link (to the environment's ArgoCD application)
+- Vault deep link (to the environment's secrets path)
+- Grafana deep link (to the environment's monitoring dashboard, from the health endpoint)
+
+**Given** the Environments tab exists
+**When** the Settings tab is evaluated
+**Then** the Settings tab is removed from ApplicationTabs
+**And** the `/settings` route is removed from the router
+**And** the `ApplicationSettingsPage` component is deleted
+**And** all Vault/environment configuration that was on Settings is now accessible on the Environments tab
+
+**Given** the Environments tab is navigated with keyboard
+**When** tabbing through environment entries
+**Then** each entry and its deep links are keyboard-accessible
+**And** each environment row has an aria-label including environment name and status
+
+**Given** environments data is loading
+**When** the tab first renders
+**Then** a loading spinner is shown
+**And** errors from ArgoCD or Prometheus are displayed as inline alerts without blocking the entire page
+
+### Story 7.5: Application Overview — Recent Builds & Activity Summary
+
+As a developer,
+I want to see a summary of recent builds and activity on my application's Overview page,
+So that I have immediate context without switching to the Builds or Activity tabs.
+
+**Acceptance Criteria:**
+
+**Given** the Application Overview page renders its bottom section
+**When** the two-column grid displays
+**Then** the left column shows "Recent Builds" with the 5 most recent builds
+**And** the right column shows "Recent Activity" with the most recent per-app activity events
+
+**Given** the Recent Builds section renders
+**When** build data is available
+**Then** it reuses the existing BuildTable component (or a compact variant) showing the last 5 builds
+**And** each build shows: build ID, status badge, started timestamp, and duration
+**And** a "View all builds" link navigates to the Builds tab
+
+**Given** the Recent Activity section renders
+**When** activity events are available for this application
+**Then** it reuses the ActivityFeed component from Story 7.3
+**And** events are scoped to the current application (not team-wide)
+**And** event types include builds, deployments, and releases for this application
+
+**Given** no builds exist for the application
+**When** the Recent Builds section renders
+**Then** an empty state message is shown: "No builds yet"
+
+**Given** the previous placeholder text ("Build history coming in Epic 4" / "Activity feed coming in Epic 7")
+**When** this story is implemented
+**Then** those placeholder cards are completely replaced with the live data components

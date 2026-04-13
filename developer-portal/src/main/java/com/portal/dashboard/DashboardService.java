@@ -21,6 +21,8 @@ import com.portal.integration.prometheus.model.DoraMetricType;
 import com.portal.integration.prometheus.model.TrendDirection;
 import com.portal.release.ReleaseService;
 import com.portal.release.ReleaseSummaryDto;
+import io.quarkus.arc.Arc;
+import io.quarkus.arc.ManagedContext;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
@@ -33,6 +35,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
@@ -64,6 +67,23 @@ public class DashboardService {
     DeploymentService deploymentService;
 
     /**
+     * Runs a task on a new thread with its own CDI request context so that each
+     * parallel task gets a fresh Hibernate Session/EntityManager rather than sharing
+     * the caller's connection (which causes closed ResultSet errors).
+     */
+    <T> CompletableFuture<T> supplyWithContext(Supplier<T> task) {
+        return CompletableFuture.supplyAsync(() -> {
+            ManagedContext requestContext = Arc.container().requestContext();
+            requestContext.activate();
+            try {
+                return task.get();
+            } finally {
+                requestContext.terminate();
+            }
+        });
+    }
+
+    /**
      * Assembles the team dashboard by aggregating health, DORA, and activity data
      * in parallel across all team applications. Partial failures are isolated to
      * their respective sections rather than failing the entire dashboard.
@@ -72,11 +92,11 @@ public class DashboardService {
         List<Application> apps = applicationService.getApplicationsForTeam(teamId);
 
         CompletableFuture<HealthAggregation> healthFuture =
-                CompletableFuture.supplyAsync(() -> aggregateHealth(teamId, apps));
+                supplyWithContext(() -> aggregateHealth(teamId, apps));
         CompletableFuture<DoraAggregation> doraFuture =
-                CompletableFuture.supplyAsync(() -> aggregateDora(teamId, apps));
+                supplyWithContext(() -> aggregateDora(teamId, apps));
         CompletableFuture<ActivityAggregation> activityFuture =
-                CompletableFuture.supplyAsync(() -> aggregateActivity(teamId, apps));
+                supplyWithContext(() -> aggregateActivity(teamId, apps));
 
         HealthAggregation health = joinSafely(healthFuture);
         DoraAggregation dora = joinSafely(doraFuture);
@@ -98,7 +118,7 @@ public class DashboardService {
         List<ApplicationHealthSummaryDto> summaries = new ArrayList<>();
 
         List<CompletableFuture<ApplicationHealthSummaryDto>> futures = apps.stream()
-                .map(app -> CompletableFuture.supplyAsync(() ->
+                .map(app -> supplyWithContext(() ->
                         buildAppHealthSummary(teamId, app, errors)))
                 .toList();
 
@@ -228,7 +248,7 @@ public class DashboardService {
         List<DoraMetricsDto> perAppDora = new ArrayList<>();
 
         List<CompletableFuture<DoraMetricsDto>> futures = apps.stream()
-                .map(app -> CompletableFuture.supplyAsync(() -> {
+                .map(app -> supplyWithContext(() -> {
                     try {
                         return doraService.getDoraMetrics(teamId, app.id, null);
                     } catch (Exception e) {
@@ -495,7 +515,7 @@ public class DashboardService {
         List<TeamActivityEventDto> allEvents = new ArrayList<>();
 
         List<CompletableFuture<List<TeamActivityEventDto>>> futures = apps.stream()
-                .map(app -> CompletableFuture.supplyAsync(() ->
+                .map(app -> supplyWithContext(() ->
                         collectAppActivity(teamId, app, errors)))
                 .toList();
 

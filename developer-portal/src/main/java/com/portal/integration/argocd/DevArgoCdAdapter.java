@@ -31,12 +31,17 @@ public class DevArgoCdAdapter implements ArgoCdAdapter {
                     int relative = env.promotionOrder - minOrder;
                     PortalEnvironmentStatus status = switch (relative) {
                         case 0 -> PortalEnvironmentStatus.HEALTHY;
-                        case 1 -> PortalEnvironmentStatus.DEPLOYING;
+                        case 1 -> PortalEnvironmentStatus.HEALTHY;
+                        case 2 -> PortalEnvironmentStatus.DEPLOYING;
                         default -> PortalEnvironmentStatus.NOT_DEPLOYED;
                     };
-                    String version = status == PortalEnvironmentStatus.HEALTHY ? "v1.2.3" : null;
+                    String version = switch (status) {
+                        case HEALTHY -> relative == 0 ? "v1.2.3" : "v1.2.2";
+                        case DEPLOYING -> "v1.2.3";
+                        default -> null;
+                    };
                     Instant deployedAt = status == PortalEnvironmentStatus.HEALTHY
-                            ? Instant.now().minusSeconds(7200) : null;
+                            ? Instant.now().minusSeconds(7200 * (relative + 1)) : null;
 
                     return new EnvironmentStatusDto(
                             env.name, status, version, deployedAt,
