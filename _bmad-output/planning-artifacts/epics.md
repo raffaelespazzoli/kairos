@@ -233,6 +233,13 @@ Team leads can view a team-level dashboard with all applications, health across 
 **FRs covered:** FR32, FR33, FR34, FR35
 **Key UX-DRs:** UX-DR5, UX-DR10, UX-DR22
 
+### Epic 8: UI Consolidation — Tab Restructuring & View Optimization
+
+Application tabs are consolidated from 5 to 3: Overview absorbs Environments (full promotion pipeline with Vault deep links in cards), a new Delivery tab merges Builds + Releases + Activity into a 3-column view, and Metrics remains unchanged. Frontend-only — no backend changes.
+
+**FRs covered:** FR35 (drill-down optimization), FR33 (activity feed relocation)
+**Key UX-DRs:** UX-DR5 (health grid), UX-DR10 (dashboard layout), UX-DR22 (activity feed)
+
 ---
 
 ## Epic 1: Foundation, Authentication & Platform Setup
@@ -1852,3 +1859,123 @@ So that I have immediate context without switching to the Builds or Activity tab
 **Given** the previous placeholder text ("Build history coming in Epic 4" / "Activity feed coming in Epic 7")
 **When** this story is implemented
 **Then** those placeholder cards are completely replaced with the live data components
+
+## Epic 8: UI Consolidation — Tab Restructuring & View Optimization
+
+Application tabs are consolidated from 5 to 3: Overview absorbs Environments (full promotion pipeline with Vault deep links in cards), a new Delivery tab merges Builds + Releases + Activity into a 3-column view, and Metrics remains unchanged. This is a frontend-only epic — no backend changes required.
+
+**Origin:** Epic 7 retrospective party mode analysis. Building all 7 epics revealed UI redundancy: the same EnvironmentChain appeared on two pages, activity data was displayed in multiple views, and 5 tabs created navigation overhead. The team (UX, BA, PM, Architect, Dev) converged on a 3-tab model that preserves all functionality while improving focus.
+
+**Tab Restructuring:**
+
+| Tab (Before) | Tab (After) | Change |
+|---|---|---|
+| Overview | **Overview** | Absorbs Environments tab; drops Recent Builds + Recent Activity cards |
+| Builds | **Delivery** (new) | 3-column: Builds \| Releases \| Activity |
+| Releases | _(merged into Delivery)_ | — |
+| Environments | _(merged into Overview)_ | — |
+| Metrics | **Metrics** | Unchanged |
+
+**Design Decisions:**
+- Overview becomes the **deployment state** view: full environment chain with ArgoCD, Vault, and Grafana deep links in expanded cards
+- Delivery becomes the **pipeline activity** view: 3-column layout (Builds | Releases | Activity) showing the full delivery story left-to-right (built → tagged → shipped)
+- Vault deep links stay in `EnvironmentCard` expanded view — the separate Secrets Management card from the Environments page is redundant
+- `CreateReleaseModal` continues to trigger from `BuildTable` — works in any page context
+- `RefreshButton` behavior preserved on Overview (already wired to `refreshEnv` + `refreshHealth`)
+
+**Scope:** Frontend-only. All existing backend endpoints remain unchanged. Reuses existing components: `EnvironmentChain`, `EnvironmentCard`, `BuildTable`, `ActivityFeed`, releases list, `DoraStatCard`, `DoraTrendChart`.
+
+### Story 8.1: Merge Environments Tab into Application Overview
+
+As a developer,
+I want the Application Overview to be the single view for deployment state — showing the full environment promotion pipeline with all deep links and deploy/promote actions,
+So that I don't need to switch between Overview and Environments tabs for the same information.
+
+**Acceptance Criteria:**
+
+**Given** the Application Overview page renders
+**When** the environment chain section displays
+**Then** it shows the full promotion pipeline with per-environment details, deep links (ArgoCD, Vault, Grafana), deploy/promote actions, and health status — identical to what the Environments tab currently provides
+**And** the Vault deep links are accessible from each `EnvironmentCard` expanded view (already added in Story 7.4)
+
+**Given** the Overview page now contains the full environment chain
+**When** the Environments tab is evaluated
+**Then** the Environments tab is removed from `ApplicationTabs`
+**And** the `/environments` route is removed from `App.tsx`
+**And** `ApplicationEnvironmentsPage` is deleted
+
+**Given** the Overview page previously showed Recent Builds and Recent Activity cards in a bottom grid (Story 7.5)
+**When** this story is implemented
+**Then** the Recent Builds card, Recent Activity card, and their associated hooks (`useBuilds`, `useAppActivity`) are removed from the Overview page
+**And** the Overview page's bottom section is clean — no placeholder or stub content remains
+
+**Given** the Overview page is refreshed
+**When** the RefreshButton is clicked
+**Then** environment data and health data are refreshed (existing behavior preserved)
+
+### Story 8.2: Create Delivery Tab — Unified Builds, Releases & Activity View
+
+As a developer,
+I want a single Delivery tab that shows my builds, releases, and recent activity in a 3-column layout,
+So that I can see the full delivery pipeline — from CI output to versioned releases to deployment events — in one view.
+
+**Acceptance Criteria:**
+
+**Given** a developer navigates to the Delivery tab for an application
+**When** the page renders
+**Then** a 3-column PatternFly Grid layout displays:
+- Left column: full build list using `BuildTable` with Create Release flow intact
+- Middle column: full release list (existing releases list component)
+- Right column: recent activity using `ActivityFeed` with per-app events
+
+**Given** the Builds tab and Releases tab currently exist as separate pages
+**When** this story is implemented
+**Then** the Builds tab is removed from `ApplicationTabs`
+**And** the Releases tab is removed from `ApplicationTabs`
+**And** a new "Delivery" tab is added to `ApplicationTabs`
+**And** the `/builds` and `/releases` routes are removed from `App.tsx`
+**And** a new `/delivery` route is added to `App.tsx`
+**And** `ApplicationBuildsPage` and `ApplicationReleasesPage` are deleted
+
+**Given** the 3-column layout renders
+**When** each column has its own data source
+**Then** each column shows independent loading states (Spinner per column)
+**And** each column shows independent error states (inline Alert per column) without blocking sibling columns
+**And** empty states are handled per column ("No builds yet", "No releases yet", "No recent activity")
+
+**Given** a developer creates a release from a successful build in the Builds column
+**When** the `CreateReleaseModal` completes
+**Then** the new release appears in the Releases column (via data refresh)
+
+**Given** the application tabs after this story
+**When** the tab bar renders
+**Then** it shows exactly 3 tabs: Overview | Delivery | Metrics
+
+### Story 8.3: Tab Navigation Cleanup & Route Redirects
+
+As a developer,
+I want old bookmarked URLs for removed tabs to redirect gracefully to their new locations,
+So that saved links and browser history don't lead to 404 pages.
+
+**Acceptance Criteria:**
+
+**Given** a developer has a bookmarked URL to `/teams/{teamId}/apps/{appId}/environments`
+**When** they navigate to that URL
+**Then** they are redirected to `/teams/{teamId}/apps/{appId}` (Overview, which now contains environments)
+
+**Given** a developer has a bookmarked URL to `/teams/{teamId}/apps/{appId}/builds`
+**When** they navigate to that URL
+**Then** they are redirected to `/teams/{teamId}/apps/{appId}/delivery`
+
+**Given** a developer has a bookmarked URL to `/teams/{teamId}/apps/{appId}/releases`
+**When** they navigate to that URL
+**Then** they are redirected to `/teams/{teamId}/apps/{appId}/delivery`
+
+**Given** a developer has a bookmarked URL to `/teams/{teamId}/apps/{appId}/settings`
+**When** they navigate to that URL
+**Then** they are redirected to `/teams/{teamId}/apps/{appId}` (Overview)
+
+**Given** all redirect routes are in place
+**When** the full test suite runs
+**Then** all tests pass with zero regressions
+**And** breadcrumbs display correctly for all remaining tabs

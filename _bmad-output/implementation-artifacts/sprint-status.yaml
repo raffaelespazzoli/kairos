@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-03
-last_updated: 2026-04-14T06:28:00-04:00
+last_updated: 2026-04-14T17:00:00-04:00
 project: bmad
 project_key: NOKEY
 tracking_system: file-system
@@ -97,10 +97,17 @@ development_status:
   epic-6-retrospective: done
 
   # Epic 7: Team Portfolio Dashboard
-  epic-7: in-progress
+  epic-7: done
   7-1-team-dashboard-backend-aggregation: done
   7-2-team-dashboard-page-application-health-grid: done
   7-3-activity-feed-aggregated-dora-trends: done
   7-4-environments-tab-promotion-pipeline-settings-consolidation: done
-  7-5-application-overview-recent-builds-activity-summary: ready-for-dev
-  epic-7-retrospective: optional
+  7-5-application-overview-recent-builds-activity-summary: done
+  epic-7-retrospective: done
+
+  # Epic 8: UI Consolidation — Tab Restructuring & View Optimization
+  epic-8: backlog
+  8-1-merge-environments-tab-into-application-overview: backlog
+  8-2-create-delivery-tab-unified-builds-releases-activity: backlog
+  8-3-tab-navigation-cleanup-route-redirects: backlog
+  epic-8-retrospective: optional

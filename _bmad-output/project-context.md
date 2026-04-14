@@ -368,6 +368,24 @@ When rendering action controls (buttons, dropdowns, menus) whose visibility or b
 5. **Document the state matrix** — for components with 3+ state dimensions controlling action visibility, include a comment-level truth table (status x role x data availability → visible controls) so reviewers can verify completeness without reverse-engineering the JSX conditionals
 6. **Test every guard rule** — for each guard condition that hides or disables a control, a corresponding frontend test must assert the control is absent/disabled under that condition. Guards without tests are invisible regressions waiting to happen
 
+**Section-Level Error Handling — Partial Data with Inline Alerts:**
+
+When a page or section fetches data and the response includes both available data and a section-level error indicator (e.g., `healthError`, `doraError`, `activityError`), follow these rules to prevent content replacement failures:
+
+1. **Render available data alongside the error** — when partial data is available, render it normally AND show an inline `Alert` (warning variant) explaining the degraded section. Never replace the entire section's content with an error-only view
+2. **Independent section loading states** — each section (e.g., DORA cards, health grid, activity feed) shows its own loading indicator (Spinner/Skeleton). Never use a single global loading overlay that blocks all sections
+3. **Section errors do not block sibling sections** — if one section has an error, all other sections that received data must render normally. Errors are isolated to their section
+4. **Error + data pattern for stat cards** — when a stat card section has an error but individual cards can show data, render the cards in their insufficient-data state rather than replacing all cards with a single Alert
+5. **Test both paths** — for every section that can have partial errors, test: (a) section renders data when no error, (b) section renders data + warning Alert when error is present, (c) sibling sections still render when this section errors
+
+**Unique Test Fixture Data — Preventing Text Collisions:**
+
+When multiple components on the same page display overlapping data types (e.g., application names in both a health grid and an activity feed), test fixtures must use distinct values per component to prevent `getByText` ambiguity:
+
+1. **Use unique reference values per test section** — if both a BuildTable and an ActivityFeed render on the same page, the build fixtures and activity fixtures must use different application names, version strings, and identifiers
+2. **Prefer `getAllByText` for intentionally duplicated text** — when text genuinely appears in multiple components (e.g., a metric title in both a stat card and a trend chart), use `getAllByText` with length assertions instead of `getByText`
+3. **Test data should be obviously synthetic** — use values like `"test-app-builds"` and `"test-app-activity"` rather than generic `"checkout-api"` that might collide across components
+
 ---
 
 ## Usage Guidelines
@@ -386,4 +404,4 @@ When rendering action controls (buttons, dropdowns, menus) whose visibility or b
 - Review quarterly for outdated rules
 - Remove rules that become obvious over time
 
-Last Updated: 2026-04-12
+Last Updated: 2026-04-14
