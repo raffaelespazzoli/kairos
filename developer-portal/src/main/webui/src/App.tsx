@@ -8,7 +8,6 @@ import { ApplicationBuildsPage } from './routes/ApplicationBuildsPage';
 import { ApplicationReleasesPage } from './routes/ApplicationReleasesPage';
 import { ApplicationEnvironmentsPage } from './routes/ApplicationEnvironmentsPage';
 import { ApplicationHealthPage } from './routes/ApplicationHealthPage';
-import { ApplicationSettingsPage } from './routes/ApplicationSettingsPage';
 import { OnboardingWizardPage } from './routes/OnboardingWizardPage';
 import { AdminClustersPage } from './routes/AdminClustersPage';
 import { setTokenAccessor } from './api/client';
@@ -44,7 +43,6 @@ function App() {
               element={<ApplicationEnvironmentsPage />}
             />
             <Route path="health" element={<ApplicationHealthPage />} />
-            <Route path="settings" element={<ApplicationSettingsPage />} />
           </Route>
 
           <Route

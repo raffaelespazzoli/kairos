@@ -1,6 +1,6 @@
 # Story 7.4: Environments Tab — Promotion Pipeline & Settings Consolidation
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -54,40 +54,44 @@ so that I can understand my application's deployment path and access all environ
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Rewrite `ApplicationEnvironmentsPage` with full environment chain and Vault deep links (AC: #1, #2, #3, #5, #6)
-  - [ ] 1.1 Replace the placeholder content in `ApplicationEnvironmentsPage.tsx` with a full implementation
-  - [ ] 1.2 Use `useEnvironments(teamId, appId)` to fetch environment chain data
-  - [ ] 1.3 Use `useReleases(teamId, appId)` and `useHealth(teamId, appId)` for deploy actions and health enrichment
-  - [ ] 1.4 Render `EnvironmentChain` component (reuse from Overview page) with all required props
-  - [ ] 1.5 Add a "Secrets Management" card below the chain: show Vault deep links per environment using `DeepLinkButton`
-  - [ ] 1.6 Handle no-vault-links state with info Alert ("Vault URL not configured")
-  - [ ] 1.7 Add loading state (`LoadingSpinner`) and error handling (`ErrorAlert`, inline `Alert`)
-  - [ ] 1.8 Add `RefreshButton` for manual refresh of environment + health data
+- [x] Task 1: Rewrite `ApplicationEnvironmentsPage` with full environment chain and Vault deep links (AC: #1, #2, #3, #5, #6)
+  - [x] 1.1 Replace the placeholder content in `ApplicationEnvironmentsPage.tsx` with a full implementation
+  - [x] 1.2 Use `useEnvironments(teamId, appId)` to fetch environment chain data
+  - [x] 1.3 Use `useReleases(teamId, appId)` and `useHealth(teamId, appId)` for deploy actions and health enrichment
+  - [x] 1.4 Render `EnvironmentChain` component (reuse from Overview page) with all required props
+  - [x] 1.5 Add a "Secrets Management" card below the chain: show Vault deep links per environment using `DeepLinkButton`
+  - [x] 1.6 Handle no-vault-links state with info Alert ("Vault URL not configured")
+  - [x] 1.7 Add loading state (`LoadingSpinner`) and error handling (`ErrorAlert`, inline `Alert`)
+  - [x] 1.8 Add `RefreshButton` for manual refresh of environment + health data
 
-- [ ] Task 2: Add Vault deep link to `EnvironmentCard` expanded view (AC: #3)
-  - [ ] 2.1 Add a `FlexItem` with `DeepLinkButton` for Vault between the existing ArgoCD and Grafana deep link items in the expanded card body
-  - [ ] 2.2 Use `entry.vaultDeepLink` (already in `EnvironmentChainEntry` type) with `toolName="Vault"` and appropriate `ariaLabel`
+- [x] Task 2: Add Vault deep link to `EnvironmentCard` expanded view (AC: #3)
+  - [x] 2.1 Add a `FlexItem` with `DeepLinkButton` for Vault between the existing ArgoCD and Grafana deep link items in the expanded card body
+  - [x] 2.2 Use `entry.vaultDeepLink` (already in `EnvironmentChainEntry` type) with `toolName="Vault"` and appropriate `ariaLabel`
 
-- [ ] Task 3: Remove Settings tab and route (AC: #4)
-  - [ ] 3.1 Remove `{ key: 'settings', label: 'Settings' }` from `APP_TABS` in `ApplicationTabs.tsx`
-  - [ ] 3.2 Remove `<Route path="settings" element={<ApplicationSettingsPage />} />` from `App.tsx`
-  - [ ] 3.3 Remove `import { ApplicationSettingsPage }` from `App.tsx`
-  - [ ] 3.4 Delete `ApplicationSettingsPage.tsx` and `ApplicationSettingsPage.test.tsx`
+- [x] Task 3: Remove Settings tab and route (AC: #4)
+  - [x] 3.1 Remove `{ key: 'settings', label: 'Settings' }` from `APP_TABS` in `ApplicationTabs.tsx`
+  - [x] 3.2 Remove `<Route path="settings" element={<ApplicationSettingsPage />} />` from `App.tsx`
+  - [x] 3.3 Remove `import { ApplicationSettingsPage }` from `App.tsx`
+  - [x] 3.4 Delete `ApplicationSettingsPage.tsx` and `ApplicationSettingsPage.test.tsx`
 
-- [ ] Task 4: Tests (all AC)
-  - [ ] 4.1 Create `ApplicationEnvironmentsPage.test.tsx` in `src/main/webui/src/routes/`
-    - [ ] Renders environment chain with environment cards
-    - [ ] Shows loading spinner while environments load
-    - [ ] Shows error alert on fetch failure
-    - [ ] Shows ArgoCD warning alert when `argocdError` is present
-    - [ ] Shows Vault deep links per environment in Secrets Management card
-    - [ ] Shows info alert when no vault links configured
-    - [ ] RefreshButton is rendered
-  - [ ] 4.2 Update `ApplicationTabs.test.tsx`
-    - [ ] Update "renders all 6 tabs" → "renders all 5 tabs"
-    - [ ] Remove assertion for 'Settings' tab
-  - [ ] 4.3 Update `App.test.tsx` if it references the settings route
-  - [ ] 4.4 Verify `EnvironmentCard` Vault deep link renders in existing `EnvironmentCard.test.tsx` or add test if none exists
+- [x] Task 4: Tests (all AC)
+  - [x] 4.1 Create `ApplicationEnvironmentsPage.test.tsx` in `src/main/webui/src/routes/`
+    - [x] Renders environment chain with environment cards
+    - [x] Shows loading spinner while environments load
+    - [x] Shows error alert on fetch failure
+    - [x] Shows ArgoCD warning alert when `argocdError` is present
+    - [x] Shows Vault deep links per environment in Secrets Management card
+    - [x] Shows info alert when no vault links configured
+    - [x] RefreshButton is rendered
+  - [x] 4.2 Update `ApplicationTabs.test.tsx`
+    - [x] Update "renders all 6 tabs" → "renders all 5 tabs"
+    - [x] Remove assertion for 'Settings' tab
+  - [x] 4.3 Update `App.test.tsx` if it references the settings route
+  - [x] 4.4 Verify `EnvironmentCard` Vault deep link renders in existing `EnvironmentCard.test.tsx` or add test if none exists
+
+### Review Findings
+
+- [x] [Review][Patch] Surface `useHealth` failures on the Environments page [`developer-portal/src/main/webui/src/routes/ApplicationEnvironmentsPage.tsx`] — fixed: added `healthError` inline warning Alert + test
 
 ## Dev Notes
 
@@ -407,12 +411,41 @@ Key patterns reinforced:
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Opus 4 (2026-04-13)
 
 ### Debug Log References
 
+- Initial test run: 3 failures (duplicate LoadingSpinner/ErrorAlert in Secrets Management card, Accessibility.test.tsx tab count 6→5)
+- Fix: removed duplicate loading/error states from card body; updated Accessibility.test.tsx tab count
+- Final test run: 424/424 tests pass, 38 test files
+
 ### Completion Notes List
+
+- Replaced placeholder `ApplicationEnvironmentsPage` with full implementation: EnvironmentChain + Secrets Management card with Vault deep links
+- Added Vault deep link (`DeepLinkButton`) to `EnvironmentCard` expanded view between ArgoCD and Grafana links
+- Removed Settings tab from `APP_TABS` (6→5 tabs), removed settings route + import from `App.tsx`
+- Deleted `ApplicationSettingsPage.tsx` and `ApplicationSettingsPage.test.tsx`
+- Created comprehensive `ApplicationEnvironmentsPage.test.tsx` (11 tests covering chain rendering, loading, errors, ArgoCD warnings, Vault links, info alerts, refresh button)
+- Added 2 Vault deep link tests to `EnvironmentCard.test.tsx` (present + absent)
+- Updated `ApplicationTabs.test.tsx` (6→5 tabs, Settings→Metrics)
+- Updated `Accessibility.test.tsx` tab count (6→5)
+- App.test.tsx required no changes (did not reference settings route)
 
 ### Change Log
 
+- 2026-04-13: Story 7.4 implementation complete — Environments tab with full promotion pipeline, Vault deep links, Settings tab removed and consolidated
+
 ### File List
+
+- `developer-portal/src/main/webui/src/routes/ApplicationEnvironmentsPage.tsx` (modified — replaced placeholder with full implementation)
+- `developer-portal/src/main/webui/src/routes/ApplicationEnvironmentsPage.test.tsx` (new — 11 test cases)
+- `developer-portal/src/main/webui/src/components/environment/EnvironmentCard.tsx` (modified — added Vault deep link in expanded view)
+- `developer-portal/src/main/webui/src/components/environment/EnvironmentCard.test.tsx` (modified — added 2 Vault deep link tests)
+- `developer-portal/src/main/webui/src/components/layout/ApplicationTabs.tsx` (modified — removed Settings from APP_TABS)
+- `developer-portal/src/main/webui/src/components/layout/ApplicationTabs.test.tsx` (modified — 6 tabs → 5 tabs)
+- `developer-portal/src/main/webui/src/components/layout/Accessibility.test.tsx` (modified — tab count 6 → 5)
+- `developer-portal/src/main/webui/src/App.tsx` (modified — removed settings route and import)
+- `developer-portal/src/main/webui/src/routes/ApplicationSettingsPage.tsx` (deleted)
+- `developer-portal/src/main/webui/src/routes/ApplicationSettingsPage.test.tsx` (deleted)
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` (modified — 7-4 status updated)
+- `_bmad-output/implementation-artifacts/7-4-environments-tab-promotion-pipeline-settings-consolidation.md` (modified — story file updated)

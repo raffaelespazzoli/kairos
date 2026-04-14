@@ -61,7 +61,7 @@ describe('Accessibility', () => {
   it('each tab has proper tab role', () => {
     renderFullShell();
     const tabs = screen.getAllByRole('tab');
-    expect(tabs.length).toBe(6);
+    expect(tabs.length).toBe(5);
   });
 
   it('sidebar toggle has aria-label', () => {

@@ -7,7 +7,6 @@ const APP_TABS = [
   { key: 'releases', label: 'Releases' },
   { key: 'environments', label: 'Environments' },
   { key: 'health', label: 'Metrics' },
-  { key: 'settings', label: 'Settings' },
 ] as const;
 
 function deriveTabFromPath(pathname: string): string {

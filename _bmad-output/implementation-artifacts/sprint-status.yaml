@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-03
-last_updated: 2026-04-13T22:00:00-04:00
+last_updated: 2026-04-14T06:28:00-04:00
 project: bmad
 project_key: NOKEY
 tracking_system: file-system
@@ -101,6 +101,6 @@ development_status:
   7-1-team-dashboard-backend-aggregation: done
   7-2-team-dashboard-page-application-health-grid: done
   7-3-activity-feed-aggregated-dora-trends: done
-  7-4-environments-tab-promotion-pipeline-settings-consolidation: ready-for-dev
+  7-4-environments-tab-promotion-pipeline-settings-consolidation: done
   7-5-application-overview-recent-builds-activity-summary: ready-for-dev
   epic-7-retrospective: optional

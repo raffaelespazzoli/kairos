@@ -918,6 +918,32 @@ describe('EnvironmentCard', () => {
     expect(mockTriggerDeployment).not.toHaveBeenCalled();
   });
 
+  // --- Vault deep link tests ---
+
+  it('shows Vault deep link when vaultDeepLink is present', async () => {
+    const user = userEvent.setup();
+    render(<EnvironmentCard entry={makeEntry()} />);
+
+    await user.click(screen.getByText('dev'));
+
+    const link = screen.getByRole('link', { name: 'Open dev secrets in Vault' });
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute(
+      'href',
+      'https://vault.example.com/ui/vault/secrets/applications/team/team-payments-dev/static-secrets',
+    );
+    expect(link).toHaveAttribute('target', '_blank');
+  });
+
+  it('does not show Vault deep link when vaultDeepLink is null', async () => {
+    const user = userEvent.setup();
+    render(<EnvironmentCard entry={makeEntry({ vaultDeepLink: null })} />);
+
+    await user.click(screen.getByText('dev'));
+
+    expect(screen.queryByRole('link', { name: /Vault/ })).not.toBeInTheDocument();
+  });
+
   // --- Grafana deep link tests ---
 
   it('shows Grafana deep link when grafanaDeepLink is present', async () => {

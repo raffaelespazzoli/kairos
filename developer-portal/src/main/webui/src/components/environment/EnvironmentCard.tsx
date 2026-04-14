@@ -400,6 +400,13 @@ export const EnvironmentCard = forwardRef<HTMLDivElement, EnvironmentCardProps>(
                 )}
                 <FlexItem>
                   <DeepLinkButton
+                    href={entry.vaultDeepLink}
+                    toolName="Vault"
+                    ariaLabel={`Open ${entry.environmentName} secrets in Vault`}
+                  />
+                </FlexItem>
+                <FlexItem>
+                  <DeepLinkButton
                     href={entry.grafanaDeepLink}
                     toolName="Grafana"
                     label="View in Grafana ↗"
