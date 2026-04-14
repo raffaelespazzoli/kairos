@@ -1,6 +1,6 @@
 # Story 7.5: Application Overview — Recent Builds & Activity Summary
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -54,32 +54,32 @@ so that I have immediate context without switching to the Builds or Activity tab
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Add backend endpoint for per-app activity (AC: #3)
-  - [ ] 1.1 Add `getApplicationActivity(Long teamId, Long appId)` method to `DashboardService`
-  - [ ] 1.2 Widen `DashboardResource` `@Path` from `/api/v1/teams/{teamId}/dashboard` to `/api/v1/teams/{teamId}` and add `@Path("dashboard")` on the existing GET method
-  - [ ] 1.3 Add `@GET @Path("applications/{appId}/activity")` method to `DashboardResource`
-  - [ ] 1.4 Add backend test for the new endpoint
+- [x] Task 1: Add backend endpoint for per-app activity (AC: #3)
+  - [x] 1.1 Add `getApplicationActivity(Long teamId, Long appId)` method to `DashboardService`
+  - [x] 1.2 Widen `DashboardResource` `@Path` from `/api/v1/teams/{teamId}/dashboard` to `/api/v1/teams/{teamId}` and add `@Path("dashboard")` on the existing GET method
+  - [x] 1.3 Add `@GET @Path("applications/{appId}/activity")` method to `DashboardResource`
+  - [x] 1.4 Add backend test for the new endpoint
 
-- [ ] Task 2: Add frontend API function, hook, and types for app activity (AC: #3)
-  - [ ] 2.1 Add `fetchAppActivity(teamId, appId)` to `api/dashboard.ts`
-  - [ ] 2.2 Add `useAppActivity(teamId, appId)` hook to `hooks/useDashboard.ts`
+- [x] Task 2: Add frontend API function, hook, and types for app activity (AC: #3)
+  - [x] 2.1 Add `fetchAppActivity(teamId, appId)` to `api/dashboard.ts`
+  - [x] 2.2 Add `useAppActivity(teamId, appId)` hook to `hooks/useDashboard.ts`
 
-- [ ] Task 3: Update `ActivityFeed` component for per-app context (AC: #3, #4)
-  - [ ] 3.1 Add optional `emptyMessage` prop to `ActivityFeed`, defaulting to existing "No recent activity across team applications"
-  - [ ] 3.2 Update `ActivityFeed.test.tsx` for the new prop
+- [x] Task 3: Update `ActivityFeed` component for per-app context (AC: #3, #4)
+  - [x] 3.1 Add optional `emptyMessage` prop to `ActivityFeed`, defaulting to existing "No recent activity across team applications"
+  - [x] 3.2 Update `ActivityFeed.test.tsx` for the new prop
 
-- [ ] Task 4: Replace placeholder cards in `ApplicationOverviewPage` (AC: #1, #2, #3, #4, #5)
-  - [ ] 4.1 Add `useBuilds` and `useAppActivity` hooks to the page
-  - [ ] 4.2 Replace left placeholder card with Recent Builds card using `BuildTable` (sliced to 5)
-  - [ ] 4.3 Add "View all builds" link in Recent Builds card header
-  - [ ] 4.4 Replace right placeholder card with Recent Activity card using `ActivityFeed`
-  - [ ] 4.5 Pass `emptyMessage="No recent activity"` to `ActivityFeed`
-  - [ ] 4.6 Add per-section loading spinners and error alerts
-  - [ ] 4.7 Add empty state for builds ("No builds yet")
-  - [ ] 4.8 Wire `refreshAll` to include builds and activity refreshes
+- [x] Task 4: Replace placeholder cards in `ApplicationOverviewPage` (AC: #1, #2, #3, #4, #5)
+  - [x] 4.1 Add `useBuilds` and `useAppActivity` hooks to the page
+  - [x] 4.2 Replace left placeholder card with Recent Builds card using `BuildTable` (sliced to 5)
+  - [x] 4.3 Add "View all builds" link in Recent Builds card header
+  - [x] 4.4 Replace right placeholder card with Recent Activity card using `ActivityFeed`
+  - [x] 4.5 Pass `emptyMessage="No recent activity"` to `ActivityFeed`
+  - [x] 4.6 Add per-section loading spinners and error alerts
+  - [x] 4.7 Add empty state for builds ("No builds yet")
+  - [x] 4.8 Wire `refreshAll` to include builds and activity refreshes
 
-- [ ] Task 5: Tests (all AC)
-  - [ ] 5.1 Update `ApplicationOverviewPage.test.tsx`:
+- [x] Task 5: Tests (all AC)
+  - [x] 5.1 Update `ApplicationOverviewPage.test.tsx`:
     - Remove placeholder assertion (the current test checks for "Build history coming in Epic 4.")
     - Add mocks for `useBuilds` and `useAppActivity`
     - Test: BuildTable renders when builds available
@@ -90,7 +90,7 @@ so that I have immediate context without switching to the Builds or Activity tab
     - Test: Loading spinner shown per section while loading
     - Test: Warning alert shown when build fetch fails
     - Test: Warning alert shown when activity fetch fails
-  - [ ] 5.2 Add `DashboardResourceIT.java` test for the new `/applications/{appId}/activity` endpoint (or extend existing)
+  - [x] 5.2 Add `DashboardResourceIT.java` test for the new `/applications/{appId}/activity` endpoint (or extend existing)
 
 ## Dev Notes
 
@@ -499,12 +499,45 @@ Key patterns reinforced:
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Cursor Agent (Opus 4.6)
 
 ### Debug Log References
 
+- Backend tests initially returned 403 on the new activity endpoint due to the Casbin PermissionFilter extracting "activity" as the resource type. Fixed by adding "activity" to ACTION_SEGMENTS in PermissionFilter so the resource resolves to "applications" (which has read permission).
+- Frontend test "renders ActivityFeed when events are available" initially failed because `getByText('payments-api')` matched both the page heading and the activity feed item. Fixed by using a unique reference value (`v2.0.0-rc1`) in the test data.
+
 ### Completion Notes List
+
+- Added `getApplicationActivity(teamId, appId)` to `DashboardService` — validates app ownership via `ApplicationService.getApplicationById`, reuses existing `collectAppActivity` logic, returns up to `MAX_ACTIVITY_EVENTS` sorted by timestamp descending
+- Widened `DashboardResource` class `@Path` to `/api/v1/teams/{teamId}`, added `@Path("dashboard")` on existing GET method, added new `GET applications/{appId}/activity` endpoint
+- Added "activity" to `PermissionFilter.ACTION_SEGMENTS` so the Casbin resource resolves to "applications" (read) instead of an unmapped "activity" resource
+- Added `fetchAppActivity` API function and `useAppActivity` hook for per-app activity data
+- Added optional `emptyMessage` prop to `ActivityFeed` component for per-app context customization
+- Replaced placeholder cards in `ApplicationOverviewPage` with live `BuildTable` (sliced to 5) and `ActivityFeed` with per-section loading, error, and empty states
+- Added "View all builds" link in Recent Builds card header navigating to builds tab
+- Wired `refreshAll` to include builds and activity refreshes
+- Added 10 new frontend tests covering all AC scenarios (builds, activity, empty states, loading, errors)
+- Added 4 new backend integration tests (200 with sorted events, 404 for non-existent app, 404 for cross-team access, only-specified-app events)
+- All 435 frontend tests pass (38 files), all 552 backend tests pass — zero regressions
 
 ### Change Log
 
+- 2026-04-14: Story 7.5 implementation complete — replaced placeholder cards with live Recent Builds and Recent Activity sections on Application Overview page
+
 ### File List
+
+- `developer-portal/src/main/java/com/portal/dashboard/DashboardResource.java` (modified — widened @Path, added activity endpoint)
+- `developer-portal/src/main/java/com/portal/dashboard/DashboardService.java` (modified — added getApplicationActivity method)
+- `developer-portal/src/main/java/com/portal/auth/PermissionFilter.java` (modified — added "activity" to ACTION_SEGMENTS)
+- `developer-portal/src/main/webui/src/api/dashboard.ts` (modified — added fetchAppActivity)
+- `developer-portal/src/main/webui/src/hooks/useDashboard.ts` (modified — added useAppActivity hook)
+- `developer-portal/src/main/webui/src/components/dashboard/ActivityFeed.tsx` (modified — added emptyMessage prop)
+- `developer-portal/src/main/webui/src/components/dashboard/ActivityFeed.test.tsx` (modified — added emptyMessage prop test)
+- `developer-portal/src/main/webui/src/routes/ApplicationOverviewPage.tsx` (modified — replaced placeholders with live data)
+- `developer-portal/src/main/webui/src/routes/ApplicationOverviewPage.test.tsx` (modified — comprehensive test updates)
+- `developer-portal/src/test/java/com/portal/dashboard/DashboardResourceIT.java` (modified — added 4 activity endpoint tests)
+
+### Review Findings
+
+- [x] [Review][Patch] App activity endpoint masks per-source failures as an empty/partial success — fixed: endpoint now returns `AppActivityResponse` wrapper with `error` field; frontend surfaces inline warning
+- [x] [Review][Patch] Overview page tests still exercise the real health hook instead of a stable mock — fixed: added `vi.mock('../hooks/useHealth')` to test file

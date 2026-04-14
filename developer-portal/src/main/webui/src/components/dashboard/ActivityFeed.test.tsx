@@ -155,6 +155,23 @@ describe('ActivityFeed', () => {
     ).toBeInTheDocument();
   });
 
+  it('shows custom empty message when emptyMessage prop is provided', () => {
+    render(
+      <MemoryRouter initialEntries={['/teams/1']}>
+        <Routes>
+          <Route
+            path="/teams/:teamId"
+            element={<ActivityFeed events={[]} emptyMessage="No recent activity" />}
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('No recent activity')).toBeInTheDocument();
+    expect(
+      screen.queryByText('No recent activity across team applications'),
+    ).not.toBeInTheDocument();
+  });
+
   it('does not render DataList when events are empty', () => {
     renderFeed([]);
     expect(screen.queryByRole('list')).not.toBeInTheDocument();

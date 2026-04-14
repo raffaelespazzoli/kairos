@@ -66,16 +66,17 @@ function buildAriaLabel(event: TeamActivityEventDto, relativeTime: string): stri
 
 interface ActivityFeedProps {
   events: TeamActivityEventDto[];
+  emptyMessage?: string;
 }
 
-export function ActivityFeed({ events }: ActivityFeedProps) {
+export function ActivityFeed({ events, emptyMessage }: ActivityFeedProps) {
   const navigate = useNavigate();
   const { teamId } = useParams();
 
   if (events.length === 0) {
     return (
       <Content component="p" style={{ color: 'var(--pf-t--global--text--color--subtle)', textAlign: 'center' }}>
-        No recent activity across team applications
+        {emptyMessage ?? 'No recent activity across team applications'}
       </Content>
     );
   }

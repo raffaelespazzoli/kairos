@@ -69,6 +69,8 @@ class DashboardResourceIT {
 
     private Team testTeam;
     private Team otherTeam;
+    private Application testApp;
+    private Application otherTeamApp;
 
     @BeforeAll
     void setUpData() {
@@ -88,6 +90,28 @@ class DashboardResourceIT {
             t.persist();
             t.flush();
             return t;
+        });
+
+        testApp = QuarkusTransaction.requiringNew().call(() -> {
+            Application a = new Application();
+            a.name = "dash-payments";
+            a.teamId = testTeam.id;
+            a.runtimeType = "quarkus";
+            a.gitRepoUrl = "https://github.com/org/payments.git";
+            a.persist();
+            a.flush();
+            return a;
+        });
+
+        otherTeamApp = QuarkusTransaction.requiringNew().call(() -> {
+            Application a = new Application();
+            a.name = "other-app";
+            a.teamId = otherTeam.id;
+            a.runtimeType = "quarkus";
+            a.gitRepoUrl = "https://github.com/org/other.git";
+            a.persist();
+            a.flush();
+            return a;
         });
     }
 
@@ -263,5 +287,112 @@ class DashboardResourceIT {
                 .statusCode(200)
                 .body("applications.size()", equalTo(1))
                 .body("activityError", notNullValue());
+    }
+
+    // ── Application activity endpoint tests ──────────────────────────────
+
+    private void stubAppForActivity() {
+        Instant now = Instant.now();
+        when(buildService.listBuilds(testTeam.id, testApp.id)).thenReturn(List.of(
+                new BuildSummaryDto("b-1", "Passed", now.minusSeconds(300), null,
+                        "45s", null, "dash-payments", null),
+                new BuildSummaryDto("b-2", "Failed", now.minusSeconds(600), null,
+                        "30s", null, "dash-payments", null)));
+        when(releaseService.listReleases(testTeam.id, testApp.id)).thenReturn(List.of(
+                new ReleaseSummaryDto("v1.0.0", now.minusSeconds(200), null, "abc", null)));
+        when(deploymentService.listDeployments(testTeam.id, testApp.id, null)).thenReturn(List.of(
+                new DeploymentHistoryDto("d-1", "v1.0.0", "Deployed",
+                        now.minusSeconds(100), null, "dev@example.com", "prod", null)));
+    }
+
+    @Test
+    @TestSecurity(user = "dev@example.com", roles = "member")
+    @OidcSecurity(claims = {
+            @Claim(key = "team", value = "dashres-team"),
+            @Claim(key = "role", value = "member")
+    })
+    void getApplicationActivityReturns200WithSortedEvents() {
+        stubAppForActivity();
+
+        given()
+                .when()
+                .get("/api/v1/teams/{teamId}/applications/{appId}/activity",
+                        testTeam.id, testApp.id)
+                .then()
+                .statusCode(200)
+                .body("events.size()", equalTo(4))
+                .body("events[0].eventType", equalTo("deployment"))
+                .body("events[0].applicationName", equalTo("dash-payments"))
+                .body("error", nullValue());
+    }
+
+    @Test
+    @TestSecurity(user = "dev@example.com", roles = "member")
+    @OidcSecurity(claims = {
+            @Claim(key = "team", value = "dashres-team"),
+            @Claim(key = "role", value = "member")
+    })
+    void getApplicationActivityReturns404ForNonExistentApp() {
+        given()
+                .when()
+                .get("/api/v1/teams/{teamId}/applications/{appId}/activity",
+                        testTeam.id, 9999L)
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    @TestSecurity(user = "dev@example.com", roles = "member")
+    @OidcSecurity(claims = {
+            @Claim(key = "team", value = "dashres-team"),
+            @Claim(key = "role", value = "member")
+    })
+    void getApplicationActivityReturns404ForCrossTeamAccess() {
+        given()
+                .when()
+                .get("/api/v1/teams/{teamId}/applications/{appId}/activity",
+                        testTeam.id, otherTeamApp.id)
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    @TestSecurity(user = "dev@example.com", roles = "member")
+    @OidcSecurity(claims = {
+            @Claim(key = "team", value = "dashres-team"),
+            @Claim(key = "role", value = "member")
+    })
+    void getApplicationActivityReturnsOnlyEventsForSpecifiedApp() {
+        stubAppForActivity();
+
+        given()
+                .when()
+                .get("/api/v1/teams/{teamId}/applications/{appId}/activity",
+                        testTeam.id, testApp.id)
+                .then()
+                .statusCode(200)
+                .body("events.findAll { it.applicationName != 'dash-payments' }.size()", equalTo(0));
+    }
+
+    @Test
+    @TestSecurity(user = "dev@example.com", roles = "member")
+    @OidcSecurity(claims = {
+            @Claim(key = "team", value = "dashres-team"),
+            @Claim(key = "role", value = "member")
+    })
+    void getApplicationActivitySurfacesPartialSourceFailure() {
+        when(buildService.listBuilds(testTeam.id, testApp.id))
+                .thenThrow(new RuntimeException("Tekton unreachable"));
+        when(releaseService.listReleases(testTeam.id, testApp.id)).thenReturn(List.of());
+        when(deploymentService.listDeployments(testTeam.id, testApp.id, null)).thenReturn(List.of());
+
+        given()
+                .when()
+                .get("/api/v1/teams/{teamId}/applications/{appId}/activity",
+                        testTeam.id, testApp.id)
+                .then()
+                .statusCode(200)
+                .body("events.size()", equalTo(0))
+                .body("error", notNullValue());
     }
 }

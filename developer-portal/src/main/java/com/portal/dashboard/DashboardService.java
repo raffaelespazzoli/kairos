@@ -25,6 +25,7 @@ import io.quarkus.arc.Arc;
 import io.quarkus.arc.ManagedContext;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.NotFoundException;
 import org.jboss.logging.Logger;
 
 import java.time.Instant;
@@ -508,6 +509,23 @@ public class DashboardService {
         };
     }
 
+    /**
+     * Returns recent activity events for a single application, validating
+     * that the app belongs to the URL-path team. Errors within individual
+     * sources (builds, releases, deployments) are logged and silently omitted.
+     */
+    public AppActivityResponse getApplicationActivity(Long teamId, Long appId) {
+        Application app = requireTeamApplication(teamId, appId);
+        List<String> errors = new ArrayList<>();
+        List<TeamActivityEventDto> events = collectAppActivity(teamId, app, errors);
+        events.sort(Comparator.comparing(TeamActivityEventDto::timestamp).reversed());
+        List<TeamActivityEventDto> capped = events.size() > MAX_ACTIVITY_EVENTS
+                ? events.subList(0, MAX_ACTIVITY_EVENTS)
+                : events;
+        String error = errors.isEmpty() ? null : String.join("; ", errors);
+        return new AppActivityResponse(capped, error);
+    }
+
     // ── Activity aggregation ────────────────────────────────────────────
 
     ActivityAggregation aggregateActivity(Long teamId, List<Application> apps) {
@@ -591,6 +609,16 @@ public class DashboardService {
         }
 
         return events;
+    }
+
+    // ── Ownership validation ───────────────────────────────────────────
+
+    private Application requireTeamApplication(Long teamId, Long appId) {
+        Application app = Application.findById(appId);
+        if (app == null || !app.teamId.equals(teamId)) {
+            throw new NotFoundException();
+        }
+        return app;
     }
 
     // ── Internal aggregation result holders ─────────────────────────────

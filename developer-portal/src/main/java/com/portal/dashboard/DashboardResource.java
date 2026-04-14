@@ -10,7 +10,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 
-@Path("/api/v1/teams/{teamId}/dashboard")
+@Path("/api/v1/teams/{teamId}")
 @Produces(MediaType.APPLICATION_JSON)
 public class DashboardResource {
 
@@ -21,9 +21,19 @@ public class DashboardResource {
     TeamContext teamContext;
 
     @GET
+    @Path("dashboard")
     public TeamDashboardDto getTeamDashboard(@PathParam("teamId") Long teamId) {
         validateTeamAccess(teamId);
         return dashboardService.getTeamDashboard(teamId);
+    }
+
+    @GET
+    @Path("applications/{appId}/activity")
+    public AppActivityResponse getApplicationActivity(
+            @PathParam("teamId") Long teamId,
+            @PathParam("appId") Long appId) {
+        validateTeamAccess(teamId);
+        return dashboardService.getApplicationActivity(teamId, appId);
     }
 
     private void validateTeamAccess(Long teamId) {

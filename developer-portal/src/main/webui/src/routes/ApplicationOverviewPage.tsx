@@ -14,14 +14,20 @@ import {
   CardTitle,
   Flex,
   FlexItem,
+  Alert,
+  Spinner,
 } from '@patternfly/react-core';
 import { useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useApplications } from '../contexts/ApplicationsContext';
 import { useEnvironments } from '../hooks/useEnvironments';
 import { useHealth } from '../hooks/useHealth';
 import { useReleases } from '../hooks/useReleases';
+import { useBuilds } from '../hooks/useBuilds';
+import { useAppActivity } from '../hooks/useDashboard';
 import { EnvironmentChain } from '../components/environment/EnvironmentChain';
+import { BuildTable } from '../components/build/BuildTable';
+import { ActivityFeed } from '../components/dashboard/ActivityFeed';
 import { DeepLinkButton } from '../components/shared/DeepLinkButton';
 import { LoadingSpinner } from '../components/shared/LoadingSpinner';
 import { ErrorAlert } from '../components/shared/ErrorAlert';
@@ -38,11 +44,25 @@ export function ApplicationOverviewPage() {
   } = useEnvironments(teamId, appId);
   const { data: releases, error: releasesError } = useReleases(teamId, appId);
   const { data: healthData, refresh: refreshHealth } = useHealth(teamId, appId);
+  const {
+    data: builds,
+    error: buildsError,
+    isLoading: buildsLoading,
+    refresh: refreshBuilds,
+  } = useBuilds(teamId, appId);
+  const {
+    data: activity,
+    error: activityError,
+    isLoading: activityLoading,
+    refresh: refreshActivity,
+  } = useAppActivity(teamId, appId);
 
   const refreshAll = useCallback(() => {
     refreshEnv();
     refreshHealth();
-  }, [refreshEnv, refreshHealth]);
+    refreshBuilds();
+    refreshActivity();
+  }, [refreshEnv, refreshHealth, refreshBuilds, refreshActivity]);
 
   if (appsLoading) return <LoadingSpinner systemName="Portal" />;
   if (appsError) return <ErrorAlert error={appsError} />;
@@ -131,21 +151,42 @@ export function ApplicationOverviewPage() {
         <Grid hasGutter>
           <GridItem span={6}>
             <Card>
-              <CardTitle>Recent Builds</CardTitle>
+              <CardTitle>
+                <Flex>
+                  <FlexItem grow={{ default: 'grow' }}>Recent Builds</FlexItem>
+                  <FlexItem>
+                    <Button variant="link" component={(props) => <Link {...props} to="builds" />}>
+                      View all builds
+                    </Button>
+                  </FlexItem>
+                </Flex>
+              </CardTitle>
               <CardBody>
-                <Content component="p">
-                  Build history coming in Epic 4.
-                </Content>
+                {buildsLoading && <Spinner size="lg" aria-label="Loading builds" />}
+                {buildsError && <Alert variant="warning" title="Could not load builds" isInline />}
+                {!buildsLoading && !buildsError && builds && builds.length === 0 && (
+                  <Content component="p" style={{ color: 'var(--pf-t--global--text--color--subtle)', textAlign: 'center' }}>
+                    No builds yet
+                  </Content>
+                )}
+                {!buildsLoading && !buildsError && builds && builds.length > 0 && teamId && appId && (
+                  <BuildTable builds={builds.slice(0, 5)} teamId={teamId} appId={appId} />
+                )}
               </CardBody>
             </Card>
           </GridItem>
           <GridItem span={6}>
             <Card>
-              <CardTitle>Activity</CardTitle>
+              <CardTitle>Recent Activity</CardTitle>
               <CardBody>
-                <Content component="p">
-                  Activity feed coming in Epic 7.
-                </Content>
+                {activityLoading && <Spinner size="lg" aria-label="Loading activity" />}
+                {activityError && <Alert variant="warning" title="Could not load activity" isInline />}
+                {!activityLoading && !activityError && activity?.error && (
+                  <Alert variant="warning" title="Some activity sources unavailable" isInline />
+                )}
+                {!activityLoading && !activityError && activity && (
+                  <ActivityFeed events={activity.events} emptyMessage="No recent activity" />
+                )}
               </CardBody>
             </Card>
           </GridItem>

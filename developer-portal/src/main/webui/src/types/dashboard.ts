@@ -33,6 +33,11 @@ export interface TeamActivityEventDto {
   environmentName: string | null;
 }
 
+export interface AppActivityResponse {
+  events: TeamActivityEventDto[];
+  error: string | null;
+}
+
 export interface TeamDashboardResponse {
   applications: ApplicationHealthSummaryDto[];
   dora: DoraMetricsResponse;
