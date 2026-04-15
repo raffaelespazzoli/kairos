@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-04-03
-last_updated: 2026-04-15T00:00:00-04:00
+last_updated: 2026-04-15T16:27:00-04:00
 project: bmad
 project_key: NOKEY
 tracking_system: file-system
@@ -109,5 +109,5 @@ development_status:
   epic-8: in-progress
   8-1-merge-environments-tab-into-application-overview: done
   8-2-create-delivery-tab-unified-builds-releases-activity: done
-  8-3-tab-navigation-cleanup-route-redirects: review
+  8-3-tab-navigation-cleanup-route-redirects: done
   epic-8-retrospective: optional

@@ -1,6 +1,6 @@
 # Story 8.3: Tab Navigation Cleanup & Route Redirects
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -77,6 +77,10 @@ So that saved links and browser history don't lead to 404 pages.
   - [x] 4.1 Run full frontend test suite and confirm zero regressions
   - [x] 4.2 Verify `ApplicationTabs.test.tsx` passes (already 3 tabs after 8.2 — no changes needed)
   - [x] 4.3 Verify `Accessibility.test.tsx` passes (already 3 tabs after 8.2 — no changes needed)
+
+### Review Findings
+
+- [x] [Review][Patch] Redirect tests do not verify post-redirect URL or breadcrumb text [`developer-portal/src/main/webui/src/App.test.tsx`:138-162] — Fixed: added breadcrumb assertions using `within(screen.getByRole('navigation', { name: /breadcrumb/i }))` to verify post-redirect view name in all 4 redirect tests.
 
 ## Dev Notes
 

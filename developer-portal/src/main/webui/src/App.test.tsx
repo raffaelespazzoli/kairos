@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { MemoryRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppShell } from './components/layout/AppShell';
@@ -140,23 +140,31 @@ describe('App routing', () => {
     renderApp('/teams/1/apps/my-app/environments');
     const overviewTab = screen.getByRole('tab', { name: 'Overview' });
     expect(overviewTab).toHaveAttribute('aria-selected', 'true');
+    const breadcrumb = screen.getByRole('navigation', { name: /breadcrumb/i });
+    expect(within(breadcrumb).getByText('Overview')).toBeInTheDocument();
   });
 
   it('redirects /builds to Delivery', () => {
     renderApp('/teams/1/apps/my-app/builds');
     const deliveryTab = screen.getByRole('tab', { name: 'Delivery' });
     expect(deliveryTab).toHaveAttribute('aria-selected', 'true');
+    const breadcrumb = screen.getByRole('navigation', { name: /breadcrumb/i });
+    expect(within(breadcrumb).getByText('Delivery')).toBeInTheDocument();
   });
 
   it('redirects /releases to Delivery', () => {
     renderApp('/teams/1/apps/my-app/releases');
     const deliveryTab = screen.getByRole('tab', { name: 'Delivery' });
     expect(deliveryTab).toHaveAttribute('aria-selected', 'true');
+    const breadcrumb = screen.getByRole('navigation', { name: /breadcrumb/i });
+    expect(within(breadcrumb).getByText('Delivery')).toBeInTheDocument();
   });
 
   it('redirects /settings to Overview', () => {
     renderApp('/teams/1/apps/my-app/settings');
     const overviewTab = screen.getByRole('tab', { name: 'Overview' });
     expect(overviewTab).toHaveAttribute('aria-selected', 'true');
+    const breadcrumb = screen.getByRole('navigation', { name: /breadcrumb/i });
+    expect(within(breadcrumb).getByText('Overview')).toBeInTheDocument();
   });
 });
