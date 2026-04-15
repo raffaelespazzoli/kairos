@@ -330,33 +330,78 @@ export const EnvironmentCard = forwardRef<HTMLDivElement, EnvironmentCardProps>(
         >
           <CardHeader>
             <Flex
-              direction={{ default: 'column' }}
-              spaceItems={{ default: 'spaceItemsSm' }}
+              justifyContent={{ default: 'justifyContentSpaceBetween' }}
+              alignItems={{ default: 'alignItemsFlexStart' }}
             >
               <FlexItem>
-                <Content component="h4">{entry.environmentName}</Content>
-              </FlexItem>
-              <FlexItem>
-                <Label
-                  {...config.labelProps}
-                  icon={config.icon}
+                <Flex
+                  direction={{ default: 'column' }}
+                  spaceItems={{ default: 'spaceItemsSm' }}
                 >
-                  {config.text}
-                </Label>
-                {healthInfo?.healthStatus &&
-                  healthInfo.healthStatus.status !== 'NO_DATA' &&
-                  displayStatus !== entry.status && (
-                    <Content
-                      component="small"
-                      style={{
-                        marginLeft: 'var(--pf-t--global--spacer--sm)',
-                        color: 'var(--pf-t--global--text--color--subtle)',
-                      }}
+                  <FlexItem>
+                    <Content component="h4">{entry.environmentName}</Content>
+                  </FlexItem>
+                  <FlexItem>
+                    <Label
+                      {...config.labelProps}
+                      icon={config.icon}
                     >
-                      Prometheus: {healthInfo.healthStatus.status.charAt(0) + healthInfo.healthStatus.status.slice(1).toLowerCase()}
-                    </Content>
-                  )}
+                      {config.text}
+                    </Label>
+                    {healthInfo?.healthStatus &&
+                      healthInfo.healthStatus.status !== 'NO_DATA' &&
+                      displayStatus !== entry.status && (
+                        <Content
+                          component="small"
+                          style={{
+                            marginLeft: 'var(--pf-t--global--spacer--sm)',
+                            color: 'var(--pf-t--global--text--color--subtle)',
+                          }}
+                        >
+                          Prometheus: {healthInfo.healthStatus.status.charAt(0) + healthInfo.healthStatus.status.slice(1).toLowerCase()}
+                        </Content>
+                      )}
+                  </FlexItem>
+                </Flex>
               </FlexItem>
+              {showPromote && (
+                <FlexItem onClick={(e) => e.stopPropagation()}>
+                  {promoteDisabled ? (
+                    <Tooltip content="Production deployments require team lead approval">
+                      <span tabIndex={0} ref={promoteButtonRef as React.Ref<HTMLElement>}>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          isDisabled
+                          aria-disabled="true"
+                        >
+                          {`Promote to ${nextEnvName}`}
+                        </Button>
+                      </span>
+                    </Tooltip>
+                  ) : (
+                    <Button
+                      ref={promoteButtonRef as React.Ref<HTMLElement>}
+                      variant="secondary"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePromoteClick();
+                      }}
+                      isDisabled={pendingAction != null}
+                    >
+                      {pendingAction === 'promote' ? (
+                        <>
+                          <Spinner size="sm" aria-label="Promoting" />{' '}
+                          Promoting...
+                        </>
+                      ) : (
+                        `Promote to ${nextEnvName}`
+                      )}
+                    </Button>
+                  )}
+                </FlexItem>
+              )}
             </Flex>
           </CardHeader>
 
@@ -533,44 +578,6 @@ export const EnvironmentCard = forwardRef<HTMLDivElement, EnvironmentCardProps>(
                       ))}
                     </DropdownList>
                   </Dropdown>
-                </FlexItem>
-              )}
-              {showPromote && (
-                <FlexItem>
-                  {promoteDisabled ? (
-                    <Tooltip content="Production deployments require team lead approval">
-                      <span tabIndex={0} ref={promoteButtonRef as React.Ref<HTMLElement>}>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          isDisabled
-                          aria-disabled="true"
-                        >
-                          {`Promote to ${nextEnvName}`}
-                        </Button>
-                      </span>
-                    </Tooltip>
-                  ) : (
-                    <Button
-                      ref={promoteButtonRef as React.Ref<HTMLElement>}
-                      variant="secondary"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handlePromoteClick();
-                      }}
-                      isDisabled={pendingAction != null}
-                    >
-                      {pendingAction === 'promote' ? (
-                        <>
-                          <Spinner size="sm" aria-label="Promoting" />{' '}
-                          Promoting...
-                        </>
-                      ) : (
-                        `Promote to ${nextEnvName}`
-                      )}
-                    </Button>
-                  )}
                 </FlexItem>
               )}
               {entry.status === 'UNHEALTHY' && entry.argocdDeepLink && (
