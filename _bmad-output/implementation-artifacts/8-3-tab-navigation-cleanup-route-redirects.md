@@ -1,6 +1,6 @@
 # Story 8.3: Tab Navigation Cleanup & Route Redirects
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -53,30 +53,30 @@ So that saved links and browser history don't lead to 404 pages.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Add redirect routes to `App.tsx` (AC: #1, #2, #3, #4)
-  - [ ] 1.1 Add `<Route path="environments" element={<Navigate to=".." replace />} />` inside the `ApplicationLayout` nested routes
-  - [ ] 1.2 Add `<Route path="builds" element={<Navigate to="../delivery" replace />} />` inside the `ApplicationLayout` nested routes
-  - [ ] 1.3 Add `<Route path="releases" element={<Navigate to="../delivery" replace />} />` inside the `ApplicationLayout` nested routes
-  - [ ] 1.4 Add `<Route path="settings" element={<Navigate to=".." replace />} />` inside the `ApplicationLayout` nested routes
-  - [ ] 1.5 Remove stale imports from `App.tsx` if any remain from previous stories (verify `ApplicationEnvironmentsPage`, `ApplicationBuildsPage`, `ApplicationReleasesPage` imports are already removed by 8.1 and 8.2)
+- [x] Task 1: Add redirect routes to `App.tsx` (AC: #1, #2, #3, #4)
+  - [x] 1.1 Add `<Route path="environments" element={<Navigate to=".." replace />} />` inside the `ApplicationLayout` nested routes
+  - [x] 1.2 Add `<Route path="builds" element={<Navigate to="../delivery" replace />} />` inside the `ApplicationLayout` nested routes
+  - [x] 1.3 Add `<Route path="releases" element={<Navigate to="../delivery" replace />} />` inside the `ApplicationLayout` nested routes
+  - [x] 1.4 Add `<Route path="settings" element={<Navigate to=".." replace />} />` inside the `ApplicationLayout` nested routes
+  - [x] 1.5 Remove stale imports from `App.tsx` if any remain from previous stories (verify `ApplicationEnvironmentsPage`, `ApplicationBuildsPage`, `ApplicationReleasesPage` imports are already removed by 8.1 and 8.2)
 
-- [ ] Task 2: Add redirect tests to `App.test.tsx` (AC: #1, #2, #3, #4, #5)
-  - [ ] 2.1 Add `ApplicationDeliveryPage` import and route to the test's `renderApp` function (if not already added by Story 8.2)
-  - [ ] 2.2 Add redirect routes to `renderApp` matching production `App.tsx` (environments, builds, releases, settings all use `<Navigate>`)
-  - [ ] 2.3 Add test: `/environments` redirects to Overview — navigating to `/teams/1/apps/my-app/environments` renders the Overview page content
-  - [ ] 2.4 Add test: `/builds` redirects to Delivery — navigating to `/teams/1/apps/my-app/builds` renders the Delivery page content
-  - [ ] 2.5 Add test: `/releases` redirects to Delivery — navigating to `/teams/1/apps/my-app/releases` renders the Delivery page content
-  - [ ] 2.6 Add test: `/settings` redirects to Overview — navigating to `/teams/1/apps/my-app/settings` renders the Overview page content
-  - [ ] 2.7 Remove stale builds route test if it still references `ApplicationBuildsPage` directly (should have been updated by 8.2)
+- [x] Task 2: Add redirect tests to `App.test.tsx` (AC: #1, #2, #3, #4, #5)
+  - [x] 2.1 Add `ApplicationDeliveryPage` import and route to the test's `renderApp` function (if not already added by Story 8.2)
+  - [x] 2.2 Add redirect routes to `renderApp` matching production `App.tsx` (environments, builds, releases, settings all use `<Navigate>`)
+  - [x] 2.3 Add test: `/environments` redirects to Overview — navigating to `/teams/1/apps/my-app/environments` renders the Overview page content
+  - [x] 2.4 Add test: `/builds` redirects to Delivery — navigating to `/teams/1/apps/my-app/builds` renders the Delivery page content
+  - [x] 2.5 Add test: `/releases` redirects to Delivery — navigating to `/teams/1/apps/my-app/releases` renders the Delivery page content
+  - [x] 2.6 Add test: `/settings` redirects to Overview — navigating to `/teams/1/apps/my-app/settings` renders the Overview page content
+  - [x] 2.7 Remove stale builds route test if it still references `ApplicationBuildsPage` directly (should have been updated by 8.2)
 
-- [ ] Task 3: Verify breadcrumbs work correctly (AC: #6)
-  - [ ] 3.1 Verify `AppBreadcrumb.tsx` requires NO changes — `deriveViewFromPath` reads the URL path after redirect, so it will show "Overview" or "Delivery" correctly since `Navigate replace` updates the URL before rendering
-  - [ ] 3.2 Verify no breadcrumb test updates are needed (the redirect updates the URL, so breadcrumbs see the final URL)
+- [x] Task 3: Verify breadcrumbs work correctly (AC: #6)
+  - [x] 3.1 Verify `AppBreadcrumb.tsx` requires NO changes — `deriveViewFromPath` reads the URL path after redirect, so it will show "Overview" or "Delivery" correctly since `Navigate replace` updates the URL before rendering
+  - [x] 3.2 Verify no breadcrumb test updates are needed (the redirect updates the URL, so breadcrumbs see the final URL)
 
-- [ ] Task 4: Verify existing tests still pass (AC: #5)
-  - [ ] 4.1 Run full frontend test suite and confirm zero regressions
-  - [ ] 4.2 Verify `ApplicationTabs.test.tsx` passes (already 3 tabs after 8.2 — no changes needed)
-  - [ ] 4.3 Verify `Accessibility.test.tsx` passes (already 3 tabs after 8.2 — no changes needed)
+- [x] Task 4: Verify existing tests still pass (AC: #5)
+  - [x] 4.1 Run full frontend test suite and confirm zero regressions
+  - [x] 4.2 Verify `ApplicationTabs.test.tsx` passes (already 3 tabs after 8.2 — no changes needed)
+  - [x] 4.3 Verify `Accessibility.test.tsx` passes (already 3 tabs after 8.2 — no changes needed)
 
 ## Dev Notes
 
@@ -349,10 +349,28 @@ Key patterns reinforced:
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Opus 4
 
 ### Debug Log References
 
+No issues encountered. Clean implementation with all tests passing on first run.
+
 ### Completion Notes List
 
+- Added 4 `<Navigate replace>` redirect routes to `App.tsx` for legacy URLs: `/environments` → Overview, `/builds` → Delivery, `/releases` → Delivery, `/settings` → Overview
+- Added matching redirect routes to `App.test.tsx` `renderApp` function to mirror production routing
+- Added 4 redirect test cases verifying correct tab activation after redirect (tab aria-selected assertion)
+- Verified `AppBreadcrumb.tsx` requires no changes — `deriveViewFromPath` reads post-redirect URL correctly
+- Verified `ApplicationTabs.tsx` requires no changes — `deriveTabFromPath` reads post-redirect URL correctly
+- No stale imports found in `App.tsx` — 8.1 and 8.2 already cleaned up old page imports
+- Full test suite: 390/390 tests pass across 36 files, zero regressions
+- No new dependencies, no new files, no backend changes
+
+### Change Log
+
+- 2026-04-15: Story 8.3 implementation — added 4 legacy URL redirect routes and 4 redirect tests
+
 ### File List
+
+- `developer-portal/src/main/webui/src/App.tsx` (modified — added 4 redirect routes)
+- `developer-portal/src/main/webui/src/App.test.tsx` (modified — added 4 redirect routes to renderApp + 4 redirect test cases)

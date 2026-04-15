@@ -36,6 +36,12 @@ function App() {
             <Route path="overview" element={<ApplicationOverviewPage />} />
             <Route path="delivery" element={<ApplicationDeliveryPage />} />
             <Route path="health" element={<ApplicationHealthPage />} />
+
+            {/* Legacy URL redirects — removed tabs */}
+            <Route path="environments" element={<Navigate to=".." replace />} />
+            <Route path="builds" element={<Navigate to="../delivery" replace />} />
+            <Route path="releases" element={<Navigate to="../delivery" replace />} />
+            <Route path="settings" element={<Navigate to=".." replace />} />
           </Route>
 
           <Route

@@ -76,6 +76,11 @@ function renderApp(initialRoute: string) {
             <Route index element={<ApplicationOverviewPage />} />
             <Route path="overview" element={<ApplicationOverviewPage />} />
             <Route path="delivery" element={<ApplicationDeliveryPage />} />
+
+            <Route path="environments" element={<Navigate to=".." replace />} />
+            <Route path="builds" element={<Navigate to="../delivery" replace />} />
+            <Route path="releases" element={<Navigate to="../delivery" replace />} />
+            <Route path="settings" element={<Navigate to=".." replace />} />
           </Route>
           <Route
             path="/teams/:teamId/onboard"
@@ -129,5 +134,29 @@ describe('App routing', () => {
   it('tabs navigate without full page reload (client-side routing)', () => {
     renderApp('/teams/1/apps/my-app/overview');
     expect(screen.getByLabelText('Application tabs')).toBeInTheDocument();
+  });
+
+  it('redirects /environments to Overview', () => {
+    renderApp('/teams/1/apps/my-app/environments');
+    const overviewTab = screen.getByRole('tab', { name: 'Overview' });
+    expect(overviewTab).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('redirects /builds to Delivery', () => {
+    renderApp('/teams/1/apps/my-app/builds');
+    const deliveryTab = screen.getByRole('tab', { name: 'Delivery' });
+    expect(deliveryTab).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('redirects /releases to Delivery', () => {
+    renderApp('/teams/1/apps/my-app/releases');
+    const deliveryTab = screen.getByRole('tab', { name: 'Delivery' });
+    expect(deliveryTab).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('redirects /settings to Overview', () => {
+    renderApp('/teams/1/apps/my-app/settings');
+    const overviewTab = screen.getByRole('tab', { name: 'Overview' });
+    expect(overviewTab).toHaveAttribute('aria-selected', 'true');
   });
 });
