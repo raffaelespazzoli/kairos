@@ -1,6 +1,6 @@
 # Story 8.1: Merge Environments Tab into Application Overview
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -51,43 +51,43 @@ So that I don't need to switch between Overview and Environments tabs for the sa
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Remove Recent Builds and Recent Activity from `ApplicationOverviewPage.tsx` (AC: #3, #5)
-  - [ ] 1.1 Remove `useBuilds` import and hook call
-  - [ ] 1.2 Remove `useAppActivity` import and hook call (`useDashboard` module)
-  - [ ] 1.3 Remove `BuildTable` import
-  - [ ] 1.4 Remove `ActivityFeed` import
-  - [ ] 1.5 Remove `Grid`, `GridItem` imports (if unused after removal)
-  - [ ] 1.6 Remove `Link` import from `react-router-dom` (if unused after removal)
-  - [ ] 1.7 Remove `refreshBuilds` and `refreshActivity` from `refreshAll` callback and its dependency array
-  - [ ] 1.8 Delete the entire bottom `PageSection` containing the two-column grid with Recent Builds and Recent Activity cards
-  - [ ] 1.9 Remove unused PF6 imports: `Card`, `CardBody`, `CardTitle`, `Flex`, `FlexItem`, `Alert`, `Spinner` — BUT verify each is genuinely unused (some may be used in the header section)
+- [x] Task 1: Remove Recent Builds and Recent Activity from `ApplicationOverviewPage.tsx` (AC: #3, #5)
+  - [x] 1.1 Remove `useBuilds` import and hook call
+  - [x] 1.2 Remove `useAppActivity` import and hook call (`useDashboard` module)
+  - [x] 1.3 Remove `BuildTable` import
+  - [x] 1.4 Remove `ActivityFeed` import
+  - [x] 1.5 Remove `Grid`, `GridItem` imports (if unused after removal)
+  - [x] 1.6 Remove `Link` import from `react-router-dom` (if unused after removal)
+  - [x] 1.7 Remove `refreshBuilds` and `refreshActivity` from `refreshAll` callback and its dependency array
+  - [x] 1.8 Delete the entire bottom `PageSection` containing the two-column grid with Recent Builds and Recent Activity cards
+  - [x] 1.9 Remove unused PF6 imports: `Card`, `CardBody`, `CardTitle`, `Flex`, `FlexItem`, `Alert`, `Spinner` — BUT verify each is genuinely unused (some may be used in the header section)
 
-- [ ] Task 2: Add `healthError` inline warning to Overview page (AC: #2)
-  - [ ] 2.1 Destructure `error: healthError` from `useHealth(teamId, appId)` (currently only `data` and `refresh` are destructured)
-  - [ ] 2.2 Add inline `Alert` with `variant="warning"` and `title="Health data unavailable — Prometheus may be unreachable"` in the environment chain `PageSection`, below `envError`/`releasesError` alerts and above `EnvironmentChain`
-  - [ ] 2.3 Ensure `Alert` uses `isInline` prop (matching pattern from Environments page)
+- [x] Task 2: Add `healthError` inline warning to Overview page (AC: #2)
+  - [x] 2.1 Destructure `error: healthError` from `useHealth(teamId, appId)` (currently only `data` and `refresh` are destructured)
+  - [x] 2.2 Add inline `Alert` with `variant="warning"` and `title="Health data unavailable — Prometheus may be unreachable"` in the environment chain `PageSection`, below `envError`/`releasesError` alerts and above `EnvironmentChain`
+  - [x] 2.3 Ensure `Alert` uses `isInline` prop (matching pattern from Environments page)
 
-- [ ] Task 3: Remove Environments tab and route (AC: #4)
-  - [ ] 3.1 Remove `{ key: 'environments', label: 'Environments' }` from `APP_TABS` in `ApplicationTabs.tsx`
-  - [ ] 3.2 Remove `<Route path="environments" element={<ApplicationEnvironmentsPage />} />` from `App.tsx`
-  - [ ] 3.3 Remove `import { ApplicationEnvironmentsPage } from './routes/ApplicationEnvironmentsPage'` from `App.tsx`
-  - [ ] 3.4 Delete `routes/ApplicationEnvironmentsPage.tsx`
-  - [ ] 3.5 Delete `routes/ApplicationEnvironmentsPage.test.tsx`
+- [x] Task 3: Remove Environments tab and route (AC: #4)
+  - [x] 3.1 Remove `{ key: 'environments', label: 'Environments' }` from `APP_TABS` in `ApplicationTabs.tsx`
+  - [x] 3.2 Remove `<Route path="environments" element={<ApplicationEnvironmentsPage />} />` from `App.tsx`
+  - [x] 3.3 Remove `import { ApplicationEnvironmentsPage } from './routes/ApplicationEnvironmentsPage'` from `App.tsx`
+  - [x] 3.4 Delete `routes/ApplicationEnvironmentsPage.tsx`
+  - [x] 3.5 Delete `routes/ApplicationEnvironmentsPage.test.tsx`
 
-- [ ] Task 4: Update tests (AC: #6)
-  - [ ] 4.1 Update `ApplicationOverviewPage.test.tsx`:
+- [x] Task 4: Update tests (AC: #6)
+  - [x] 4.1 Update `ApplicationOverviewPage.test.tsx`:
     - Remove `useBuilds` mock and `mockBuildsResult`
     - Remove `useDashboard` / `useAppActivity` mock and `mockActivityResult`
     - Remove all test cases for: BuildTable, "View all builds" link, ActivityFeed, empty builds, empty activity, loading builds, loading activity, build error, activity error, partial activity warning
     - Add test: health warning Alert renders when `healthError` is present
     - Add test: health warning Alert does not render when `healthError` is null
     - Verify remaining tests still pass: env chain, env loading, env error, releases error, app metadata, refresh button, DevSpaces link
-  - [ ] 4.2 Update `ApplicationTabs.test.tsx`:
+  - [x] 4.2 Update `ApplicationTabs.test.tsx`:
     - Change "renders all 5 tabs" → "renders all 4 tabs"
     - Remove assertion for 'Environments' tab
     - Keep assertions for: Overview, Builds, Releases, Metrics
-  - [ ] 4.3 Update `Accessibility.test.tsx` if it asserts tab count (was updated 6→5 in Story 7.4; now 5→4)
-  - [ ] 4.4 Verify `App.test.tsx` does not reference the environments route (if it does, remove)
+  - [x] 4.3 Update `Accessibility.test.tsx` if it asserts tab count (was updated 6→5 in Story 7.4; now 5→4)
+  - [x] 4.4 Verify `App.test.tsx` does not reference the environments route (if it does, remove)
 
 ## Dev Notes
 
@@ -395,10 +395,40 @@ Key patterns reinforced:
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+GPT-5.4
+
+### Implementation Plan
+
+- Simplify `ApplicationOverviewPage` to keep only the application header and environment chain sections, remove builds/activity hooks and UI, preserve refresh for environments and health, and surface the inline `healthError` warning above the chain.
+- Remove the Environments tab and route, then delete the redundant `ApplicationEnvironmentsPage` implementation and its tests.
+- Update frontend tests to reflect the reduced tab count, removed Overview bottom grid, and new Overview health warning behavior before validating the frontend suite.
 
 ### Debug Log References
 
+- Updated Overview tests first and confirmed red-phase failures for the missing health warning and still-present Environments tab/5-tab navigation.
+- Validated the implementation with `npm test -- src/routes/ApplicationOverviewPage.test.tsx src/components/layout/ApplicationTabs.test.tsx src/components/layout/Accessibility.test.tsx` and then `npm test` from `developer-portal/src/main/webui`.
+- Ran `npm run lint`; failures were pre-existing in unrelated files (`ActivityFeed.tsx`, `ApplicationHealthGrid.test.tsx`, `DoraStatCard.tsx`, `GoldenSignalsPanel.tsx`, `AppShell.tsx`, `TeamDashboardPage.test.tsx`). `ReadLints` reported no new lint issues in the files changed for this story.
+
 ### Completion Notes List
 
+- Removed Recent Builds and Recent Activity from `ApplicationOverviewPage`, including the `useBuilds`/`useAppActivity` hooks, associated imports, and the bottom grid section, leaving Overview focused on the application header and full environment promotion chain.
+- Added the inline warning `Alert` for `healthError` on the Overview page and preserved manual refresh behavior for environments and health only.
+- Removed the Environments tab from application navigation, removed the `/environments` route from `App.tsx`, and deleted the obsolete `ApplicationEnvironmentsPage` implementation and test files.
+- Updated the affected frontend tests for the new Overview and 4-tab navigation, and verified the full frontend suite passes: 37 files, 416 tests.
+
 ### File List
+
+- `_bmad-output/implementation-artifacts/8-1-merge-environments-tab-into-application-overview.md`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `developer-portal/src/main/webui/src/App.tsx`
+- `developer-portal/src/main/webui/src/components/layout/Accessibility.test.tsx`
+- `developer-portal/src/main/webui/src/components/layout/ApplicationTabs.test.tsx`
+- `developer-portal/src/main/webui/src/components/layout/ApplicationTabs.tsx`
+- `developer-portal/src/main/webui/src/routes/ApplicationEnvironmentsPage.test.tsx` (deleted)
+- `developer-portal/src/main/webui/src/routes/ApplicationEnvironmentsPage.tsx` (deleted)
+- `developer-portal/src/main/webui/src/routes/ApplicationOverviewPage.test.tsx`
+- `developer-portal/src/main/webui/src/routes/ApplicationOverviewPage.tsx`
+
+### Change Log
+
+- 2026-04-14: Merged the Environments tab content into Overview, removed Overview's builds/activity section, deleted the Environments route/page, and updated frontend tests for the 4-tab navigation model.

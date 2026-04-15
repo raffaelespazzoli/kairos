@@ -22,13 +22,13 @@ function renderTabs(route = '/teams/default/apps/my-app/overview') {
 }
 
 describe('ApplicationTabs', () => {
-  it('renders all 5 tabs', () => {
+  it('renders all 4 tabs', () => {
     renderTabs();
     expect(screen.getByText('Overview')).toBeInTheDocument();
     expect(screen.getByText('Builds')).toBeInTheDocument();
     expect(screen.getByText('Releases')).toBeInTheDocument();
-    expect(screen.getByText('Environments')).toBeInTheDocument();
     expect(screen.getByText('Metrics')).toBeInTheDocument();
+    expect(screen.queryByText('Environments')).not.toBeInTheDocument();
   });
 
   it('has Application tabs aria-label', () => {

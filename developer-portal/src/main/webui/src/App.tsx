@@ -6,7 +6,6 @@ import { TeamDashboardPage } from './routes/TeamDashboardPage';
 import { ApplicationOverviewPage } from './routes/ApplicationOverviewPage';
 import { ApplicationBuildsPage } from './routes/ApplicationBuildsPage';
 import { ApplicationReleasesPage } from './routes/ApplicationReleasesPage';
-import { ApplicationEnvironmentsPage } from './routes/ApplicationEnvironmentsPage';
 import { ApplicationHealthPage } from './routes/ApplicationHealthPage';
 import { OnboardingWizardPage } from './routes/OnboardingWizardPage';
 import { AdminClustersPage } from './routes/AdminClustersPage';
@@ -38,10 +37,6 @@ function App() {
             <Route path="overview" element={<ApplicationOverviewPage />} />
             <Route path="builds" element={<ApplicationBuildsPage />} />
             <Route path="releases" element={<ApplicationReleasesPage />} />
-            <Route
-              path="environments"
-              element={<ApplicationEnvironmentsPage />}
-            />
             <Route path="health" element={<ApplicationHealthPage />} />
           </Route>
 
