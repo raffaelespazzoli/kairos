@@ -5,7 +5,7 @@ import { AppShell } from './components/layout/AppShell';
 import { ApplicationLayout } from './components/layout/ApplicationLayout';
 import { TeamDashboardPage } from './routes/TeamDashboardPage';
 import { ApplicationOverviewPage } from './routes/ApplicationOverviewPage';
-import { ApplicationBuildsPage } from './routes/ApplicationBuildsPage';
+import { ApplicationDeliveryPage } from './routes/ApplicationDeliveryPage';
 import { OnboardingWizardPage } from './routes/OnboardingWizardPage';
 import { AdminClustersPage } from './routes/AdminClustersPage';
 
@@ -27,6 +27,40 @@ vi.mock('./hooks/useApiFetch', () => ({
 vi.mock('./hooks/useBuilds', () => ({
   useBuilds: () => ({ data: [], error: null, isLoading: false, refresh: vi.fn(), prepend: vi.fn() }),
   useTriggerBuild: () => ({ trigger: vi.fn().mockResolvedValue(null), error: null, isTriggering: false }),
+  useBuildDetail: () => ({ data: null, error: null, isLoading: false, load: vi.fn() }),
+  useBuildLogs: () => ({ logs: null, error: null, isLoading: false, load: vi.fn() }),
+}));
+
+vi.mock('./hooks/useReleases', () => ({
+  useReleases: () => ({ data: [], error: null, isLoading: false, refresh: vi.fn() }),
+}));
+
+vi.mock('./hooks/useDashboard', () => ({
+  useAppActivity: () => ({ data: { events: [], error: null }, error: null, isLoading: false, refresh: vi.fn() }),
+  useDashboard: () => ({
+    data: {
+      applications: [],
+      dora: { metrics: [], timeRange: '30d', hasData: false },
+      recentActivity: [],
+      healthError: null,
+      doraError: null,
+      activityError: null,
+    },
+    error: null,
+    isLoading: false,
+    refresh: vi.fn(),
+  }),
+}));
+
+vi.mock('./api/releases', () => ({
+  createRelease: vi.fn(),
+}));
+
+vi.mock('./api/builds', () => ({
+  fetchBuilds: vi.fn(),
+  triggerBuild: vi.fn(),
+  fetchBuildDetail: vi.fn(),
+  fetchBuildLogs: vi.fn(),
 }));
 
 function renderApp(initialRoute: string) {
@@ -41,7 +75,7 @@ function renderApp(initialRoute: string) {
           >
             <Route index element={<ApplicationOverviewPage />} />
             <Route path="overview" element={<ApplicationOverviewPage />} />
-            <Route path="builds" element={<ApplicationBuildsPage />} />
+            <Route path="delivery" element={<ApplicationDeliveryPage />} />
           </Route>
           <Route
             path="/teams/:teamId/onboard"
@@ -68,11 +102,11 @@ describe('App routing', () => {
     expect(screen.getByLabelText('Application tabs')).toBeInTheDocument();
   });
 
-  it('renders builds page at /teams/:teamId/apps/:appId/builds', () => {
-    renderApp('/teams/1/apps/my-app/builds');
+  it('renders delivery page at /teams/:teamId/apps/:appId/delivery', () => {
+    renderApp('/teams/1/apps/my-app/delivery');
     expect(screen.getByText('No builds yet')).toBeInTheDocument();
-    const buildsTab = screen.getByRole('tab', { name: 'Builds' });
-    expect(buildsTab).toHaveAttribute('aria-selected', 'true');
+    const deliveryTab = screen.getByRole('tab', { name: 'Delivery' });
+    expect(deliveryTab).toHaveAttribute('aria-selected', 'true');
   });
 
   it('renders onboarding page at /teams/:teamId/onboard', () => {

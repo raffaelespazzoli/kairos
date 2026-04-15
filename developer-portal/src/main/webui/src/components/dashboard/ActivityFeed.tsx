@@ -45,11 +45,10 @@ function getNavigationPath(event: TeamActivityEventDto, teamId: string): string 
   const base = `/teams/${teamId}/apps/${event.applicationId}`;
   switch (event.eventType) {
     case 'build':
-      return `${base}/builds`;
+    case 'release':
+      return `${base}/delivery`;
     case 'deployment':
       return `${base}/overview`;
-    case 'release':
-      return `${base}/releases`;
     default:
       return `${base}/overview`;
   }

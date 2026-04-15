@@ -22,13 +22,13 @@ function renderTabs(route = '/teams/default/apps/my-app/overview') {
 }
 
 describe('ApplicationTabs', () => {
-  it('renders all 4 tabs', () => {
+  it('renders all 3 tabs', () => {
     renderTabs();
     expect(screen.getByText('Overview')).toBeInTheDocument();
-    expect(screen.getByText('Builds')).toBeInTheDocument();
-    expect(screen.getByText('Releases')).toBeInTheDocument();
+    expect(screen.getByText('Delivery')).toBeInTheDocument();
     expect(screen.getByText('Metrics')).toBeInTheDocument();
-    expect(screen.queryByText('Environments')).not.toBeInTheDocument();
+    expect(screen.queryByText('Builds')).not.toBeInTheDocument();
+    expect(screen.queryByText('Releases')).not.toBeInTheDocument();
   });
 
   it('has Application tabs aria-label', () => {
@@ -37,9 +37,9 @@ describe('ApplicationTabs', () => {
   });
 
   it('highlights the active tab based on URL path', () => {
-    renderTabs('/teams/default/apps/my-app/builds');
-    const buildsTab = screen.getByText('Builds').closest('button');
-    expect(buildsTab).toHaveAttribute('aria-selected', 'true');
+    renderTabs('/teams/default/apps/my-app/delivery');
+    const deliveryTab = screen.getByText('Delivery').closest('button');
+    expect(deliveryTab).toHaveAttribute('aria-selected', 'true');
   });
 
   it('defaults to overview tab when no view in URL', () => {
@@ -51,10 +51,9 @@ describe('ApplicationTabs', () => {
   it('navigates when a tab is clicked', async () => {
     const user = userEvent.setup();
     renderTabs('/teams/default/apps/my-app/overview');
-    const releasesTab = screen.getByText('Releases');
-    await user.click(releasesTab);
-    // After click, Releases should become active
-    const releasesButton = screen.getByText('Releases').closest('button');
-    expect(releasesButton).toHaveAttribute('aria-selected', 'true');
+    const deliveryTab = screen.getByText('Delivery');
+    await user.click(deliveryTab);
+    const deliveryButton = screen.getByText('Delivery').closest('button');
+    expect(deliveryButton).toHaveAttribute('aria-selected', 'true');
   });
 });

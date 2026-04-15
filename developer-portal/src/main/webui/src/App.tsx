@@ -4,8 +4,7 @@ import { AppShell } from './components/layout/AppShell';
 import { ApplicationLayout } from './components/layout/ApplicationLayout';
 import { TeamDashboardPage } from './routes/TeamDashboardPage';
 import { ApplicationOverviewPage } from './routes/ApplicationOverviewPage';
-import { ApplicationBuildsPage } from './routes/ApplicationBuildsPage';
-import { ApplicationReleasesPage } from './routes/ApplicationReleasesPage';
+import { ApplicationDeliveryPage } from './routes/ApplicationDeliveryPage';
 import { ApplicationHealthPage } from './routes/ApplicationHealthPage';
 import { OnboardingWizardPage } from './routes/OnboardingWizardPage';
 import { AdminClustersPage } from './routes/AdminClustersPage';
@@ -35,8 +34,7 @@ function App() {
           >
             <Route index element={<ApplicationOverviewPage />} />
             <Route path="overview" element={<ApplicationOverviewPage />} />
-            <Route path="builds" element={<ApplicationBuildsPage />} />
-            <Route path="releases" element={<ApplicationReleasesPage />} />
+            <Route path="delivery" element={<ApplicationDeliveryPage />} />
             <Route path="health" element={<ApplicationHealthPage />} />
           </Route>
 

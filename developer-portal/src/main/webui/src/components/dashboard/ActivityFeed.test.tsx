@@ -102,12 +102,12 @@ describe('ActivityFeed', () => {
     expect(screen.queryByText(/→/)).not.toBeInTheDocument();
   });
 
-  it('click on build event navigates to builds page', async () => {
+  it('click on build event navigates to delivery page', async () => {
     const user = userEvent.setup();
     renderFeed([sampleEvents[0]]);
     const item = screen.getByRole('listitem');
     await user.click(item);
-    expect(mockNavigate).toHaveBeenCalledWith('/teams/1/apps/1/builds');
+    expect(mockNavigate).toHaveBeenCalledWith('/teams/1/apps/1/delivery');
   });
 
   it('click on deployment event navigates to overview page', async () => {
@@ -118,12 +118,12 @@ describe('ActivityFeed', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/teams/1/apps/1/overview');
   });
 
-  it('click on release event navigates to releases page', async () => {
+  it('click on release event navigates to delivery page', async () => {
     const user = userEvent.setup();
     renderFeed([sampleEvents[2]]);
     const item = screen.getByRole('listitem');
     await user.click(item);
-    expect(mockNavigate).toHaveBeenCalledWith('/teams/1/apps/2/releases');
+    expect(mockNavigate).toHaveBeenCalledWith('/teams/1/apps/2/delivery');
   });
 
   it('keyboard Enter on item triggers navigation', async () => {
@@ -132,7 +132,7 @@ describe('ActivityFeed', () => {
     const item = screen.getByRole('listitem');
     item.focus();
     await user.keyboard('{Enter}');
-    expect(mockNavigate).toHaveBeenCalledWith('/teams/1/apps/1/builds');
+    expect(mockNavigate).toHaveBeenCalledWith('/teams/1/apps/1/delivery');
   });
 
   it('each item has correct aria-label', () => {

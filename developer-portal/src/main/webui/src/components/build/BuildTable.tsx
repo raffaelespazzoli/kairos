@@ -22,6 +22,7 @@ interface BuildTableProps {
   builds: BuildSummary[];
   teamId: string;
   appId: string;
+  onReleaseCreated?: () => void;
 }
 
 interface ReleaseRowState {
@@ -40,7 +41,7 @@ function formatTime(iso: string): string {
   });
 }
 
-export function BuildTable({ builds, teamId, appId }: BuildTableProps) {
+export function BuildTable({ builds, teamId, appId, onReleaseCreated }: BuildTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [releaseState, setReleaseState] = useState<Map<string, ReleaseRowState>>(new Map());
   const [modalBuild, setModalBuild] = useState<BuildSummary | null>(null);
@@ -88,6 +89,7 @@ export function BuildTable({ builds, teamId, appId }: BuildTableProps) {
         new Map(prev).set(buildId, { status: 'released', version }),
       );
       handleCloseModal();
+      onReleaseCreated?.();
     } catch (e) {
       const message =
         e instanceof ApiError

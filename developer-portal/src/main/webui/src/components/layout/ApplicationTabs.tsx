@@ -3,8 +3,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 
 const APP_TABS = [
   { key: 'overview', label: 'Overview' },
-  { key: 'builds', label: 'Builds' },
-  { key: 'releases', label: 'Releases' },
+  { key: 'delivery', label: 'Delivery' },
   { key: 'health', label: 'Metrics' },
 ] as const;
 

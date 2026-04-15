@@ -1,6 +1,6 @@
 # Story 8.2: Create Delivery Tab — Unified Builds, Releases & Activity View
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -60,63 +60,68 @@ So that I can see the full delivery pipeline — from CI output to versioned rel
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create `ApplicationDeliveryPage.tsx` (AC: #1, #3, #5, #6)
-  - [ ] 1.1 Create `routes/ApplicationDeliveryPage.tsx`
-  - [ ] 1.2 Wire hooks: `useBuilds(teamId, appId)`, `useTriggerBuild(teamId, appId)`, `useReleases(teamId, appId)`, `useAppActivity(teamId, appId)`
-  - [ ] 1.3 Create `refreshAll` callback combining `refreshBuilds`, `refreshReleases`, `refreshActivity`
-  - [ ] 1.4 Render page header `PageSection` with page title and `RefreshButton` wired to `refreshAll`
-  - [ ] 1.5 Render content `PageSection` with `Grid` (`numColumns={12}`)
-  - [ ] 1.6 Builds column (`GridItem span={4}`): Card with "Builds" CardTitle + "Trigger Build" button in CardHeader actions, CardBody with `LoadingSpinner`/`ErrorAlert`/EmptyState/`BuildTable`
-  - [ ] 1.7 Releases column (`GridItem span={4}`): Card with "Releases" CardTitle, CardBody with `LoadingSpinner`/`ErrorAlert`/EmptyState/`ReleaseTable`
-  - [ ] 1.8 Activity column (`GridItem span={4}`): Card with "Recent Activity" CardTitle, CardBody with `LoadingSpinner`/`ErrorAlert`/EmptyState/`ActivityFeed`
-  - [ ] 1.9 Wire trigger build: call `trigger()`, on success call `prependBuild(newBuild)`, show `triggerError` as inline danger Alert above BuildTable
-  - [ ] 1.10 Wire `onReleaseCreated={refreshReleases}` on `BuildTable` (see Task 2)
-  - [ ] 1.11 Pass `emptyMessage="No recent activity"` to `ActivityFeed` (per Story 7.5 pattern)
+- [x] Task 1: Create `ApplicationDeliveryPage.tsx` (AC: #1, #3, #5, #6)
+  - [x] 1.1 Create `routes/ApplicationDeliveryPage.tsx`
+  - [x] 1.2 Wire hooks: `useBuilds(teamId, appId)`, `useTriggerBuild(teamId, appId)`, `useReleases(teamId, appId)`, `useAppActivity(teamId, appId)`
+  - [x] 1.3 Create `refreshAll` callback combining `refreshBuilds`, `refreshReleases`, `refreshActivity`
+  - [x] 1.4 Render page header `PageSection` with page title and `RefreshButton` wired to `refreshAll`
+  - [x] 1.5 Render content `PageSection` with `Grid` (`numColumns={12}`)
+  - [x] 1.6 Builds column (`GridItem span={4}`): Card with "Builds" CardTitle + "Trigger Build" button in CardHeader actions, CardBody with `LoadingSpinner`/`ErrorAlert`/EmptyState/`BuildTable`
+  - [x] 1.7 Releases column (`GridItem span={4}`): Card with "Releases" CardTitle, CardBody with `LoadingSpinner`/`ErrorAlert`/EmptyState/`ReleaseTable`
+  - [x] 1.8 Activity column (`GridItem span={4}`): Card with "Recent Activity" CardTitle, CardBody with `LoadingSpinner`/`ErrorAlert`/EmptyState/`ActivityFeed`
+  - [x] 1.9 Wire trigger build: call `trigger()`, on success call `prependBuild(newBuild)`, show `triggerError` as inline danger Alert above BuildTable
+  - [x] 1.10 Wire `onReleaseCreated={refreshReleases}` on `BuildTable` (see Task 2)
+  - [x] 1.11 Pass `emptyMessage="No recent activity"` to `ActivityFeed` (per Story 7.5 pattern)
 
-- [ ] Task 2: Add `onReleaseCreated` callback prop to `BuildTable` (AC: #4)
-  - [ ] 2.1 Add optional `onReleaseCreated?: () => void` prop to `BuildTable`'s props interface
-  - [ ] 2.2 In `BuildTable`, after successful `CreateReleaseModal` completion, call `onReleaseCreated?.()` alongside the existing inline release badge update
-  - [ ] 2.3 Update `BuildTable.test.tsx`: add test that `onReleaseCreated` callback is invoked after successful release creation
+- [x] Task 2: Add `onReleaseCreated` callback prop to `BuildTable` (AC: #4)
+  - [x] 2.1 Add optional `onReleaseCreated?: () => void` prop to `BuildTable`'s props interface
+  - [x] 2.2 In `BuildTable`, after successful `CreateReleaseModal` completion, call `onReleaseCreated?.()` alongside the existing inline release badge update
+  - [x] 2.3 Update `BuildTable.test.tsx`: add test that `onReleaseCreated` callback is invoked after successful release creation
 
-- [ ] Task 3: Update `ApplicationTabs.tsx` (AC: #2)
-  - [ ] 3.1 Remove `{ key: 'builds', label: 'Builds' }` from `APP_TABS`
-  - [ ] 3.2 Remove `{ key: 'releases', label: 'Releases' }` from `APP_TABS`
-  - [ ] 3.3 Add `{ key: 'delivery', label: 'Delivery' }` to `APP_TABS` (between Overview and Metrics)
+- [x] Task 3: Update `ApplicationTabs.tsx` (AC: #2)
+  - [x] 3.1 Remove `{ key: 'builds', label: 'Builds' }` from `APP_TABS`
+  - [x] 3.2 Remove `{ key: 'releases', label: 'Releases' }` from `APP_TABS`
+  - [x] 3.3 Add `{ key: 'delivery', label: 'Delivery' }` to `APP_TABS` (between Overview and Metrics)
 
-- [ ] Task 4: Update routes in `App.tsx` (AC: #2)
-  - [ ] 4.1 Remove `<Route path="builds" element={<ApplicationBuildsPage />} />`
-  - [ ] 4.2 Remove `<Route path="releases" element={<ApplicationReleasesPage />} />`
-  - [ ] 4.3 Add `<Route path="delivery" element={<ApplicationDeliveryPage />} />`
-  - [ ] 4.4 Remove `import { ApplicationBuildsPage }` and `import { ApplicationReleasesPage }`
-  - [ ] 4.5 Add `import { ApplicationDeliveryPage }`
+- [x] Task 4: Update routes in `App.tsx` (AC: #2)
+  - [x] 4.1 Remove `<Route path="builds" element={<ApplicationBuildsPage />} />`
+  - [x] 4.2 Remove `<Route path="releases" element={<ApplicationReleasesPage />} />`
+  - [x] 4.3 Add `<Route path="delivery" element={<ApplicationDeliveryPage />} />`
+  - [x] 4.4 Remove `import { ApplicationBuildsPage }` and `import { ApplicationReleasesPage }`
+  - [x] 4.5 Add `import { ApplicationDeliveryPage }`
 
-- [ ] Task 5: Delete old page files (AC: #2)
-  - [ ] 5.1 Delete `routes/ApplicationBuildsPage.tsx`
-  - [ ] 5.2 Delete `routes/ApplicationBuildsPage.test.tsx`
-  - [ ] 5.3 Delete `routes/ApplicationReleasesPage.tsx`
-  - [ ] 5.4 Delete `routes/ApplicationReleasesPage.test.tsx`
+- [x] Task 5: Delete old page files (AC: #2)
+  - [x] 5.1 Delete `routes/ApplicationBuildsPage.tsx`
+  - [x] 5.2 Delete `routes/ApplicationBuildsPage.test.tsx`
+  - [x] 5.3 Delete `routes/ApplicationReleasesPage.tsx`
+  - [x] 5.4 Delete `routes/ApplicationReleasesPage.test.tsx`
 
-- [ ] Task 6: Create `ApplicationDeliveryPage.test.tsx` (AC: #1, #3, #4, #5, #6, #7)
-  - [ ] 6.1 Mock `useBuilds`, `useTriggerBuild`, `useReleases`, `useAppActivity` with mutable mock results
-  - [ ] 6.2 Test: 3-column grid renders with builds, releases, activity data
-  - [ ] 6.3 Test: builds loading spinner shown when buildsLoading
-  - [ ] 6.4 Test: releases loading spinner shown when releasesLoading
-  - [ ] 6.5 Test: activity loading spinner shown when activityLoading
-  - [ ] 6.6 Test: builds error Alert shown when buildsError (sibling columns still render)
-  - [ ] 6.7 Test: releases error Alert shown when releasesError (sibling columns still render)
-  - [ ] 6.8 Test: activity error Alert shown when activityError (sibling columns still render)
-  - [ ] 6.9 Test: empty state "No builds yet" when builds data is empty array
-  - [ ] 6.10 Test: empty state "No releases yet" when releases data is empty array
-  - [ ] 6.11 Test: empty state "No recent activity" when activity data is empty/null
-  - [ ] 6.12 Test: RefreshButton triggers all three refresh functions
-  - [ ] 6.13 Test: Trigger Build button renders in Builds Card header
-  - [ ] 6.14 Test: trigger error shows danger Alert in Builds column
-  - [ ] 6.15 Test: `onReleaseCreated` callback wired (verify `refreshReleases` called — mock BuildTable or use integration test)
+- [x] Task 6: Create `ApplicationDeliveryPage.test.tsx` (AC: #1, #3, #4, #5, #6, #7)
+  - [x] 6.1 Mock `useBuilds`, `useTriggerBuild`, `useReleases`, `useAppActivity` with mutable mock results
+  - [x] 6.2 Test: 3-column grid renders with builds, releases, activity data
+  - [x] 6.3 Test: builds loading spinner shown when buildsLoading
+  - [x] 6.4 Test: releases loading spinner shown when releasesLoading
+  - [x] 6.5 Test: activity loading spinner shown when activityLoading
+  - [x] 6.6 Test: builds error Alert shown when buildsError (sibling columns still render)
+  - [x] 6.7 Test: releases error Alert shown when releasesError (sibling columns still render)
+  - [x] 6.8 Test: activity error Alert shown when activityError (sibling columns still render)
+  - [x] 6.9 Test: empty state "No builds yet" when builds data is empty array
+  - [x] 6.10 Test: empty state "No releases yet" when releases data is empty array
+  - [x] 6.11 Test: empty state "No recent activity" when activity data is empty/null
+  - [x] 6.12 Test: RefreshButton triggers all three refresh functions
+  - [x] 6.13 Test: Trigger Build button renders in Builds Card header
+  - [x] 6.14 Test: trigger error shows danger Alert in Builds column
+  - [x] 6.15 Test: `onReleaseCreated` callback wired (verify `refreshReleases` called — mock BuildTable or use integration test)
 
-- [ ] Task 7: Update tab and routing tests (AC: #2, #7)
-  - [ ] 7.1 Update `ApplicationTabs.test.tsx`: change "renders all 4 tabs" → "renders all 3 tabs" — assert Overview, Delivery, Metrics; remove assertions for Builds and Releases
-  - [ ] 7.2 Update `Accessibility.test.tsx`: update tab count assertion from 4 → 3 (if it asserts count)
-  - [ ] 7.3 Verify `App.test.tsx` does not reference builds or releases routes (remove if present)
+- [x] Task 7: Update tab and routing tests (AC: #2, #7)
+  - [x] 7.1 Update `ApplicationTabs.test.tsx`: change "renders all 4 tabs" → "renders all 3 tabs" — assert Overview, Delivery, Metrics; remove assertions for Builds and Releases
+  - [x] 7.2 Update `Accessibility.test.tsx`: update tab count assertion from 4 → 3 (if it asserts count)
+  - [x] 7.3 Verify `App.test.tsx` does not reference builds or releases routes (remove if present)
+
+### Review Findings
+
+- [x] [Review][Patch] Activity feed still navigates build and release events to removed routes [developer-portal/src/main/webui/src/components/dashboard/ActivityFeed.tsx:44]
+- [x] [Review][Patch] Release-refresh behavior added in this story is not actually verified by tests [developer-portal/src/main/webui/src/routes/ApplicationDeliveryPage.test.tsx:370]
 
 ## Dev Notes
 
@@ -565,10 +570,44 @@ Key patterns reinforced:
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Opus 4.6 (Cursor)
 
 ### Debug Log References
 
+- App.test.tsx `useDashboard` mock initially returned `data: null`, breaking TeamDashboardPage tests. Fixed by returning full `TeamDashboardResponse` shape in mock.
+
 ### Completion Notes List
 
+- Created `ApplicationDeliveryPage.tsx` with 3-column PatternFly Grid layout (Builds | Releases | Activity), independent loading/error/empty states per column, RefreshButton wired to all three data sources, Trigger Build in Builds Card header, and cross-column release creation refresh via `onReleaseCreated` prop on BuildTable.
+- Added `onReleaseCreated?: () => void` optional callback to `BuildTable` props — invoked after successful release creation to trigger Releases column refresh on Delivery page.
+- Updated `ApplicationTabs.tsx`: APP_TABS from 4 entries (Overview, Builds, Releases, Metrics) to 3 entries (Overview, Delivery, Metrics).
+- Updated `App.tsx`: replaced builds + releases routes with single delivery route; updated imports.
+- Deleted 4 files: `ApplicationBuildsPage.tsx`, `ApplicationBuildsPage.test.tsx`, `ApplicationReleasesPage.tsx`, `ApplicationReleasesPage.test.tsx`.
+- Created `ApplicationDeliveryPage.test.tsx` with 18 tests covering all ACs: 3-column rendering, per-column loading/error/empty states, refresh-all behavior, trigger build, trigger error, cross-column release refresh wiring, and Delivery tab selection.
+- Updated `ApplicationTabs.test.tsx`, `Accessibility.test.tsx`, and `App.test.tsx` for 3-tab structure and delivery route.
+- All 386 tests pass across 36 test files — zero regressions.
+
 ### File List
+
+New:
+- developer-portal/src/main/webui/src/routes/ApplicationDeliveryPage.tsx
+- developer-portal/src/main/webui/src/routes/ApplicationDeliveryPage.test.tsx
+
+Modified:
+- developer-portal/src/main/webui/src/components/build/BuildTable.tsx
+- developer-portal/src/main/webui/src/components/layout/ApplicationTabs.tsx
+- developer-portal/src/main/webui/src/components/layout/ApplicationTabs.test.tsx
+- developer-portal/src/main/webui/src/components/layout/Accessibility.test.tsx
+- developer-portal/src/main/webui/src/App.tsx
+- developer-portal/src/main/webui/src/App.test.tsx
+- _bmad-output/implementation-artifacts/sprint-status.yaml
+
+Deleted:
+- developer-portal/src/main/webui/src/routes/ApplicationBuildsPage.tsx
+- developer-portal/src/main/webui/src/routes/ApplicationBuildsPage.test.tsx
+- developer-portal/src/main/webui/src/routes/ApplicationReleasesPage.tsx
+- developer-portal/src/main/webui/src/routes/ApplicationReleasesPage.test.tsx
+
+### Change Log
+
+- 2026-04-14: Story 8.2 implementation — consolidated Builds + Releases tabs into single Delivery tab with 3-column layout (Builds | Releases | Activity), added onReleaseCreated cross-column refresh to BuildTable, updated tabs from 4→3, updated all tests. 386 tests pass, zero regressions.
